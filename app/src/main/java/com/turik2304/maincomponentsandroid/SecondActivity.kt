@@ -17,8 +17,9 @@ class SecondActivity : AppCompatActivity() {
         binding = ActivitySecondBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnDoSmth.setOnClickListener {
-            val intent = Intent().putExtra(MESSAGE, "Some message")
+        binding.btnSendMessage.setOnClickListener {
+            val message = binding.editText.text.toString()
+            val intent = Intent().putExtra(MESSAGE, message)
             setResult(RESULT_OK, intent)
             finish()
         }

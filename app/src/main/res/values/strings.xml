@@ -2,5 +2,6 @@
     <string name="app_name">MainComponentsAndroid</string>
     <string name="helloText">Hello Tinkoff!</string>
     <string name="btnTextSecondActivity">Second Activity</string>
-    <string name="btnTextDoSmth">Do smth</string>
+    <string name="sendMessageText">Send Message</string>
+    <string name="enterMessage">Enter your message</string>
 </resources>
