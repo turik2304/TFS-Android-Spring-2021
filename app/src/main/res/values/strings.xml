@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">MainComponentsAndroid</string>
+    <string name="upcomingEventText">Upcoming event:</string>
+    <string name="btnTextGetUpcomingEvent">Get upcoming event</string>
+    <string name="getUpcomingEventText">Get upcoming event</string>
+    <string name="tvTitleText">Title: </string>
+    <string name="tvStartDateText">Start date: </string>
+    <string name="tvEndDateText">End date: </string>
+    <string name="tvDescriptionText">Description: </string>
+    <string name="backPressedText">Back pressed</string>
+</resources>
