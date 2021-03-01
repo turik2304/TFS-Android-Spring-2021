@@ -6,19 +6,20 @@ import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import com.turik2304.maincomponentsandroid.databinding.ActivityMainBinding
 
-const val REQUEST_CODE = 1
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
-            binding.textView.text = result.data?.getStringExtra(MESSAGE) ?: "fuck"
+            val data = result.data
+            binding.tvTitle.text = data?.getStringExtra(EXTRA_TITLE) ?: "none"
+            binding.tvStartDate.text = data?.getStringExtra(EXTRA_START_DATE) ?: "none"
+            binding.tvEndDate.text =  data?.getStringExtra(EXTRA_END_DATE) ?: "none"
+            binding.tvDescription.text = data?.getStringExtra(EXTRA_DESCRIPTION) ?: "none"
         } else {
-            binding.textView.text = "Back pressed"
+            binding.tvUpcomingEvent.text = getString(R.string.backPressedText)
         }
-
 
     }
 
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnSecondActivity.setOnClickListener {
             startForResult.launch(Intent(this, SecondActivity::class.java))
         }
+
     }
 
 
