@@ -14,7 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.turik2304.maincomponentsandroid.databinding.ActivitySecondBinding
 
-const val ACTION_MY_CUSTOM_ACTION = "com.turik2304.maincomponentsandroid.ACTION"
+//const val ACTION_MY_CUSTOM_ACTION = "com.turik2304.maincomponentsandroid.ACTION"
 
 const val EXTRA_TITLE = "com.turik2304.maincomponentsandroid.TITLE"
 const val EXTRA_START_DATE = "com.turik2304.maincomponentsandroid.START_DATE"
@@ -23,6 +23,10 @@ const val EXTRA_DESCRIPTION = "com.turik2304.maincomponentsandroid.DESCRIPTION"
 private const val REQUEST_PERMISSION_CODE: Int = 1
 
 class SecondActivity : AppCompatActivity() {
+
+    companion object {
+       const val ACTION_MY_CUSTOM_ACTION = "com.turik2304.maincomponentsandroid.ACTION"
+    }
 
     private lateinit var binding: ActivitySecondBinding
     private lateinit var broadcastReceiver: BroadcastReceiver
