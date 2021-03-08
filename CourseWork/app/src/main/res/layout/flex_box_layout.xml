@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.turik2304.coursework.FlexboxLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="235dp"
+    android:layout_height="wrap_content"
+    tools:context=".MainActivity">
+
+    <com.turik2304.coursework.EmojiView
+        android:id="@+id/em"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:emojiCode="0x1F607"
+        app:selectCounter="2" />
+
+    <com.turik2304.coursework.EmojiView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:emojiCode="0x1F605"
+        app:selectCounter="1323" />
+
+    <com.turik2304.coursework.EmojiView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:emojiCode="0x1F606"
+        app:selectCounter="13" />
+
+</com.turik2304.coursework.FlexboxLayout>
