@@ -2,15 +2,12 @@ package com.turik2304.coursework
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.core.view.children
-
 
 class FlexboxLayout @JvmOverloads constructor(
         context: Context,
@@ -19,7 +16,7 @@ class FlexboxLayout @JvmOverloads constructor(
         defStyleRes: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
-    private var imageView: ImageView
+    private var imageViewAddsEmojis: ImageView
     private val widthOfImageView = 100
     private val heightOfImageView = 60
     private val gap = 10
@@ -32,16 +29,16 @@ class FlexboxLayout @JvmOverloads constructor(
 
     init {
         setWillNotDraw(true)
-        imageView = ImageView(context)
-        addView(imageView)
-        imageView.setImageResource(R.drawable.image_view_add_emoji)
-//        imageView.setBackgroundColor(resources.getColor(R.color.image_view_add_emoji_day))
-        val imageViewLayoutParams = FrameLayout.LayoutParams(widthOfImageView, heightOfImageView)
-        imageViewLayoutParams.gravity = Gravity.CENTER
-        imageView.layoutParams = imageViewLayoutParams
-        imageView.setOnClickListener {
+        imageViewAddsEmojis = ImageView(context)
+        addView(imageViewAddsEmojis)
+        imageViewAddsEmojis.setImageResource(R.drawable.image_view_add_emoji)
+//        imageViewAddsEmojis.setBackgroundColor(resources.getColor(R.color.emoji_view_night_color))
+        imageViewAddsEmojis.layoutParams.height = heightOfImageView
+        imageViewAddsEmojis.layoutParams.width = widthOfImageView
+        imageViewAddsEmojis.setOnClickListener {
             val em = EmojiView(context)
             em.selectCounter = (0..1000).random()
+            em.emojiCode = (128512..128533).random()
             em.layoutParams = MarginLayoutParams(WRAP_CONTENT, WRAP_CONTENT)
             addView(em)
         }
@@ -53,16 +50,16 @@ class FlexboxLayout @JvmOverloads constructor(
         var currentWidth = 0
         var heightOfLayout = 0
 
-        children.plus(imageView).forEach {
+        children.plus(imageViewAddsEmojis).forEach {
             measureChildWithMargins(it, widthMeasureSpec, 0, heightMeasureSpec, 0)
         }
-        removeView(imageView)
+        removeView(imageViewAddsEmojis)
 
-        val maxHeightOfChild = children.plus(imageView).maxOf { children ->
+        val maxHeightOfChild = children.plus(imageViewAddsEmojis).maxOf { children ->
             children.measuredHeight
         }
 
-        children.plus(imageView).forEach { children ->
+        children.plus(imageViewAddsEmojis).forEach { children ->
             if ((currentWidth < widthSpecSize) &&
                     (currentWidth + children.measuredWidth) < widthSpecSize) {
                 placeChild(children, currentWidth, topOfChildren)
@@ -85,10 +82,10 @@ class FlexboxLayout @JvmOverloads constructor(
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        children.plus(imageView).forEach { children ->
+        children.plus(imageViewAddsEmojis).forEach { children ->
             children.layout(children.left, children.top, children.right, children.bottom)
         }
-        addView(imageView)
+        addView(imageViewAddsEmojis)
 
     }
 

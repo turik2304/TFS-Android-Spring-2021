@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.Px
@@ -19,7 +18,6 @@ class EmojiView @JvmOverloads constructor(
         defStyleAttr: Int = 0,
         defStyleRes: Int = 0
 ) : View(context, attrs, defStyleAttr, defStyleRes) {
-
     var emojiCode = DEFAULT_EMOJI_CODE
         set(value) {
             if (field != value) {

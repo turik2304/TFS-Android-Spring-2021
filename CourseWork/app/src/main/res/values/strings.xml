@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">CourseWork</string>
+    <string name="message">Кастомная ViewGroup, которая отображает аватар пользователя,
+        имя пользователя, текст сообщения, Emoji-реакции(FlexBoxLayout с кастомными вьюхами внутри).
+        Нажми на +, чтобы добавить реакцию</string>
+    <string name="userName">Артур Сибагатуллин</string>
 </resources>
