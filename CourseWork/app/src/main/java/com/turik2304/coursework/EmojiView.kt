@@ -13,10 +13,10 @@ import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
 
 class EmojiView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyleAttr: Int = 0,
-        defStyleRes: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0,
+    defStyleRes: Int = 0
 ) : View(context, attrs, defStyleAttr, defStyleRes) {
     var emojiCode = DEFAULT_EMOJI_CODE
         set(value) {
@@ -34,10 +34,14 @@ class EmojiView @JvmOverloads constructor(
             }
         }
 
-    private val superellipseDayColor = resources.getColor(R.color.design_default_color_background, context.theme)
-    private val superellipseNightColor = resources.getColor(R.color.emoji_view_night_color, context.theme)
-    private val superellipseDayColorSelected = resources.getColor(R.color.emoji_view_day_selected_color, context.theme)
-    private val superellipseNightColorSelected = resources.getColor(R.color.emoji_view_night_selected_color, context.theme)
+    private val superellipseDayColor =
+        resources.getColor(R.color.design_default_color_background, context.theme)
+    private val superellipseNightColor =
+        resources.getColor(R.color.emoji_view_night_color, context.theme)
+    private val superellipseDayColorSelected =
+        resources.getColor(R.color.emoji_view_day_selected_color, context.theme)
+    private val superellipseNightColorSelected =
+        resources.getColor(R.color.emoji_view_night_selected_color, context.theme)
 
     private val currentNightMode = resources.configuration.uiMode and
             Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
@@ -59,7 +63,7 @@ class EmojiView @JvmOverloads constructor(
     private val superellipseBoundaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = resources.getColor(R.color.emoji_view_night_selected_color, context.theme)
         style = Paint.Style.STROKE
-        strokeWidth = 3f
+        strokeWidth = dpToPx(2f).toFloat()
     }
 
     private val contentPaint = Paint().apply {
@@ -98,10 +102,13 @@ class EmojiView @JvmOverloads constructor(
     private val strokeWidth = superellipseBoundaryPaint.strokeWidth.toInt()
 
     init {
+        isClickable = true
         context.obtainStyledAttributes(attrs, R.styleable.EmojiView).apply {
-            textSize = getDimensionPixelSize(R.styleable.EmojiView_ev_text_size, context.spToPx(
-                    DEFAULT_TEXT_SIZE_PX
-            ))
+            textSize = getDimensionPixelSize(
+                R.styleable.EmojiView_ev_text_size, context.spToPx(
+                    DEFAULT_TEXT_SIZE_SP
+                )
+            )
             emojiCode = getInteger(R.styleable.EmojiView_emojiCode, DEFAULT_EMOJI_CODE)
             selectCounter = getInteger(R.styleable.EmojiView_selectCounter, selectCounter)
             recycle()
@@ -130,9 +137,9 @@ class EmojiView @JvmOverloads constructor(
         coordinateYOfContent = when (heightMode) {
             MeasureSpec.EXACTLY -> height / 2 + paddingTop
             MeasureSpec.AT_MOST -> contentPaint.fontMetrics
-                    .run { height - paddingBottom - bottom }
+                .run { height - paddingBottom - bottom }
             else -> contentPaint.fontMetrics
-                    .run { height - paddingBottom - bottom }
+                .run { height - paddingBottom - bottom }
         }
         setMeasuredDimension(width.toInt(), height.toInt())
     }
@@ -146,7 +153,12 @@ class EmojiView @JvmOverloads constructor(
         val canvasCount = canvas.save()
         canvas.drawRoundRect(boundariesRect.toRectF(), radius, radius, superellipseBoundaryPaint)
         if (isSelected) {
-            canvas.drawRoundRect(boundariesRect.toRectF(), radius, radius, superellipseSelectedPaint)
+            canvas.drawRoundRect(
+                boundariesRect.toRectF(),
+                radius,
+                radius,
+                superellipseSelectedPaint
+            )
         } else {
             canvas.drawRoundRect(boundariesRect.toRectF(), radius, radius, superellipsePaint)
         }
@@ -154,33 +166,36 @@ class EmojiView @JvmOverloads constructor(
         canvas.restoreToCount(canvasCount)
     }
 
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        performClick()
-        return super.onTouchEvent(event)
-    }
-
     override fun performClick(): Boolean {
-        if (!isSelected) {
-            isSelected = !isSelected
-            selectCounter++
-        } else {
-            isSelected = !isSelected
-            selectCounter--
+
+        setOnClickListener {
+            if (!isSelected) {
+                isSelected = !isSelected
+                selectCounter++
+            } else {
+                isSelected = !isSelected
+                selectCounter--
+            }
         }
         super.performClick()
         return true
     }
 
     @Px
-    fun Context.spToPx(sp: Float): Int {
+    private fun Context.spToPx(sp: Float): Int {
         return (sp * resources.displayMetrics.scaledDensity).roundToInt()
     }
 
+    @Px
+    private fun dpToPx(dp: Float): Int {
+        return (dp * resources.displayMetrics.density).roundToInt()
+    }
+
     private fun correctSizeOfRect(rect: Rect, value: Int) {
-        rect.top += value
-        rect.bottom -= value
-        rect.right -= value
-        rect.left += value
+        rect.top += value / 2
+        rect.bottom -= value / 2
+        rect.right -= value / 2
+        rect.left += value / 2
     }
 
     private fun updateViewContent() {
@@ -197,7 +212,7 @@ class EmojiView @JvmOverloads constructor(
     }
 
     companion object {
-        private const val DEFAULT_TEXT_SIZE_PX = 14F
+        private const val DEFAULT_TEXT_SIZE_SP = 14F
         private const val DEFAULT_EMOJI_CODE: Int = 0x1F60A
         private const val DEFAULT_SELECT_COUNTER: Int = 0
     }

@@ -7,19 +7,19 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.ImageView
+import androidx.annotation.Px
 import androidx.core.view.children
+import kotlin.math.roundToInt
 
 class FlexboxLayout @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyleAttr: Int = 0,
-        defStyleRes: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0,
+    defStyleRes: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
     private var imageViewAddsEmojis: ImageView
-    private val widthOfImageView = 100
-    private val heightOfImageView = 60
-    private val gap = 10
+    private val gap = dpToPx(7f)
     private var widthOfLayout = 0
         set(value) {
             if (value > field) {
@@ -29,12 +29,21 @@ class FlexboxLayout @JvmOverloads constructor(
 
     init {
         setWillNotDraw(true)
+
+        //get default size of EmojiView
+        val emojiViewForSizingImageView = EmojiView(context)
+        addView(emojiViewForSizingImageView)
+        measureChild(emojiViewForSizingImageView, MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
+        val height = emojiViewForSizingImageView.measuredHeight
+        val width = emojiViewForSizingImageView.measuredWidth
+        removeView(emojiViewForSizingImageView)
+
         imageViewAddsEmojis = ImageView(context)
         addView(imageViewAddsEmojis)
         imageViewAddsEmojis.setImageResource(R.drawable.image_view_add_emoji)
-//        imageViewAddsEmojis.setBackgroundColor(resources.getColor(R.color.emoji_view_night_color))
-        imageViewAddsEmojis.layoutParams.height = heightOfImageView
-        imageViewAddsEmojis.layoutParams.width = widthOfImageView
+        imageViewAddsEmojis.setBackgroundResource(R.drawable.round_corners)
+        imageViewAddsEmojis.layoutParams.height = height
+        imageViewAddsEmojis.layoutParams.width = width
         imageViewAddsEmojis.setOnClickListener {
             val em = EmojiView(context)
             em.selectCounter = (0..1000).random()
@@ -50,18 +59,18 @@ class FlexboxLayout @JvmOverloads constructor(
         var currentWidth = 0
         var heightOfLayout = 0
 
-        children.plus(imageViewAddsEmojis).forEach {
+        children.forEach {
             measureChildWithMargins(it, widthMeasureSpec, 0, heightMeasureSpec, 0)
         }
         removeView(imageViewAddsEmojis)
-
         val maxHeightOfChild = children.plus(imageViewAddsEmojis).maxOf { children ->
             children.measuredHeight
         }
 
         children.plus(imageViewAddsEmojis).forEach { children ->
             if ((currentWidth < widthSpecSize) &&
-                    (currentWidth + children.measuredWidth) < widthSpecSize) {
+                (currentWidth + children.measuredWidth) < widthSpecSize
+            ) {
                 placeChild(children, currentWidth, topOfChildren)
                 currentWidth += children.measuredWidth + gap
                 widthOfLayout = currentWidth
@@ -76,21 +85,29 @@ class FlexboxLayout @JvmOverloads constructor(
         }
 
         setMeasuredDimension(
-                resolveSize(widthOfLayout, widthMeasureSpec),
-                resolveSize(if (heightOfLayout == 0) maxHeightOfChild else heightOfLayout, heightMeasureSpec)
+            resolveSize(widthOfLayout, widthMeasureSpec),
+            resolveSize(
+                if (heightOfLayout == 0) maxHeightOfChild else heightOfLayout,
+                heightMeasureSpec
+            )
         )
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        removeView(imageViewAddsEmojis)
         children.plus(imageViewAddsEmojis).forEach { children ->
             children.layout(children.left, children.top, children.right, children.bottom)
         }
         addView(imageViewAddsEmojis)
+    }
 
+    @Px
+    private fun dpToPx(dp: Float): Int {
+        return (dp * resources.displayMetrics.density).roundToInt()
     }
 
     override fun generateDefaultLayoutParams(): LayoutParams =
-            MarginLayoutParams(MATCH_PARENT, WRAP_CONTENT)
+        MarginLayoutParams(MATCH_PARENT, WRAP_CONTENT)
 
     override fun generateLayoutParams(attrs: AttributeSet?) = MarginLayoutParams(context, attrs)
 
