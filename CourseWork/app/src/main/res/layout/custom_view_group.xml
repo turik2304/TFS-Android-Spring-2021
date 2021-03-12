@@ -4,28 +4,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:parentTag="com.turik2304.coursework.CustomViewGroup">
+    tools:parentTag="com.turik2304.coursework.MessageCustomViewGroup">
 
 
     <ImageView
         android:id="@+id/avatarView"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="10dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="2dp"
         android:layout_marginEnd="10dp"
         android:background="@drawable/round_avatar"
-        android:src="@drawable/ic_launcher_background"
         android:scaleType="centerCrop"
-        />
+        android:src="@drawable/ic_launcher_background" />
 
     <TextView
         android:id="@+id/userName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
         android:text="@string/userName"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        />
 
     <TextView
         android:id="@+id/message"
@@ -38,6 +36,5 @@
         android:id="@+id/flexBoxLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        />
+        android:layout_marginTop="5dp" />
 </merge>

@@ -3,6 +3,7 @@ package com.turik2304.coursework
 import android.content.Context
 import android.graphics.Rect
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,16 +16,17 @@ import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 
-class CustomViewGroup @JvmOverloads constructor(
+class MessageCustomViewGroup @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0,
         defStyleRes: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
+    var text: String = "def"
     private val avatarImageView: ImageView
     private val userName: TextView
-    private val message: TextView
+    val message: TextView
     private val flexboxLayout: FlexboxLayout
 
     private val avatarRect = Rect()
@@ -37,8 +39,14 @@ class CustomViewGroup @JvmOverloads constructor(
         avatarImageView = findViewById(R.id.avatarView)
         userName = findViewById(R.id.userName)
         message = findViewById(R.id.message)
+        message.text = text
         flexboxLayout = findViewById(R.id.flexBoxLayout)
         avatarImageView.clipToOutline = true
+        flexboxLayout.visibility = INVISIBLE
+        setOnClickListener {
+            Log.d("POPA", "clickCustomView")
+            flexboxLayout.visibility = VISIBLE
+        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
