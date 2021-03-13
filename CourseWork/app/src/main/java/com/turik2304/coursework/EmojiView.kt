@@ -4,10 +4,8 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.*
 import android.util.AttributeSet
-import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.Px
-import androidx.core.graphics.toRectF
 import androidx.core.view.setPadding
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
@@ -94,7 +92,7 @@ class EmojiView @JvmOverloads constructor(
     private var width: Float = 0F
     private var height: Float = 0F
     private val contentBoundsRect = Rect()
-    private val boundariesRect = Rect()
+    private val boundariesRect = RectF()
     private var coordinateXOfContent: Float = 0F
     private var coordinateYOfContent: Float = 0F
     private val padding: Int = textSize
@@ -105,7 +103,7 @@ class EmojiView @JvmOverloads constructor(
         isClickable = true
         context.obtainStyledAttributes(attrs, R.styleable.EmojiView).apply {
             textSize = getDimensionPixelSize(
-                R.styleable.EmojiView_ev_text_size, context.spToPx(
+                R.styleable.EmojiView_ev_text_size, spToPx(
                     DEFAULT_TEXT_SIZE_SP
                 )
             )
@@ -144,45 +142,36 @@ class EmojiView @JvmOverloads constructor(
         setMeasuredDimension(width.toInt(), height.toInt())
     }
 
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        getDrawingRect(boundariesRect)
-        correctSizeOfRect(boundariesRect, strokeWidth)
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        boundariesRect.set(0f, 0f, w.toFloat(), h.toFloat())
+        setBordersOffsetToPreventStrokeClipping(boundariesRect, strokeWidth)
     }
 
     override fun onDraw(canvas: Canvas) {
         val canvasCount = canvas.save()
-        canvas.drawRoundRect(boundariesRect.toRectF(), radius, radius, superellipseBoundaryPaint)
+        canvas.drawRoundRect(boundariesRect, radius, radius, superellipseBoundaryPaint)
         if (isSelected) {
-            canvas.drawRoundRect(
-                boundariesRect.toRectF(),
-                radius,
-                radius,
-                superellipseSelectedPaint
-            )
+            canvas.drawRoundRect(boundariesRect, radius, radius, superellipseSelectedPaint)
         } else {
-            canvas.drawRoundRect(boundariesRect.toRectF(), radius, radius, superellipsePaint)
+            canvas.drawRoundRect(boundariesRect, radius, radius, superellipsePaint)
         }
         canvas.drawText(viewContent, coordinateXOfContent, coordinateYOfContent, contentPaint)
         canvas.restoreToCount(canvasCount)
     }
 
     override fun performClick(): Boolean {
-
-        setOnClickListener {
-            if (!isSelected) {
-                isSelected = !isSelected
-                selectCounter++
-            } else {
-                isSelected = !isSelected
-                selectCounter--
-            }
+        if (!isSelected) {
+            isSelected = !isSelected
+            selectCounter++
+        } else {
+            isSelected = !isSelected
+            selectCounter--
         }
-        super.performClick()
-        return true
+        return super.performClick()
     }
 
     @Px
-    private fun Context.spToPx(sp: Float): Int {
+    private fun spToPx(sp: Float): Int {
         return (sp * resources.displayMetrics.scaledDensity).roundToInt()
     }
 
@@ -191,7 +180,7 @@ class EmojiView @JvmOverloads constructor(
         return (dp * resources.displayMetrics.density).roundToInt()
     }
 
-    private fun correctSizeOfRect(rect: Rect, value: Int) {
+    private fun setBordersOffsetToPreventStrokeClipping(rect: RectF, value: Int) {
         rect.top += value / 2
         rect.bottom -= value / 2
         rect.right -= value / 2

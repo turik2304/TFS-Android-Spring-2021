@@ -20,12 +20,6 @@ class FlexboxLayout @JvmOverloads constructor(
 
     private var imageViewAddsEmojis: ImageView
     private val gap = dpToPx(7f)
-    private var widthOfLayout = 0
-        set(value) {
-            if (value > field) {
-                field = value
-            }
-        }
 
     init {
         setWillNotDraw(true)
@@ -58,29 +52,30 @@ class FlexboxLayout @JvmOverloads constructor(
         var topOfChildren = 0
         var currentWidth = 0
         var heightOfLayout = 0
+        var widthOfLayout = 0
 
         children.forEach {
             measureChildWithMargins(it, widthMeasureSpec, 0, heightMeasureSpec, 0)
         }
         removeView(imageViewAddsEmojis)
-        val maxHeightOfChild = children.plus(imageViewAddsEmojis).maxOf { children ->
+        val maxHeightOfChild = (children + imageViewAddsEmojis).maxOf { children ->
             children.measuredHeight
         }
 
-        children.plus(imageViewAddsEmojis).forEach { children ->
+        (children + imageViewAddsEmojis).forEach { children ->
             if ((currentWidth < widthSpecSize) &&
                 (currentWidth + children.measuredWidth) < widthSpecSize
             ) {
                 placeChild(children, currentWidth, topOfChildren)
                 currentWidth += children.measuredWidth + gap
-                widthOfLayout = currentWidth
+                widthOfLayout = if (currentWidth > widthOfLayout) currentWidth else widthOfLayout
             } else {
                 currentWidth = 0
                 topOfChildren += maxHeightOfChild + gap
                 heightOfLayout = topOfChildren + maxHeightOfChild
                 placeChild(children, currentWidth, topOfChildren)
                 currentWidth += children.measuredWidth + gap
-                widthOfLayout = currentWidth
+                widthOfLayout = if (currentWidth > widthOfLayout) currentWidth else widthOfLayout
             }
         }
 
@@ -95,7 +90,7 @@ class FlexboxLayout @JvmOverloads constructor(
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         removeView(imageViewAddsEmojis)
-        children.plus(imageViewAddsEmojis).forEach { children ->
+        (children + imageViewAddsEmojis).forEach { children ->
             children.layout(children.left, children.top, children.right, children.bottom)
         }
         addView(imageViewAddsEmojis)
