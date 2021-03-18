@@ -4,19 +4,18 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.*
 import android.util.AttributeSet
-import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.Px
-import androidx.core.graphics.toRectF
 import androidx.core.view.setPadding
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
+
 
 class EmojiView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
-    defStyleRes: Int = 0
+    defStyleRes: Int = 0,
 ) : View(context, attrs, defStyleAttr, defStyleRes) {
     var emojiCode = DEFAULT_EMOJI_CODE
         set(value) {
@@ -33,6 +32,7 @@ class EmojiView @JvmOverloads constructor(
                 updateViewContent()
             }
         }
+    val listOfUsersWhoClicked = mutableListOf<String>()
 
     private val superellipseDayColor =
         resources.getColor(R.color.design_default_color_background, context.theme)
@@ -94,7 +94,7 @@ class EmojiView @JvmOverloads constructor(
     private var width: Float = 0F
     private var height: Float = 0F
     private val contentBoundsRect = Rect()
-    private val boundariesRect = Rect()
+    private val boundariesRect = RectF()
     private var coordinateXOfContent: Float = 0F
     private var coordinateYOfContent: Float = 0F
     private val padding: Int = textSize
@@ -105,7 +105,7 @@ class EmojiView @JvmOverloads constructor(
         isClickable = true
         context.obtainStyledAttributes(attrs, R.styleable.EmojiView).apply {
             textSize = getDimensionPixelSize(
-                R.styleable.EmojiView_ev_text_size, context.spToPx(
+                R.styleable.EmojiView_ev_text_size, spToPx(
                     DEFAULT_TEXT_SIZE_SP
                 )
             )
@@ -144,45 +144,70 @@ class EmojiView @JvmOverloads constructor(
         setMeasuredDimension(width.toInt(), height.toInt())
     }
 
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        getDrawingRect(boundariesRect)
-        correctSizeOfRect(boundariesRect, strokeWidth)
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        boundariesRect.set(0f, 0f, w.toFloat(), h.toFloat())
+        setBordersOffsetToPreventStrokeClipping(boundariesRect, strokeWidth)
     }
 
     override fun onDraw(canvas: Canvas) {
         val canvasCount = canvas.save()
-        canvas.drawRoundRect(boundariesRect.toRectF(), radius, radius, superellipseBoundaryPaint)
+        canvas.drawRoundRect(boundariesRect, radius, radius, superellipseBoundaryPaint)
         if (isSelected) {
-            canvas.drawRoundRect(
-                boundariesRect.toRectF(),
-                radius,
-                radius,
-                superellipseSelectedPaint
-            )
+            canvas.drawRoundRect(boundariesRect, radius, radius, superellipseSelectedPaint)
         } else {
-            canvas.drawRoundRect(boundariesRect.toRectF(), radius, radius, superellipsePaint)
+            canvas.drawRoundRect(boundariesRect, radius, radius, superellipsePaint)
         }
         canvas.drawText(viewContent, coordinateXOfContent, coordinateYOfContent, contentPaint)
         canvas.restoreToCount(canvasCount)
     }
 
     override fun performClick(): Boolean {
+        val userClicked = listOfUsersWhoClicked.contains(MY_USER_ID)
+        val directParent = parent as FlexboxLayout
+        val mainParent = directParent.parent as MessageViewGroup
+        val dateOfClickedMessageInMillis = mainParent.dateInMillis
 
-        setOnClickListener {
-            if (!isSelected) {
-                isSelected = !isSelected
-                selectCounter++
-            } else {
-                isSelected = !isSelected
-                selectCounter--
+        if (!isSelected && !userClicked) {
+            isSelected = !isSelected
+            selectCounter++
+            listOfUsersWhoClicked.add(MY_USER_ID)
+            val handlerIncreasingCounter = handler@{ reactionsOfClickedMessage: MutableList<FakeServerApi.Reaction> ->
+                val updatedReaction = FakeServerApi.Reaction(emojiCode, selectCounter, listOfUsersWhoClicked)
+                val currentReaction = FakeServerApi.Reaction(emojiCode, selectCounter - 1, (listOfUsersWhoClicked - MY_USER_ID))
+                reactionsOfClickedMessage.forEachIndexed { index, reaction ->
+                    if (reaction.emojiCode == currentReaction.emojiCode &&
+                        reaction.counter == currentReaction.counter &&
+                        reaction.usersWhoClicked.toSet() == currentReaction.usersWhoClicked.toSet()) {
+                        reactionsOfClickedMessage[index] = updatedReaction
+                    }
+                }
+                return@handler true
             }
+            MainActivity.updateReactionsOfMessages(dateOfClickedMessageInMillis, handlerIncreasingCounter)
+        } else {
+            isSelected = !isSelected
+            selectCounter--
+            listOfUsersWhoClicked.remove(MY_USER_ID)
+            directParent.checkZeroesCounters()
+            val handlerDecreasingCounter = handler@{ reactionsOfClickedMessage: MutableList<FakeServerApi.Reaction> ->
+                val updatedReaction = FakeServerApi.Reaction(emojiCode, selectCounter, listOfUsersWhoClicked)
+                val currentReaction = FakeServerApi.Reaction(emojiCode, selectCounter + 1, (listOfUsersWhoClicked + MY_USER_ID))
+                reactionsOfClickedMessage.forEachIndexed { index, reaction ->
+                    if (reaction.emojiCode == currentReaction.emojiCode &&
+                            reaction.counter == currentReaction.counter &&
+                            reaction.usersWhoClicked.toSet() == currentReaction.usersWhoClicked.toSet()) {
+                        reactionsOfClickedMessage[index] = updatedReaction
+                    }
+                }
+                return@handler true
+            }
+            MainActivity.updateReactionsOfMessages(dateOfClickedMessageInMillis, handlerDecreasingCounter)
         }
-        super.performClick()
-        return true
+        return super.performClick()
     }
 
     @Px
-    private fun Context.spToPx(sp: Float): Int {
+    private fun spToPx(sp: Float): Int {
         return (sp * resources.displayMetrics.scaledDensity).roundToInt()
     }
 
@@ -191,7 +216,7 @@ class EmojiView @JvmOverloads constructor(
         return (dp * resources.displayMetrics.density).roundToInt()
     }
 
-    private fun correctSizeOfRect(rect: Rect, value: Int) {
+    private fun setBordersOffsetToPreventStrokeClipping(rect: RectF, value: Int) {
         rect.top += value / 2
         rect.bottom -= value / 2
         rect.right -= value / 2
@@ -216,6 +241,6 @@ class EmojiView @JvmOverloads constructor(
         private const val DEFAULT_EMOJI_CODE: Int = 0x1F60A
         private const val DEFAULT_SELECT_COUNTER: Int = 0
     }
-}
 
+}
 

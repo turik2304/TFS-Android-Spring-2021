@@ -4,9 +4,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
-import com.turik2304.coursework.R
-import com.turik2304.coursework.recyclerViewBase.items.MessageItem
-import com.turik2304.coursework.recyclerViewBase.items.TextItem
 
 abstract class HolderFactory : (ViewGroup, Int) -> BaseViewHolder<ViewTyped> {
 

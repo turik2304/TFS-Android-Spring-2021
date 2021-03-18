@@ -3,7 +3,6 @@ package com.turik2304.coursework
 import android.content.Context
 import android.graphics.Rect
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,23 +10,22 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.view.marginBottom
-import androidx.core.view.marginLeft
-import androidx.core.view.marginRight
-import androidx.core.view.marginTop
+import androidx.core.view.*
 
-class MessageCustomViewGroup @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyleAttr: Int = 0,
-        defStyleRes: Int = 0
+class MessageViewGroup @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0,
+    defStyleRes: Int = 0,
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
-    var text: String = "def"
-    private val avatarImageView: ImageView
-    private val userName: TextView
+
+    val userName: TextView
     val message: TextView
-    private val flexboxLayout: FlexboxLayout
+    var uid: String = "none"
+    var dateInMillis: Long = 0
+    val flexboxLayout: FlexboxLayout
+    val avatarImageView: ImageView
 
     private val avatarRect = Rect()
     private val userNameRect = Rect()
@@ -35,17 +33,29 @@ class MessageCustomViewGroup @JvmOverloads constructor(
     private val flexboxLayoutRect = Rect()
 
     init {
-        LayoutInflater.from(context).inflate(R.layout.custom_view_group, this, true)
+        LayoutInflater.from(context).inflate(R.layout.message_view_group, this, true)
         avatarImageView = findViewById(R.id.avatarView)
         userName = findViewById(R.id.userName)
         message = findViewById(R.id.message)
-        message.text = text
         flexboxLayout = findViewById(R.id.flexBoxLayout)
         avatarImageView.clipToOutline = true
-        flexboxLayout.visibility = INVISIBLE
-        setOnClickListener {
-            Log.d("POPA", "clickCustomView")
-            flexboxLayout.visibility = VISIBLE
+    }
+
+    fun addReactions(reactions: List<FakeServerApi.Reaction>) {
+        flexboxLayout.removeViews(0, flexboxLayout.childCount - 1)
+        if (reactions.isNotEmpty()) {
+            reactions.forEach { reaction ->
+                if (reaction.counter != 0) {
+                    val emojiView = EmojiView(context).apply {
+                        emojiCode = reaction.emojiCode
+                        selectCounter = reaction.counter
+                        listOfUsersWhoClicked.addAll(reaction.usersWhoClicked)
+                        isSelected = listOfUsersWhoClicked.contains(MY_USER_ID)
+                    }
+                    flexboxLayout.addView(emojiView)
+                    flexboxLayout.imageViewAddsEmojis.visibility = VISIBLE
+                }
+            }
         }
     }
 
@@ -62,42 +72,45 @@ class MessageCustomViewGroup @JvmOverloads constructor(
         val flexboxLayoutParams = flexboxLayout.layoutParams as MarginLayoutParams
 
         avatarSize = avatarImageView.getSizeAfterMeasuringWithMargins(
-                widthMeasureSpec,
-                widthUsed = 0,
-                heightMeasureSpec,
-                heightUsed = 0,
-                marginLayoutParams = avatarLayoutParams
+            widthMeasureSpec,
+            widthUsed = 0,
+            heightMeasureSpec,
+            heightUsed = 0,
+            marginLayoutParams = avatarLayoutParams
         )
 
         userNameSize = userName.getSizeAfterMeasuringWithMargins(
-                widthMeasureSpec,
-                widthUsed = avatarSize.width(),
-                heightMeasureSpec,
-                0,
-                marginLayoutParams = userNameLayoutParams,
+            widthMeasureSpec,
+            widthUsed = avatarSize.width(),
+            heightMeasureSpec,
+            0,
+            marginLayoutParams = userNameLayoutParams,
         )
 
         messageSize = message.getSizeAfterMeasuringWithMargins(
-                widthMeasureSpec,
-                widthUsed = avatarSize.width(),
-                heightMeasureSpec,
-                heightUsed = userNameSize.second,
-                marginLayoutParams = messageLayoutParams,
+            widthMeasureSpec,
+            widthUsed = avatarSize.width(),
+            heightMeasureSpec,
+            heightUsed = userNameSize.second,
+            marginLayoutParams = messageLayoutParams,
         )
 
         flexboxLayoutSize = flexboxLayout.getSizeAfterMeasuringWithMargins(
-                widthMeasureSpec,
-                widthUsed = avatarSize.width(),
-                heightMeasureSpec,
-                heightUsed = userNameSize.second + messageSize.second,
-                marginLayoutParams = flexboxLayoutParams
+            widthMeasureSpec,
+            widthUsed = avatarSize.width(),
+            heightMeasureSpec,
+            heightUsed = userNameSize.second + messageSize.second,
+            marginLayoutParams = flexboxLayoutParams
         )
 
         setMeasuredDimension(
-                resolveSize(avatarSize.width() + maxOf(userNameSize.width(), messageSize.width(), flexboxLayoutSize.width()),
-                        widthMeasureSpec),
-                resolveSize(maxOf(avatarSize.height(), userNameSize.height() + messageSize.height() + flexboxLayoutSize.height()),
-                        heightMeasureSpec)
+            resolveSize(avatarSize.width() + maxOf(userNameSize.width(),
+                messageSize.width(),
+                flexboxLayoutSize.width()),
+                widthMeasureSpec),
+            resolveSize(maxOf(avatarSize.height(),
+                userNameSize.height() + messageSize.height() + flexboxLayoutSize.height()),
+                heightMeasureSpec)
         )
     }
 
@@ -108,22 +121,29 @@ class MessageCustomViewGroup @JvmOverloads constructor(
         flexboxLayout.layout(flexboxLayoutRect, avatarImageView, avatarRect, messageRect)
     }
 
-    override fun generateDefaultLayoutParams(): LayoutParams = MarginLayoutParams(MATCH_PARENT, WRAP_CONTENT)
+    override fun generateDefaultLayoutParams(): LayoutParams =
+        MarginLayoutParams(MATCH_PARENT, WRAP_CONTENT)
 
     override fun generateLayoutParams(attrs: AttributeSet?) = MarginLayoutParams(context, attrs)
 
     override fun generateLayoutParams(p: LayoutParams?): LayoutParams = MarginLayoutParams(p)
 
     private fun View.getSizeAfterMeasuringWithMargins(
-            widthMeasureSpec: Int,
-            widthUsed: Int,
-            heightMeasureSpec: Int,
-            heightUsed: Int,
-            marginLayoutParams: MarginLayoutParams,
+        widthMeasureSpec: Int,
+        widthUsed: Int,
+        heightMeasureSpec: Int,
+        heightUsed: Int,
+        marginLayoutParams: MarginLayoutParams,
     ): Pair<Int, Int> {
-        measureChildWithMargins(this, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed)
-        val width = this.measuredWidth + marginLayoutParams.leftMargin + marginLayoutParams.rightMargin
-        val height = this.measuredHeight + marginLayoutParams.topMargin + marginLayoutParams.bottomMargin
+        measureChildWithMargins(this,
+            widthMeasureSpec,
+            widthUsed,
+            heightMeasureSpec,
+            heightUsed)
+        val width =
+            this.measuredWidth + marginLayoutParams.leftMargin + marginLayoutParams.rightMargin
+        val height =
+            this.measuredHeight + marginLayoutParams.topMargin + marginLayoutParams.bottomMargin
         return Pair(width, height)
     }
 
@@ -136,16 +156,20 @@ class MessageCustomViewGroup @JvmOverloads constructor(
     }
 
     private fun View.layout(
-            currentChildRect: Rect,
-            childOnLeft: View?,
-            childOnLeftRect: Rect?,
-            childOnTopRect: Rect?,
+        currentChildRect: Rect,
+        childOnLeft: View?,
+        childOnLeftRect: Rect?,
+        childOnTopRect: Rect?,
     ) {
         currentChildRect.left = (childOnLeftRect?.right ?: 0) + (childOnLeft?.marginRight
-                ?: 0) + this.marginLeft
+            ?: 0) + this.marginLeft
         currentChildRect.top = (childOnTopRect?.bottom ?: 0) + this.marginTop
         currentChildRect.right = currentChildRect.left + this.measuredWidth
         currentChildRect.bottom = currentChildRect.top + this.measuredHeight + this.marginBottom
         this.layout(currentChildRect.left, currentChildRect.top, currentChildRect.right, currentChildRect.bottom)
     }
 }
+
+
+
+

@@ -1,6 +1,5 @@
 package com.turik2304.coursework.recyclerViewBase
 
-import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 
