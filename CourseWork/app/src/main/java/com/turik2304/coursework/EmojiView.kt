@@ -7,14 +7,16 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.Px
 import androidx.core.view.setPadding
+import com.turik2304.coursework.network.ServerApi
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
+
 
 class EmojiView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
-    defStyleRes: Int = 0
+    defStyleRes: Int = 0,
 ) : View(context, attrs, defStyleAttr, defStyleRes) {
     var emojiCode = DEFAULT_EMOJI_CODE
         set(value) {
@@ -31,6 +33,7 @@ class EmojiView @JvmOverloads constructor(
                 updateViewContent()
             }
         }
+    val listOfUsersWhoClicked = mutableListOf<String>()
 
     private val superellipseDayColor =
         resources.getColor(R.color.design_default_color_background, context.theme)
@@ -160,12 +163,46 @@ class EmojiView @JvmOverloads constructor(
     }
 
     override fun performClick(): Boolean {
-        if (!isSelected) {
+        val userClicked = listOfUsersWhoClicked.contains(MyUserId.MY_USER_ID)
+        val directParent = parent as FlexboxLayout
+        val mainParent = directParent.parent as MessageViewGroup
+        val uidOfMessage = mainParent.uid
+
+        if (!isSelected && !userClicked) {
             isSelected = !isSelected
             selectCounter++
+            listOfUsersWhoClicked.add(MyUserId.MY_USER_ID)
+            val handlerIncreasingCounter = handler@{ reactionsOfClickedMessage: MutableList<ServerApi.Reaction> ->
+                val updatedReaction = ServerApi.Reaction(emojiCode, selectCounter, listOfUsersWhoClicked)
+                val currentReaction = ServerApi.Reaction(emojiCode, selectCounter - 1, (listOfUsersWhoClicked - MyUserId.MY_USER_ID))
+                reactionsOfClickedMessage.forEachIndexed { index, reaction ->
+                    if (reaction.emojiCode == currentReaction.emojiCode &&
+                        reaction.counter == currentReaction.counter &&
+                        reaction.usersWhoClicked.toSet() == currentReaction.usersWhoClicked.toSet()) {
+                        reactionsOfClickedMessage[index] = updatedReaction
+                    }
+                }
+                return@handler true
+            }
+            MainActivity.updateReactionsOfMessages(uidOfMessage, handlerIncreasingCounter)
         } else {
             isSelected = !isSelected
             selectCounter--
+            listOfUsersWhoClicked.remove(MyUserId.MY_USER_ID)
+            directParent.checkZeroesCounters()
+            val handlerDecreasingCounter = handler@{ reactionsOfClickedMessage: MutableList<ServerApi.Reaction> ->
+                val updatedReaction = ServerApi.Reaction(emojiCode, selectCounter, listOfUsersWhoClicked)
+                val currentReaction = ServerApi.Reaction(emojiCode, selectCounter + 1, (listOfUsersWhoClicked + MyUserId.MY_USER_ID))
+                reactionsOfClickedMessage.forEachIndexed { index, reaction ->
+                    if (reaction.emojiCode == currentReaction.emojiCode &&
+                            reaction.counter == currentReaction.counter &&
+                            reaction.usersWhoClicked.toSet() == currentReaction.usersWhoClicked.toSet()) {
+                        reactionsOfClickedMessage[index] = updatedReaction
+                    }
+                }
+                return@handler true
+            }
+            MainActivity.updateReactionsOfMessages(uidOfMessage, handlerDecreasingCounter)
         }
         return super.performClick()
     }
@@ -205,6 +242,6 @@ class EmojiView @JvmOverloads constructor(
         private const val DEFAULT_EMOJI_CODE: Int = 0x1F60A
         private const val DEFAULT_SELECT_COUNTER: Int = 0
     }
-}
 
+}
 

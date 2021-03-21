@@ -15,37 +15,33 @@ class FlexboxLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
-    defStyleRes: Int = 0
+    defStyleRes: Int = 0,
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
-    private var imageViewAddsEmojis: ImageView
+    fun checkZeroesCounters() {
+        (children - imageViewAddsEmojis).forEachIndexed { index, emojiView ->
+            if ((emojiView as EmojiView).selectCounter == 0) {
+                removeViewAt(index)
+            }
+        }
+        if (childCount == 1) imageViewAddsEmojis.visibility = INVISIBLE
+    }
+
+    var imageViewAddsEmojis: ImageView
     private val gap = dpToPx(7f)
 
     init {
         setWillNotDraw(true)
 
-        //get default size of EmojiView
-        val emojiViewForSizingImageView = EmojiView(context)
-        addView(emojiViewForSizingImageView)
-        measureChild(emojiViewForSizingImageView, MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
-        val height = emojiViewForSizingImageView.measuredHeight
-        val width = emojiViewForSizingImageView.measuredWidth
-        removeView(emojiViewForSizingImageView)
-
         imageViewAddsEmojis = ImageView(context)
         addView(imageViewAddsEmojis)
         imageViewAddsEmojis.setImageResource(R.drawable.image_view_add_emoji)
         imageViewAddsEmojis.setBackgroundResource(R.drawable.round_corners)
-        imageViewAddsEmojis.layoutParams.height = height
-        imageViewAddsEmojis.layoutParams.width = width
-        imageViewAddsEmojis.setOnClickListener {
-            val em = EmojiView(context)
-            em.selectCounter = (0..1000).random()
-            em.emojiCode = (128512..128533).random()
-            em.layoutParams = MarginLayoutParams(WRAP_CONTENT, WRAP_CONTENT)
-            addView(em)
-        }
+        imageViewAddsEmojis.layoutParams.height = dpToPx(24f)
+        imageViewAddsEmojis.layoutParams.width = dpToPx(34f)
+        imageViewAddsEmojis.visibility = INVISIBLE
     }
+
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val widthSpecSize = MeasureSpec.getSize(widthMeasureSpec)
@@ -53,6 +49,8 @@ class FlexboxLayout @JvmOverloads constructor(
         var currentWidth = 0
         var heightOfLayout = 0
         var widthOfLayout = 0
+        var maxNumberOfChildsInRow = 5
+        var counterOfChildsInRow = 0
 
         children.forEach {
             measureChildWithMargins(it, widthMeasureSpec, 0, heightMeasureSpec, 0)
@@ -64,18 +62,21 @@ class FlexboxLayout @JvmOverloads constructor(
 
         (children + imageViewAddsEmojis).forEach { children ->
             if ((currentWidth < widthSpecSize) &&
-                (currentWidth + children.measuredWidth) < widthSpecSize
+                (currentWidth + children.measuredWidth) < widthSpecSize &&
+                counterOfChildsInRow < maxNumberOfChildsInRow
             ) {
                 placeChild(children, currentWidth, topOfChildren)
                 currentWidth += children.measuredWidth + gap
-                widthOfLayout = if (currentWidth > widthOfLayout) currentWidth else widthOfLayout
+                widthOfLayout = maxOf(currentWidth, widthOfLayout)
+                counterOfChildsInRow++
             } else {
                 currentWidth = 0
+                counterOfChildsInRow = 1
                 topOfChildren += maxHeightOfChild + gap
                 heightOfLayout = topOfChildren + maxHeightOfChild
                 placeChild(children, currentWidth, topOfChildren)
                 currentWidth += children.measuredWidth + gap
-                widthOfLayout = if (currentWidth > widthOfLayout) currentWidth else widthOfLayout
+                widthOfLayout = maxOf(currentWidth, widthOfLayout)
             }
         }
 
@@ -116,4 +117,3 @@ class FlexboxLayout @JvmOverloads constructor(
     }
 
 }
-

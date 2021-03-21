@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.turik2304.coursework.MessageViewGroup xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/outMessageHolder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="end"
+    android:layout_marginTop="2dp"
+    android:layout_marginRight="12dp"
+    android:layout_marginBottom="4dp"
+    />
