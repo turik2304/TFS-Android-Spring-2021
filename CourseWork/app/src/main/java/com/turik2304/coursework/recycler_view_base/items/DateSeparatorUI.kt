@@ -1,7 +1,7 @@
-package com.turik2304.coursework.recyclerViewBase.items
+package com.turik2304.coursework.recycler_view_base.items
 
 import com.turik2304.coursework.R
-import com.turik2304.coursework.recyclerViewBase.ViewTyped
+import com.turik2304.coursework.recycler_view_base.ViewTyped
 
 data class DateSeparatorUI(
     val date: String,

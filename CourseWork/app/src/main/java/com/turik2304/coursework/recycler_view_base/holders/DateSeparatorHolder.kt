@@ -1,10 +1,10 @@
-package com.turik2304.coursework.recyclerViewBase.holders
+package com.turik2304.coursework.recycler_view_base.holders
 
 import android.view.View
 import android.widget.TextView
 import com.turik2304.coursework.R
-import com.turik2304.coursework.recyclerViewBase.BaseViewHolder
-import com.turik2304.coursework.recyclerViewBase.items.DateSeparatorUI
+import com.turik2304.coursework.recycler_view_base.BaseViewHolder
+import com.turik2304.coursework.recycler_view_base.items.DateSeparatorUI
 
 class DateSeparatorHolder(view: View) : BaseViewHolder<DateSeparatorUI>(view) {
 

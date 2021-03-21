@@ -1,4 +1,4 @@
-package com.turik2304.coursework.recyclerViewBase
+package com.turik2304.coursework.recycler_view_base
 
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView

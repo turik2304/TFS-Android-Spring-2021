@@ -1,18 +1,9 @@
-package com.turik2304.coursework.recyclerViewBase.holders
+package com.turik2304.coursework.recycler_view_base.holders
 
-import android.graphics.Paint
-import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.TextView
-import androidx.core.view.marginEnd
 import com.turik2304.coursework.*
-import com.turik2304.coursework.recyclerViewBase.BaseViewHolder
-import com.turik2304.coursework.recyclerViewBase.items.InMessageUI
-import com.turik2304.coursework.recyclerViewBase.items.OutMessageUI
-import org.w3c.dom.Text
-import kotlin.math.roundToInt
+import com.turik2304.coursework.recycler_view_base.BaseViewHolder
+import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
 
 class OutMessageViewHolder(
     view: View,
@@ -40,6 +31,8 @@ class OutMessageViewHolder(
         outMessageHolder.dateInMillis = item.dateInMillis
         outMessageHolder.uid = item.uid
         outMessageHolder.flexboxLayout.checkZeroesCounters()
+        outMessageHolder.isMyMessage = true
+
     }
 
 

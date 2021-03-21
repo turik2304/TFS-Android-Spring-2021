@@ -2,7 +2,6 @@ package com.turik2304.coursework
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -50,6 +49,8 @@ class FlexboxLayout @JvmOverloads constructor(
         var currentWidth = 0
         var heightOfLayout = 0
         var widthOfLayout = 0
+        var maxNumberOfChildsInRow = 5
+        var counterOfChildsInRow = 0
 
         children.forEach {
             measureChildWithMargins(it, widthMeasureSpec, 0, heightMeasureSpec, 0)
@@ -61,18 +62,21 @@ class FlexboxLayout @JvmOverloads constructor(
 
         (children + imageViewAddsEmojis).forEach { children ->
             if ((currentWidth < widthSpecSize) &&
-                (currentWidth + children.measuredWidth) < widthSpecSize
+                (currentWidth + children.measuredWidth) < widthSpecSize &&
+                counterOfChildsInRow < maxNumberOfChildsInRow
             ) {
                 placeChild(children, currentWidth, topOfChildren)
                 currentWidth += children.measuredWidth + gap
-                widthOfLayout = if (currentWidth > widthOfLayout) currentWidth else widthOfLayout
+                widthOfLayout = maxOf(currentWidth, widthOfLayout)
+                counterOfChildsInRow++
             } else {
                 currentWidth = 0
+                counterOfChildsInRow = 1
                 topOfChildren += maxHeightOfChild + gap
                 heightOfLayout = topOfChildren + maxHeightOfChild
                 placeChild(children, currentWidth, topOfChildren)
                 currentWidth += children.measuredWidth + gap
-                widthOfLayout = if (currentWidth > widthOfLayout) currentWidth else widthOfLayout
+                widthOfLayout = maxOf(currentWidth, widthOfLayout)
             }
         }
 

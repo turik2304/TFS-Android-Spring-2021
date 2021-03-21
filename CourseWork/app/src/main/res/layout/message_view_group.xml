@@ -22,15 +22,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/userName"
-        android:textStyle="bold"
-        />
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:maxWidth="217dp"
         android:layout_marginTop="5dp"
+        android:maxWidth="217dp"
         android:text="@string/message" />
 
     <com.turik2304.coursework.FlexboxLayout

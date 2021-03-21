@@ -1,12 +1,10 @@
 package com.turik2304.coursework
 
-import android.opengl.Matrix
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -14,32 +12,32 @@ import androidx.core.text.toSpannable
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.turik2304.coursework.databinding.BottomSheetBinding
 import com.turik2304.coursework.databinding.ChatListBinding
-import com.turik2304.coursework.recyclerViewBase.AsyncAdapter
-import com.turik2304.coursework.recyclerViewBase.ViewTyped
-import com.turik2304.coursework.recyclerViewBase.diffUtils.DiffCallbackMessageUI
-import com.turik2304.coursework.recyclerViewBase.items.DateSeparatorUI
-import com.turik2304.coursework.recyclerViewBase.items.InMessageUI
-import com.turik2304.coursework.recyclerViewBase.items.OutMessageUI
+import com.turik2304.coursework.network.FakeServerApi
+import com.turik2304.coursework.network.ServerApi
+import com.turik2304.coursework.recycler_view_base.AsyncAdapter
+import com.turik2304.coursework.recycler_view_base.ViewTyped
+import com.turik2304.coursework.recycler_view_base.diff_utils.DiffCallbackMessageUI
+import com.turik2304.coursework.recycler_view_base.items.DateSeparatorUI
+import com.turik2304.coursework.recycler_view_base.items.InMessageUI
+import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
 import java.text.SimpleDateFormat
 import java.util.*
-
-const val MY_USER_ID = "ARTUR"
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        lateinit var viewTypedList: MutableList<ViewTyped>
+        lateinit var innerViewTypedList: MutableList<ViewTyped>
         lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-        private val fakeServer = FakeServerApi()
+        private val api: ServerApi = FakeServerApi()
         fun updateReactionsOfMessages(
-            dateOfMessageInMillis: Long,
-            handler: (MutableList<FakeServerApi.Reaction>) -> Boolean
+            uidOfMessage: String,
+            handler: (MutableList<ServerApi.Reaction>) -> Boolean
         ) {
-            viewTypedList.forEach { item ->
+            innerViewTypedList.forEach { item ->
                 when (item.viewType) {
                     R.layout.item_incoming_message -> {
                         item as InMessageUI
-                        if (item.dateInMillis == dateOfMessageInMillis) {
+                        if (item.uid == uidOfMessage) {
                             val reactions = item.reactions.toMutableList()
                             handler(reactions)
                             item.reactions = reactions
@@ -47,7 +45,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     R.layout.item_outcoming_message -> {
                         item as OutMessageUI
-                        if (item.dateInMillis == dateOfMessageInMillis) {
+                        if (item.uid == uidOfMessage) {
                             val reactions = item.reactions.toMutableList()
                             handler(reactions)
                             item.reactions = reactions
@@ -56,9 +54,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             //!!!
-            Log.d("POPA", "before listServer ${fakeServer.messages}")
-            sendMessagesToFakeServer(viewTypedList)
-            Log.d("POPA", "after listServer ${fakeServer.messages}")
+            sendMessagesToFakeServer(innerViewTypedList)
             val refreshedList = getMessageItemsFromFakeServer()
             asyncAdapter.items.submitList(refreshedList) {
 
@@ -66,44 +62,46 @@ class MainActivity : AppCompatActivity() {
         }
 
         private fun sendMessagesToFakeServer(viewTypedList: List<ViewTyped>) {
-            val messages = mutableListOf<FakeServerApi.Message>()
+            val messages = mutableListOf<ServerApi.Message>()
             viewTypedList.forEach { item ->
                 when (item.viewType) {
                     R.layout.item_incoming_message -> {
                         item as InMessageUI
                         messages.add(
-                            FakeServerApi.Message(
-                                item.message,
-                                item.dateInMillis,
-                                item.uid,
-                                item.reactions
+                            ServerApi.Message(
+                                message = item.message,
+                                dateInMillis = item.dateInMillis,
+                                userId = item.userId,
+                                reactions = item.reactions,
+                                uid = item.uid
                             )
                         )
                     }
                     R.layout.item_outcoming_message -> {
                         item as OutMessageUI
                         messages.add(
-                            FakeServerApi.Message(
-                                item.message,
-                                item.dateInMillis,
-                                item.uid,
-                                item.reactions
+                            ServerApi.Message(
+                                message = item.message,
+                                dateInMillis = item.dateInMillis,
+                                userId = item.userId,
+                                reactions = item.reactions,
+                                uid = item.uid
                             )
                         )
                     }
                 }
             }
-            fakeServer.messages = messages
+            api.sendMessages(messages)
         }
 
         private fun getMessageItemsFromFakeServer(): List<ViewTyped> {
-            val messagesByDate = fakeServer.messages
+            val messagesByDate = api.getMessages()
                 .sortedBy { it.dateInMillis }
                 .groupBy { message ->
                     getFormattedDate(message.dateInMillis)
                 }
             return messagesByDate.flatMap { (date, messages) ->
-                listOf(DateSeparatorUI(date)) + parseMessages(messages)
+                listOf(DateSeparatorUI(date, "DATE_SEPARATOR_$date")) + parseMessages(messages)
             }
         }
 
@@ -114,13 +112,14 @@ class MainActivity : AppCompatActivity() {
             return formatter.format(calendar.time)
         }
 
-        private fun parseMessages(remoteMessages: List<FakeServerApi.Message>): List<ViewTyped> {
+        private fun parseMessages(remoteMessages: List<ServerApi.Message>): List<ViewTyped> {
             val messageUIList = mutableListOf<ViewTyped>()
             remoteMessages.forEach { messageToken ->
-                if (messageToken.uid == MY_USER_ID) {
+                if (messageToken.userId == MyUserId.MY_USER_ID) {
                     messageUIList.add(
                         OutMessageUI(
-                            userName = fakeServer.getUserNameById(messageToken.uid),
+                            userName = api.getUserNameById(messageToken.userId),
+                            userId = messageToken.userId,
                             message = messageToken.message,
                             reactions = messageToken.reactions,
                             dateInMillis = messageToken.dateInMillis,
@@ -130,7 +129,8 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     messageUIList.add(
                         InMessageUI(
-                            userName = fakeServer.getUserNameById(messageToken.uid),
+                            userName = api.getUserNameById(messageToken.userId),
+                            userId = messageToken.userId,
                             message = messageToken.message,
                             reactions = messageToken.reactions,
                             dateInMillis = messageToken.dateInMillis,
@@ -147,7 +147,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dialogBinding: BottomSheetBinding
 
     private lateinit var dialog: BottomSheetDialog
-    private var dateOfClickedMessageInMillis: Long = 0
+    private var uidOfClickedMessageInMillis: String = ""
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -167,14 +167,14 @@ class MainActivity : AppCompatActivity() {
         val clickListener = { clickedView: View ->
             when (clickedView) {
                 is MessageViewGroup -> {
-                    dateOfClickedMessageInMillis = clickedView.dateInMillis
+                    uidOfClickedMessageInMillis = clickedView.uid
                     dialog.show()
                 }
                 //ImageView that adds Emoji("+"), it are located in FlexBoxLayout, and FlexBox located in MessageViewGroup
                 is ImageView -> {
                     val flexBoxLayout = clickedView.parent as FlexboxLayout
                     val messageViewGroup = flexBoxLayout.parent as MessageViewGroup
-                    dateOfClickedMessageInMillis = messageViewGroup.dateInMillis
+                    uidOfClickedMessageInMillis = messageViewGroup.uid
                     dialog.show()
                 }
             }
@@ -184,23 +184,24 @@ class MainActivity : AppCompatActivity() {
         val diffCallBack = DiffCallbackMessageUI()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatListBinding.recycleView.adapter = asyncAdapter
-        viewTypedList = getMessageItemsFromFakeServer().toMutableList()
+        innerViewTypedList = getMessageItemsFromFakeServer().toMutableList()
         asyncAdapter.items.submitList(getMessageItemsFromFakeServer())
 
         chatListBinding.ImageViewSendMessage.setOnClickListener {
             if (chatListBinding.EditTextEnterMessage.text.isNotEmpty()) {
-                viewTypedList.add(
+                innerViewTypedList.add(
                     OutMessageUI(
                         userName = "Sibagatullin Artur",
+                        userId = MyUserId.MY_USER_ID,
+                        uid = Random().nextInt().toString(),
                         message = chatListBinding.EditTextEnterMessage.text.toString(),
                         reactions = listOf(),
                         dateInMillis = Calendar.getInstance().timeInMillis,
-                        uid = MY_USER_ID
                     )
                 )
                 chatListBinding.EditTextEnterMessage.text.clear()
                 //!!!
-                sendMessagesToFakeServer(viewTypedList)
+                sendMessagesToFakeServer(innerViewTypedList)
                 val refreshedList = getMessageItemsFromFakeServer()
                 asyncAdapter.items.submitList(refreshedList) {
                     chatListBinding.recycleView.smoothScrollToPosition(
@@ -263,11 +264,11 @@ class MainActivity : AppCompatActivity() {
         override fun onClick(widget: View) {
             val emojiCodeString = (widget as TextView).text.subSequence(start, end).toString()
             val emojiCode = emojiCodeString.codePointAt(0)
-            val handlerAddingNewReaction = { reactions: MutableList<FakeServerApi.Reaction> ->
-                reactions.add(FakeServerApi.Reaction(emojiCode, 1, listOf(MY_USER_ID)))
+            val handlerAddingNewReaction = { reactions: MutableList<ServerApi.Reaction> ->
+                reactions.add(ServerApi.Reaction(emojiCode, 1, listOf(MyUserId.MY_USER_ID)))
             }
             updateReactionsOfMessages(
-                dateOfClickedMessageInMillis,
+                uidOfClickedMessageInMillis,
                 handlerAddingNewReaction
             )
             dialog.dismiss()
