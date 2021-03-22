@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="250dp"
     android:layout_height="wrap_content"
-    tools:context=".MainActivity">
+    tools:context=".ChatActivity">
 
 
     <com.turik2304.coursework.EmojiView

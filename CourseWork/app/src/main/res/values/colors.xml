@@ -13,5 +13,6 @@
     <color name="emoji_view_night_selected_color">#404040</color>
     <color name="emoji_view_day_selected_color">#BBDEFB</color>
     <color name="flex_box_layout_background">#D1D1D1</color>
+    <color name="toolbarUsers">#1E1E1E</color>
 
 </resources>

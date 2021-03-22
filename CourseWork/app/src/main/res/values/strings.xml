@@ -3,4 +3,17 @@
     <string name="message">Кастомная ViewGroup, которая отображает аватар пользователя,
         имя пользователя, текст сообщения, Emoji-реакции(FlexBoxLayout с кастомными вьюхами внутри).</string>
     <string name="userName">Имя Фамилия</string>
+    <string name="navChannels">Channels</string>
+    <string name="navPeople">People</string>
+    <string name="navProfile">Profile</string>
+    <string name="searchHint">Search…</string>
+    <string name="tagNameOfStream">nameOfStream</string>
+    <string name="errorExpandStream">Ops! Something went wrong(</string>
+    <string name="btnLogOut">Log out</string>
+    <string name="profileToolbar">Profile</string>
+    <string name="expandButtonImageView">ExpandButtonImageView</string>
+    <string name="usersHint">Users…</string>
+    <string name="tagTopicLinearLayout">tagTopicLinearLayout</string>
+    <string name="tagExpanded">tagExpanded</string>
+    <string name="tagNotExpanded">tagNotExpanded</string>
 </resources>

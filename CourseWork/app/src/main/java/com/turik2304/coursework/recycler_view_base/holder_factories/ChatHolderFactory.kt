@@ -1,6 +1,7 @@
-package com.turik2304.coursework
+package com.turik2304.coursework.recycler_view_base.holder_factories
 
 import android.view.View
+import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.HolderFactory
 import com.turik2304.coursework.recycler_view_base.holders.DateSeparatorHolder

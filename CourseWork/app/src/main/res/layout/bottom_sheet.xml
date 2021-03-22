@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".MainActivity">
+    tools:context=".ChatActivity">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"

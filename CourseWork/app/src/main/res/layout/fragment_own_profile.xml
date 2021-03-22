@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="126dp"
+        app:cardCornerRadius="15dp">
+
+        <ImageView
+            android:id="@+id/imUserAvatarProfileTab"
+            android:layout_width="185dp"
+            android:layout_height="185dp"
+            android:src="@drawable/ic_launcher_background" />
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+        android:id="@+id/tvUserNameProfileTab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textSize="32sp"
+        tools:text="@tools:sample/full_names"
+
+        />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvStatusTextProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="21dp"
+            android:textSize="20sp"
+            tools:text="@tools:sample/first_names" />
+
+        <TextView
+            android:id="@+id/tvStatusProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            tools:text="@tools:sample/lorem" />
+
+
+    </LinearLayout>
+
+
+    <Button
+        android:id="@+id/btnLogOut"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="164dp"
+        android:background="@drawable/round_corners_button"
+        android:paddingLeft="56dp"
+        android:paddingRight="56dp"
+        android:text="@string/btnLogOut"
+        android:textAllCaps="false"
+        android:textSize="20sp" />
+
+
+</LinearLayout>

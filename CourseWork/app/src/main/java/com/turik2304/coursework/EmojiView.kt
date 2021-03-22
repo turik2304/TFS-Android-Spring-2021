@@ -184,7 +184,7 @@ class EmojiView @JvmOverloads constructor(
                 }
                 return@handler true
             }
-            MainActivity.updateReactionsOfMessages(uidOfMessage, handlerIncreasingCounter)
+            ChatActivity.updateReactionsOfMessages(uidOfMessage, handlerIncreasingCounter)
         } else {
             isSelected = !isSelected
             selectCounter--
@@ -202,7 +202,7 @@ class EmojiView @JvmOverloads constructor(
                 }
                 return@handler true
             }
-            MainActivity.updateReactionsOfMessages(uidOfMessage, handlerDecreasingCounter)
+            ChatActivity.updateReactionsOfMessages(uidOfMessage, handlerDecreasingCounter)
         }
         return super.performClick()
     }
