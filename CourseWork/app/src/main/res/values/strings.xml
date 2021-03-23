@@ -16,4 +16,5 @@
     <string name="tagTopicLinearLayout">tagTopicLinearLayout</string>
     <string name="tagExpanded">tagExpanded</string>
     <string name="tagNotExpanded">tagNotExpanded</string>
+    <string name="topicToolbar">#general</string>
 </resources>

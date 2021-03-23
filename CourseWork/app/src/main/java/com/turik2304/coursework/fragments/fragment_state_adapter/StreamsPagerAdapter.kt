@@ -1,4 +1,4 @@
-package com.turik2304.coursework.fragments.adapter
+package com.turik2304.coursework.fragments.fragment_state_adapter
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager

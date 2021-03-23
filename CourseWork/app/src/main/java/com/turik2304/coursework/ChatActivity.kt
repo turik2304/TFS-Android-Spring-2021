@@ -10,8 +10,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.text.toSpannable
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.databinding.ChatListBinding
+import com.turik2304.coursework.fragments.view_pager_fragments.SubscribedFragment
 import com.turik2304.coursework.network.FakeServerApi
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
@@ -144,22 +145,27 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    private lateinit var chatListBinding: ChatListBinding
+    private lateinit var chatListBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
 
     private lateinit var dialog: BottomSheetDialog
     private var uidOfClickedMessageInMillis: String = ""
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        chatListBinding = ChatListBinding.inflate(layoutInflater)
+        chatListBinding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(chatListBinding.root)
-        chatListBinding.ImageViewSendMessage.clipToOutline = true
 
         dialog = BottomSheetDialog(this)
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
         dialog.setContentView(dialogBinding.bottomSheet)
+
+        val nameOfStream = intent.getStringExtra(SubscribedFragment.EXTRA_NAME_OF_STREAM)
+        val nameOfTopic = intent.getStringExtra(SubscribedFragment.EXTRA_NAME_OF_TOPIC)
+        chatListBinding.tvNameOfStream.text = nameOfStream
+        chatListBinding.tvNameOfTopic.text = "Topic:  #${nameOfTopic?.toLowerCase()}"
+        chatListBinding.imBackChat.setOnClickListener { onBackPressed() }
+
         fillTextViewWithEmojisAsSpannableText(
             textView = dialogBinding.emojiListTextView,
             emojiCodeRange = 0x1F600..0x1F645
@@ -228,8 +234,8 @@ class ChatActivity : AppCompatActivity() {
                 count: Int
             ) {
                 when (message.length) {
-                    0 -> chatListBinding.ImageViewSendMessage.setImageResource(R.drawable.enter_message_button)
-                    1 -> chatListBinding.ImageViewSendMessage.setImageResource(R.drawable.send_message_picture)
+                    0 -> chatListBinding.ImageViewSendMessage.setImageResource(R.drawable.ic_add_files)
+                    1 -> chatListBinding.ImageViewSendMessage.setImageResource(R.drawable.ic_send_message)
                 }
             }
 

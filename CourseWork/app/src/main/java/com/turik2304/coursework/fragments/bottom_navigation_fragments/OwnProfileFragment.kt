@@ -1,4 +1,4 @@
-package com.turik2304.coursework.fragments.bottomFragments
+package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -27,6 +27,7 @@ class OwnProfileFragment : Fragment() {
         userName.text = "Artur Sibagatullin"
         statusText.text = "In a meeting"
         status.text = "online"
+        status.setTextColor(resources.getColor(R.color.teal_status_online, context?.theme))
 
     }
 }

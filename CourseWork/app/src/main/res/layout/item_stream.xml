@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="63dp"
     android:gravity="center_vertical"
-    android:orientation="horizontal"
-    >
+    android:orientation="horizontal">
 
     <TextView
         android:id="@+id/tvNameOfStream"
@@ -22,7 +21,7 @@
     <ImageView
         android:id="@+id/imExpandStream"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="23dp"
         android:layout_weight="3"
         android:tag="0"
         android:src="@drawable/ic_arrow_down_24" />

@@ -2,6 +2,7 @@ package com.turik2304.coursework
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -35,10 +36,7 @@ class FlexboxLayout @JvmOverloads constructor(
 
         imageViewAddsEmojis = ImageView(context)
         addView(imageViewAddsEmojis)
-        imageViewAddsEmojis.setImageResource(R.drawable.image_view_add_emoji)
-        imageViewAddsEmojis.setBackgroundResource(R.drawable.round_corners)
-        imageViewAddsEmojis.layoutParams.height = dpToPx(24f)
-        imageViewAddsEmojis.layoutParams.width = dpToPx(34f)
+        imageViewAddsEmojis.setImageResource(R.drawable.ic_add_emoji)
         imageViewAddsEmojis.visibility = INVISIBLE
     }
 
@@ -49,7 +47,7 @@ class FlexboxLayout @JvmOverloads constructor(
         var currentWidth = 0
         var heightOfLayout = 0
         var widthOfLayout = 0
-        var maxNumberOfChildsInRow = 5
+        val maxNumberOfChildsInRow = 5
         var counterOfChildsInRow = 0
 
         children.forEach {
@@ -87,6 +85,7 @@ class FlexboxLayout @JvmOverloads constructor(
                 heightMeasureSpec
             )
         )
+
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {

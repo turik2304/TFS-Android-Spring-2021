@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:paddingTop="3dp">
+    android:paddingTop="6dp">
+
     <TextView
         android:id="@+id/dateSeparatorHolder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="@drawable/round_corners"
+        android:background="@drawable/round_corners_date_separator"
+        android:gravity="center_vertical"
+        android:paddingLeft="19dp"
+        android:paddingTop="2dp"
+        android:paddingRight="19dp"
+        android:paddingBottom="2dp"
+        android:textColor="@color/gray_date_separator"
         android:textSize="14sp"
-        android:padding="3dp"
-        tools:text="@tools:sample/date/mmddyy">
+        tools:text="@tools:sample/date/day_of_week">
 
     </TextView>
 

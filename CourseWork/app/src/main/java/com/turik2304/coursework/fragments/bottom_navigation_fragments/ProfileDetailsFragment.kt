@@ -1,13 +1,15 @@
-package com.turik2304.coursework.fragments.bottomFragments
+package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
+import android.app.Activity
+import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResultListener
+import com.turik2304.coursework.MainActivity
 import com.turik2304.coursework.R
 
 class ProfileDetailsFragment : Fragment() {
@@ -25,10 +27,28 @@ class ProfileDetailsFragment : Fragment() {
         val userNameTextView = view.findViewById<TextView>(R.id.tvUserNameDetailsProfile)
         val statusTextTextView = view.findViewById<TextView>(R.id.tvStatusTextProfileDetails)
         val statusTextView = view.findViewById<TextView>(R.id.tvStatusProfileDetails)
+        val backImageView = view.findViewById<ImageView>(R.id.imBackProfileDetails)
+
+        backImageView.setOnClickListener { (context as MainActivity).onBackPressed() }
 
         userNameTextView.text = requireArguments().getString(ARG_USER_NAME, "none")
         statusTextTextView.text = requireArguments().getString(ARG_STATUS_TEXT, "none")
         statusTextView.text = requireArguments().getString(ARG_STATUS, "none")
+        if (statusTextView.text == "online") {
+            statusTextView.setTextColor(
+                resources.getColor(
+                    R.color.teal_status_online,
+                    context?.theme
+                )
+            )
+        } else {
+            statusTextView.setTextColor(
+                resources.getColor(
+                    R.color.teal_status_offline,
+                    context?.theme
+                )
+            )
+        }
     }
 
     companion object {
@@ -37,7 +57,11 @@ class ProfileDetailsFragment : Fragment() {
         private const val ARG_STATUS_TEXT = "statusText"
         private const val ARG_STATUS = "status"
 
-        fun newInstance(userName: String, statusText: String, status: String): ProfileDetailsFragment {
+        fun newInstance(
+            userName: String,
+            statusText: String,
+            status: String
+        ): ProfileDetailsFragment {
             val fragment = ProfileDetailsFragment()
             val arguments = Bundle().apply {
                 putString(ARG_USER_NAME, userName)

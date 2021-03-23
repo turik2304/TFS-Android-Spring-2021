@@ -1,4 +1,4 @@
-package com.turik2304.coursework.fragments.bottomFragments
+package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,9 +9,9 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.turik2304.coursework.R
-import com.turik2304.coursework.fragments.adapter.StreamsPagerAdapter
-import com.turik2304.coursework.fragments.viewPagerFragments.AllStreamsFragment
-import com.turik2304.coursework.fragments.viewPagerFragments.SubscribedFragment
+import com.turik2304.coursework.fragments.fragment_state_adapter.StreamsPagerAdapter
+import com.turik2304.coursework.fragments.view_pager_fragments.AllStreamsFragment
+import com.turik2304.coursework.fragments.view_pager_fragments.SubscribedFragment
 
 class ChannelsFragment : Fragment() {
 

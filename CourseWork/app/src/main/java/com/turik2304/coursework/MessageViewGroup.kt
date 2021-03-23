@@ -43,6 +43,7 @@ class MessageViewGroup @JvmOverloads constructor(
         message = findViewById(R.id.message)
         flexboxLayout = findViewById(R.id.flexBoxLayout)
         avatarImageView.clipToOutline = true
+
     }
 
     fun addReactions(reactions: List<ServerApi.Reaction>) {
@@ -90,7 +91,6 @@ class MessageViewGroup @JvmOverloads constructor(
             0,
             marginLayoutParams = userNameLayoutParams,
         )
-
         messageSize = message.getSizeAfterMeasuringWithMargins(
             widthMeasureSpec,
             widthUsed = avatarSize.width(),

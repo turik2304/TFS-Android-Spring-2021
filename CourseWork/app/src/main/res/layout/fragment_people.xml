@@ -3,12 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/gray_primary_background"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
         android:layout_width="match_parent"
         android:layout_height="65dp"
-        android:background="@color/toolbarUsers">
+        android:background="@color/gray">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -21,9 +22,11 @@
                 android:layout_height="match_parent"
                 android:layout_marginLeft="2dp"
                 android:layout_weight="8"
-                android:hint="@string/usersHint"
                 android:background="@null"
+                android:hint="@string/usersHint"
                 android:paddingLeft="20dp"
+                android:textColor="@color/gray_primary"
+                android:textColorHint="@color/gray_primary"
                 android:textSize="24sp" />
 
             <ImageView
@@ -32,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_weight="2"
-                android:src="@drawable/ic_search_24" />
+                android:src="@drawable/ic_search" />
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
 

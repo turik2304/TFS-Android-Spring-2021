@@ -1,4 +1,4 @@
-package com.turik2304.coursework.fragments.viewPagerFragments
+package com.turik2304.coursework.fragments.view_pager_fragments
 
 import android.content.Intent
 import android.os.Bundle
@@ -31,7 +31,6 @@ class AllStreamsFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_all_streams, container, false)
 
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

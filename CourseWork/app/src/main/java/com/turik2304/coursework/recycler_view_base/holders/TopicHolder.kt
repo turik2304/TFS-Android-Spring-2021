@@ -1,11 +1,13 @@
 package com.turik2304.coursework.recycler_view_base.holders
 
+import android.graphics.Color
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
+import kotlin.random.Random
 
 class TopicHolder(
     view: View,
@@ -18,6 +20,11 @@ class TopicHolder(
 
     init {
         topicLinearLayout.setOnClickListener(startChatClick)
+        if (Random.nextBoolean()) {
+            topicLinearLayout.setBackgroundColor(Color.rgb(42, 157, 143))
+        } else {
+            topicLinearLayout.setBackgroundColor(Color.rgb(233, 196, 106))
+        }
     }
 
 

@@ -1,4 +1,4 @@
-package com.turik2304.coursework.fragments.bottomFragments
+package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
