@@ -11,7 +11,7 @@
 
     <androidx.appcompat.widget.Toolbar
         android:layout_width="match_parent"
-        android:layout_height="65dp"
+        android:layout_height="56dp"
         android:background="@color/teal_user_name">
 
         <ImageView

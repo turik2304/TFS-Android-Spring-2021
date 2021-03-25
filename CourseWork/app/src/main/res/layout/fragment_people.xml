@@ -8,12 +8,12 @@
 
     <androidx.appcompat.widget.Toolbar
         android:layout_width="match_parent"
-        android:layout_height="65dp"
+        android:layout_height="56dp"
         android:background="@color/gray">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="55dp"
+            android:layout_height="match_parent"
             android:orientation="horizontal">
 
             <EditText
@@ -37,6 +37,7 @@
                 android:layout_weight="2"
                 android:src="@drawable/ic_search" />
         </LinearLayout>
+
     </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView

@@ -4,7 +4,6 @@
     android:id="@+id/topicLinearLayout"
     android:layout_width="match_parent"
     android:layout_height="41dp"
-    android:tag="@string/tagTopicLinearLayout"
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
@@ -13,7 +12,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="41dp"
-        android:maxWidth="274dp"
         android:textAllCaps="false"
         android:textSize="18sp"
         tools:text="@tools:sample/lorem" />
@@ -24,6 +22,5 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="25dp"
         tools:text="@tools:sample/us_zipcodes" />
-
 
 </LinearLayout>

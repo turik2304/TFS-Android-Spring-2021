@@ -16,8 +16,8 @@ import com.turik2304.coursework.fragments.view_pager_fragments.SubscribedFragmen
 import com.turik2304.coursework.network.FakeServerApi
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
+import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
-import com.turik2304.coursework.recycler_view_base.diff_utils.DiffCallbackMessageUI
 import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.DateSeparatorUI
 import com.turik2304.coursework.recycler_view_base.items.InMessageUI
@@ -188,7 +188,7 @@ class ChatActivity : AppCompatActivity() {
         }
 
         val holderFactory = ChatHolderFactory(clickListener)
-        val diffCallBack = DiffCallbackMessageUI()
+        val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatListBinding.recycleView.adapter = asyncAdapter
         innerViewTypedList = getMessageItemsFromFakeServer().toMutableList()

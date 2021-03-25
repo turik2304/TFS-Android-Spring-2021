@@ -6,10 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.turik2304.coursework.ChatActivity
@@ -17,8 +14,8 @@ import com.turik2304.coursework.R
 import com.turik2304.coursework.network.FakeServerApi
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
+import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
-import com.turik2304.coursework.recycler_view_base.diff_utils.DiffCallbackStreamUI
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.StreamAndTopicSeparatorUI
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
@@ -48,9 +45,7 @@ class SubscribedFragment : Fragment() {
             view.findViewById<RecyclerView>(R.id.recycleViewSubscribedStreams)
 
         val clickListener = clickListener@{ clickedView: View ->
-            if (clickedView is LinearLayout &&
-                clickedView.tag != resources.getString(R.string.tagTopicLinearLayout)
-            ) {
+            if (clickedView is FrameLayout) {
                 val uidOfStreamUI = clickedView.tag.toString()
                 val expandImageView = clickedView.findViewById<ImageView>(R.id.imExpandStream)
 
@@ -122,7 +117,7 @@ class SubscribedFragment : Fragment() {
                     indexOfStreamUI = indexOfTopicUI
                     indexOfTopicUI--
                 }
-                var nameOfStreamUI = (innerViewTypedList[indexOfStreamUI - 1] as StreamUI).name
+                val nameOfStreamUI = (innerViewTypedList[indexOfStreamUI - 1] as StreamUI).name
                 val intent = Intent(context, ChatActivity::class.java)
                 intent.putExtra(EXTRA_NAME_OF_TOPIC, nameOfTopic)
                 intent.putExtra(EXTRA_NAME_OF_STREAM, nameOfStreamUI)
@@ -131,7 +126,7 @@ class SubscribedFragment : Fragment() {
             return@clickListener
         }
         val holderFactory = MainHolderFactory(clickListener)
-        val diffCallBack = DiffCallbackStreamUI()
+        val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
         innerViewTypedList = getStreamUIListFromFakeServer().toMutableList()
@@ -161,7 +156,6 @@ class SubscribedFragment : Fragment() {
                 )
             )
         }
-
     }
 
     private fun animateExpandImageViewButton(imageView: ImageView) {

@@ -2,7 +2,6 @@ package com.turik2304.coursework.recycler_view_base.holders
 
 import android.view.View
 import com.turik2304.coursework.MessageViewGroup
-import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.InMessageUI
 
@@ -11,7 +10,7 @@ class InMessageViewHolder(
     getDateInMillisClick: (View) -> Unit,
 ) : BaseViewHolder<InMessageUI>(view) {
 
-    private val inMessageHolder = view.findViewById<MessageViewGroup>(R.id.inMessageHolder)
+    private val inMessageHolder = view as MessageViewGroup
 
     init {
         inMessageHolder.setOnLongClickListener { currentView ->

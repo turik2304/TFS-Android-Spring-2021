@@ -11,8 +11,8 @@ import com.turik2304.coursework.R
 import com.turik2304.coursework.network.FakeServerApi
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
+import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
-import com.turik2304.coursework.recycler_view_base.diff_utils.DiffCallbackStreamUI
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.UserUI
 
@@ -56,13 +56,11 @@ class PeopleFragment : Fragment() {
 
         val recyclerViewUsers = view.findViewById<RecyclerView>(R.id.recycleViewUsers)
         val holderFactory = MainHolderFactory(clickListener)
-        val diffCallBack = DiffCallbackStreamUI()
+        val diffCallBack = DiffCallback<ViewTyped>()
 
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
         asyncAdapter.items.submitList(getUserUIListFromFakeServer())
-
-
     }
 
     private fun getUserUIListFromFakeServer(): List<ViewTyped> {

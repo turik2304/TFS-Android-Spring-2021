@@ -244,24 +244,24 @@ class FakeServerApi : ServerApi {
         "#PR" to "4"
     )
 
-    override val allStreams = listOf(
-        "#general",
-        "#mems",
-        "#health",
-        "#jobs",
-        "#friends",
-        "#mobile",
-        "#food",
-        "#tinkoff",
-        "#bottle",
-        "#lamp",
-        "#stack",
-        "#fun",
-        "#cooking",
-        "#books",
-        "#cars",
-        "#computers",
-        "#building",
+    override val allStreams = mapOf(
+        "#general" to "1",
+        "#mems" to "2",
+        "#health" to "3",
+        "#jobs" to "4",
+        "#friends" to "5",
+        "#mobile" to "6",
+        "#food" to "7",
+        "#tinkoff" to "8",
+        "#bottle" to "9",
+        "#lamp" to "10",
+        "#stack" to "11",
+        "#fun" to "12",
+        "#cooking" to "13",
+        "#books" to "14",
+        "#cars" to "15",
+        "#computers" to "16",
+        "#building" to "17",
     )
 
     override fun getUserNameById(uid: String): String {

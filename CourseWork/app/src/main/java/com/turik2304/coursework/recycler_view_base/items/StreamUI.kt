@@ -5,7 +5,7 @@ import com.turik2304.coursework.recycler_view_base.ViewTyped
 
 data class StreamUI(
     val name: String,
-    override val uid: String = "STREAM_UI_ID",
+    override val uid: String,
     var isExpanded: Boolean = false,
     override val viewType: Int = R.layout.item_stream,
 ) : ViewTyped {

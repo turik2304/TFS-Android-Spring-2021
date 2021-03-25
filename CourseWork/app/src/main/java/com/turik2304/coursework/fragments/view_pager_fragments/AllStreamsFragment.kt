@@ -14,8 +14,8 @@ import com.turik2304.coursework.R
 import com.turik2304.coursework.network.FakeServerApi
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
+import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
-import com.turik2304.coursework.recycler_view_base.diff_utils.DiffCallbackStreamUI
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 
@@ -48,7 +48,7 @@ class AllStreamsFragment : Fragment() {
             }
         }
         val holderFactory = MainHolderFactory(clickListener)
-        val diffCallBack = DiffCallbackStreamUI()
+        val diffCallBack = DiffCallback<ViewTyped>()
 
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewAllStreams.adapter = asyncAdapter
@@ -56,7 +56,9 @@ class AllStreamsFragment : Fragment() {
     }
 
     private fun getStreamsAndTopicsItemsFromFakeServer(): List<ViewTyped> {
-        return fakeServer.allStreams.map { StreamUI(it) }
+        return fakeServer.allStreams.map { (name, uid) ->
+            StreamUI(name, uid)
+        }
 
     }
 

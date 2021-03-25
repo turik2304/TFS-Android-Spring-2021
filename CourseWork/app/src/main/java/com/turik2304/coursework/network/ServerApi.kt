@@ -32,7 +32,7 @@ interface ServerApi {
     val userList: List<User>
     val topicsByStreamUid: Map<String, List<Topic>>
     val subscribedStreamsWithUid: Map<String, String>
-    val allStreams: List<String>
+    val allStreams: Map<String, String>
 
     fun getUserNameById(uid: String): String
     fun sendMessages(listOfMessages: List<Message>)

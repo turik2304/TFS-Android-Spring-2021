@@ -38,4 +38,5 @@
             android:textSize="16sp"
             tools:text="@tools:sample/last_names" />
     </LinearLayout>
+
 </LinearLayout>

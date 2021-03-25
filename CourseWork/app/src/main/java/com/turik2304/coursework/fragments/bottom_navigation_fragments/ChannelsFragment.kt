@@ -36,7 +36,6 @@ class ChannelsFragment : Fragment() {
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = tabs[position]
         }.attach()
-
     }
 
 

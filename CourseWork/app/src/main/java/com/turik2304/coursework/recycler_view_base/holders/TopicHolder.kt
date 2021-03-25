@@ -2,7 +2,6 @@ package com.turik2304.coursework.recycler_view_base.holders
 
 import android.graphics.Color
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.TextView
 import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
@@ -14,24 +13,23 @@ class TopicHolder(
     startChatClick: (View) -> Unit
 ) : BaseViewHolder<TopicUI>(view) {
 
-    private val nameOfTopicHolder = view.findViewById<TextView>(R.id.tvNameOfTopic)
+    private val nameOfTopic = view.findViewById<TextView>(R.id.tvNameOfTopic)
     private val numberOfMessages = view.findViewById<TextView>(R.id.tvNumberOfMessages)
-    private val topicLinearLayout = view.findViewById<LinearLayout>(R.id.topicLinearLayout)
 
     init {
-        topicLinearLayout.setOnClickListener(startChatClick)
+        view.setOnClickListener(startChatClick)
         if (Random.nextBoolean()) {
-            topicLinearLayout.setBackgroundColor(Color.rgb(42, 157, 143))
+            view.setBackgroundColor(Color.rgb(42, 157, 143))
         } else {
-            topicLinearLayout.setBackgroundColor(Color.rgb(233, 196, 106))
+            view.setBackgroundColor(Color.rgb(233, 196, 106))
         }
     }
 
 
     override fun bind(item: TopicUI) {
-        nameOfTopicHolder.text = item.name
+        nameOfTopic.text = item.name
         numberOfMessages.text = item.numberOfMessages
-        nameOfTopicHolder.tag = item.uid
+        nameOfTopic.tag = item.uid
     }
 
 }
