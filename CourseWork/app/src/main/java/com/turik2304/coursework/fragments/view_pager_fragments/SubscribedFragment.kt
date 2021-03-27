@@ -45,8 +45,11 @@ class SubscribedFragment : Fragment() {
             view.findViewById<RecyclerView>(R.id.recycleViewSubscribedStreams)
 
         val clickListener = clickListener@{ clickedView: View ->
-            if (clickedView is FrameLayout) {
-                val uidOfStreamUI = clickedView.tag.toString()
+            val positionOfClickedView =
+                recyclerViewSubscribedStreams.getChildAdapterPosition(clickedView)
+            val clickedItem = innerViewTypedList[positionOfClickedView]
+            if (clickedItem.viewType == R.layout.item_stream) {
+                val uidOfStreamUI = clickedItem.uid
                 val expandImageView = clickedView.findViewById<ImageView>(R.id.imExpandStream)
 
                 //load topics from fake server
@@ -104,8 +107,7 @@ class SubscribedFragment : Fragment() {
                 }
                 asyncAdapter.items.submitList(innerViewTypedList.map { it })
             } else {
-                val uidOfClickedTopicUI = clickedView
-                    .findViewById<TextView>(R.id.tvNameOfTopic).tag.toString()
+                val uidOfClickedTopicUI = clickedItem.uid
                 //some logic to start chat by topic ID
                 var indexOfTopicUI = 0
                 var indexOfStreamUI = 0

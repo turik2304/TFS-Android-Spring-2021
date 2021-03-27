@@ -25,7 +25,6 @@ class UserHolder(
     override fun bind(item: UserUI) {
         userName.text = item.userName
         email.text = item.email
-        itemView.tag = item.uid
     }
 
 }

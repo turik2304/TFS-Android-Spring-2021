@@ -29,7 +29,6 @@ class TopicHolder(
     override fun bind(item: TopicUI) {
         nameOfTopic.text = item.name
         numberOfMessages.text = item.numberOfMessages
-        nameOfTopic.tag = item.uid
     }
 
 }

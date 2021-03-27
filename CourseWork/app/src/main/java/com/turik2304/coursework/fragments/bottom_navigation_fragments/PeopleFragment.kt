@@ -19,6 +19,7 @@ import com.turik2304.coursework.recycler_view_base.items.UserUI
 class PeopleFragment : Fragment() {
 
     private val fakeServer: ServerApi = FakeServerApi()
+    private lateinit var innerViewTypedList: List<ViewTyped>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,35 +32,41 @@ class PeopleFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val clickListener = { clickedView: View ->
-            if (clickedView is LinearLayout) {
+        val recyclerViewUsers = view.findViewById<RecyclerView>(R.id.recycleViewUsers)
 
-                val uidOfClickedUser = clickedView.tag.toString()
-                val profileDetailsFragment = fakeServer.getProfileDetailsById(uidOfClickedUser)
-                var userName = ""
-                var statusText = ""
-                var status = ""
+        val clickListener = clickListener@{ clickedView: View ->
+            val positionOfClickedView =
+                recyclerViewUsers.getChildAdapterPosition(clickedView)
+            val clickedItem = innerViewTypedList[positionOfClickedView]
+            val uidOfClickedUser = clickedItem.uid
 
-                profileDetailsFragment.forEach {  map ->
-                    when (map.key) {
-                        "userName" -> userName = map.value
-                        "statusText" -> statusText =  map.value
-                        "status" -> status = map.value
-                    }
+            val profileDetailsFragment = fakeServer.getProfileDetailsById(uidOfClickedUser)
+            var userName = ""
+            var statusText = ""
+            var status = ""
+
+            profileDetailsFragment.forEach { map ->
+                when (map.key) {
+                    "userName" -> userName = map.value
+                    "statusText" -> statusText = map.value
+                    "status" -> status = map.value
                 }
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, ProfileDetailsFragment.newInstance(userName, statusText, status))
-                    .addToBackStack(null)
-                    .commit()
             }
+            parentFragmentManager.beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    ProfileDetailsFragment.newInstance(userName, statusText, status)
+                )
+                .addToBackStack(null)
+                .commit()
+            return@clickListener
         }
 
-        val recyclerViewUsers = view.findViewById<RecyclerView>(R.id.recycleViewUsers)
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
-
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
+        innerViewTypedList = getUserUIListFromFakeServer()
         asyncAdapter.items.submitList(getUserUIListFromFakeServer())
     }
 

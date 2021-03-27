@@ -19,6 +19,5 @@ class StreamHolder(
 
     override fun bind(item: StreamUI) {
         nameOfStreamHolder.text = item.name
-        itemView.tag = item.uid
     }
 }
