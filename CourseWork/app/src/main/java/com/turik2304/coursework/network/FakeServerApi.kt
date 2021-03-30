@@ -1,6 +1,27 @@
 package com.turik2304.coursework.network
 
+import com.turik2304.coursework.recycler_view_base.ViewTyped
+import com.turik2304.coursework.recycler_view_base.items.StreamAndTopicSeparatorUI
+import com.turik2304.coursework.recycler_view_base.items.StreamUI
+import com.turik2304.coursework.recycler_view_base.items.TopicUI
+import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
+import io.taliox.zulip.ZulipRestExecutor
+import io.taliox.zulip.calls.streams.GetAllStreams
+import io.taliox.zulip.calls.streams.GetAllTopicsOfAStream
+import io.taliox.zulip.calls.streams.GetSubscribedStreams
+import org.json.JSONObject
+import java.util.*
+
 class FakeServerApi : ServerApi {
+
+    override val userName: String
+        //generate random errors
+        get() =  if (Random().nextBoolean()) "asibag98@gmail.com" else "bobob"
+    override val password: String
+        get() = "fjMrYYPpJBw87hculEvh47Ckc7eW08yN"
+    override val serverURL: String
+        get() = "https://tfs-android-2021-spring.zulipchat.com/"
 
     override val userList = listOf(
         ServerApi.User(
@@ -288,4 +309,63 @@ class FakeServerApi : ServerApi {
             "status" to (user?.status ?: "none"),
         )
     }
+
+    override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<ViewTyped>> {
+        val key: String
+        val getStreams = if (needAllStreams) {
+            key = "streams"
+            GetAllStreams()
+        } else {
+            key = "subscriptions"
+            GetSubscribedStreams()
+        }
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        return Single.fromCallable { getStreams.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response -> JSONObject(response) }
+            .map { jsonObject -> jsonObject.getJSONArray(key) }
+            .map { jsonArrayOfStreams ->
+                val listOfStreams = mutableListOf<ViewTyped>()
+                for (indexOfStream in 0 until jsonArrayOfStreams.length()) {
+                    val jsonObjectStream = jsonArrayOfStreams.get(indexOfStream) as JSONObject
+                    val nameOfStream = jsonObjectStream.get("name").toString()
+                    val uid = jsonObjectStream.get("stream_id").toString()
+                    listOfStreams.add(StreamUI(nameOfStream, uid))
+                    listOfStreams.add(StreamAndTopicSeparatorUI(uid = "STREAM_SEPARATOR_$uid"))
+                }
+                return@map listOfStreams
+            }
+    }
+
+    override fun getTopicsUIListByStreamUid(streamUid: String): Single<List<ViewTyped>> {
+        val getTopicsOfStream = GetAllTopicsOfAStream(streamUid)
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        return Single.fromCallable { getTopicsOfStream.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response -> JSONObject(response) }
+            .map { jsonObject ->
+                val jsonArrayOfTopics = jsonObject.getJSONArray("topics")
+                val listOfTopics = mutableListOf<ViewTyped>()
+                for (indexOfTopic in 0 until jsonArrayOfTopics.length()) {
+                    val jsonObjectTopic = jsonArrayOfTopics.get(indexOfTopic) as JSONObject
+                    val nameOfTopic = jsonObjectTopic.get("name").toString()
+                    val uid = jsonObjectTopic.get("max_id").toString()
+                    listOfTopics.add(TopicUI(name = nameOfTopic, uid = uid))
+                    listOfTopics.add(
+                        StreamAndTopicSeparatorUI(
+                            uid = "TOPIC_SEPARATOR_${uid}"
+                        )
+                    )
+                }
+                return@map listOfTopics
+            }
+    }
+
+
 }

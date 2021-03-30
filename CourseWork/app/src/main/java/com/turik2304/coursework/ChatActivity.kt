@@ -28,6 +28,8 @@ import java.util.*
 class ChatActivity : AppCompatActivity() {
 
     companion object {
+        const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
+        const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
         lateinit var innerViewTypedList: MutableList<ViewTyped>
         lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
         private val api: ServerApi = FakeServerApi()
@@ -160,8 +162,8 @@ class ChatActivity : AppCompatActivity() {
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
         dialog.setContentView(dialogBinding.bottomSheet)
 
-        val nameOfStream = intent.getStringExtra(SubscribedFragment.EXTRA_NAME_OF_STREAM)
-        val nameOfTopic = intent.getStringExtra(SubscribedFragment.EXTRA_NAME_OF_TOPIC)
+        val nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM)
+        val nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC)
         chatListBinding.tvNameOfStream.text = nameOfStream
         chatListBinding.tvNameOfTopic.text = "Topic:  #${nameOfTopic?.toLowerCase()}"
         chatListBinding.imBackChat.setOnClickListener { onBackPressed() }

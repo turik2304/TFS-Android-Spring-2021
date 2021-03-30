@@ -10,25 +10,26 @@ import android.view.animation.AnimationUtils
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
-import com.turik2304.coursework.ChatActivity
-import com.turik2304.coursework.R
+import com.facebook.shimmer.ShimmerFrameLayout
+import com.turik2304.coursework.*
+import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
+import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
 import com.turik2304.coursework.network.FakeServerApi
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
-import com.turik2304.coursework.recycler_view_base.items.StreamAndTopicSeparatorUI
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 
 class SubscribedFragment : Fragment() {
 
-    private lateinit var innerViewTypedList: List<ViewTyped>
-    private lateinit var listOfStreams: List<ViewTyped>
+    private lateinit var innerViewTypedList: MutableList<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
-    private val fakeServer: ServerApi = FakeServerApi()
+    private val api: ServerApi = FakeServerApi()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,43 +41,92 @@ class SubscribedFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val editText = parentFragment?.view?.findViewById<EditText>(R.id.edSearchStreams)
+        val tabLayoutShimmer =
+            parentFragment?.view?.findViewById<ShimmerFrameLayout>(R.id.tabLayoutShimmer)
+        tabLayoutShimmer?.startShimmer()
 
         val recyclerViewSubscribedStreams =
             view.findViewById<RecyclerView>(R.id.recycleViewSubscribedStreams)
-        val listOfExpandedStreams = mutableListOf<String>()
         val clickListener = clickListener@{ clickedView: View ->
             val positionOfClickedView =
                 recyclerViewSubscribedStreams.getChildAdapterPosition(clickedView)
             val clickedItem = innerViewTypedList[positionOfClickedView]
             if (clickedItem.viewType == R.layout.item_stream) {
+                val streamShimmer =
+                    clickedView as ShimmerFrameLayout
+                streamShimmer.showShimmer(true)
                 val expandImageView = clickedView.findViewById<ImageView>(R.id.imExpandStream)
-                val uidOfStreamUI = clickedItem.uid
-                if (uidOfStreamUI in listOfExpandedStreams) {
-                    listOfExpandedStreams.remove(uidOfStreamUI)
+                val uidOfClickedStreamUI = clickedItem.uid
+                var indexOfTopicInsertion = -1
+                var deleteTopics = false
+                innerViewTypedList.forEachIndexed { index, viewTypedUI ->
+                    if (viewTypedUI.uid == uidOfClickedStreamUI &&
+                        viewTypedUI is StreamUI &&
+                        !viewTypedUI.isExpanded
+                    ) {
+                        viewTypedUI.isExpanded = true
+                        indexOfTopicInsertion = index + 1
+                    } else if (viewTypedUI.uid == uidOfClickedStreamUI &&
+                        viewTypedUI is StreamUI &&
+                        viewTypedUI.isExpanded
+                    ) {
+                        viewTypedUI.isExpanded = false
+                        indexOfTopicInsertion = index + 1
+                        deleteTopics = true
+                    }
+                }
+                try {
+                    if (deleteTopics) {
+                        while (innerViewTypedList[indexOfTopicInsertion] is TopicUI) {
+                            repeat(2) {
+                                innerViewTypedList.removeAt(indexOfTopicInsertion)
+                            }
+                            if (indexOfTopicInsertion == innerViewTypedList.size) break
+                            asyncAdapter.items.submitList(innerViewTypedList.map { it })
+                            animateExpandImageViewFrom180to0(context, expandImageView)
+                        }
+                        streamShimmer.stopAndHideShimmer()
+                        clickedView.setBackgroundColor(
+                            resources.getColor(
+                                R.color.gray_primary_background,
+                                context?.theme
+                            )
+                        )
+                    } else {
+                        api.getTopicsUIListByStreamUid(uidOfClickedStreamUI)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                { listOfTopics ->
+                                    innerViewTypedList.addAll(indexOfTopicInsertion, listOfTopics)
+                                    asyncAdapter.items.submitList(innerViewTypedList.map { it })
+                                    animateExpandImageViewFrom0to180(context, expandImageView)
+                                    streamShimmer.stopAndHideShimmer()
+                                    clickedView.setBackgroundColor(
+                                        resources.getColor(
+                                            R.color.gray_secondary_background,
+                                            context?.theme
+                                        )
+                                    )
+                                },
+                                { onError ->
+                                    Error.showError(
+                                        context,
+                                        onError
+                                    )
+                                    streamShimmer.stopAndHideShimmer()
+                                })
 
-                    animateExpandImageViewFrom180to0(context, expandImageView)
-                    clickedView.setBackgroundColor(
-                        resources.getColor(
-                            R.color.gray_primary_background,
-                            context?.theme
-                        )
-                    )
-                } else {
-                    listOfExpandedStreams.add(uidOfStreamUI)
-                    animateExpandImageViewFrom0to180(context, expandImageView)
-                    clickedView.setBackgroundColor(
-                        resources.getColor(
-                            R.color.gray_secondary_background,
-                            context?.theme
-                        )
-                    )
+                    }
+                } catch (e: IndexOutOfBoundsException) {
+                    streamShimmer.stopAndHideShimmer()
+                    Toast.makeText(
+                        context,
+                        resources.getString(R.string.errorExpandStream),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-                innerViewTypedList = listOfStreams.flatMap { stream ->
-                    listOf(stream) + if (stream.uid in listOfExpandedStreams) {
-                        getTopicsUIListByStreamUid(stream.uid, fakeServer)
-                    } else emptyList()
-                }
-                asyncAdapter.items.submitList(innerViewTypedList)
+
             } else {
                 val uidOfClickedTopicUI = clickedItem.uid
                 //some logic to start chat by topic ID
@@ -102,26 +152,31 @@ class SubscribedFragment : Fragment() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
-        innerViewTypedList = getStreamUIListFromFakeServer()
-        listOfStreams = innerViewTypedList
-        asyncAdapter.items.submitList(listOfStreams)
-    }
 
-    private fun getStreamUIListFromFakeServer(): List<ViewTyped> {
-        return fakeServer.subscribedStreamsWithUid.flatMap { (streamName, uid) ->
-            listOf(
-                StreamUI(
-                    streamName,
-                    uid
-                )
-            ) + listOf(StreamAndTopicSeparatorUI(uid = "STREAM_SEPARATOR_$uid"))
-        }
+        api.getStreamUIListFromServer(needAllStreams = false)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { streamList ->
+                    asyncAdapter.items.submitList(streamList)
+                    innerViewTypedList = streamList.toMutableList()
+                    Search.initSearch(
+                        editText,
+                        innerViewTypedList,
+                        asyncAdapter,
+                        recyclerViewSubscribedStreams
+                    )
+                    tabLayoutShimmer?.stopAndHideShimmer()
+                },
+                { onError ->
+                    Error.showError(
+                        context,
+                        onError
+                    )
+                    tabLayoutShimmer?.stopAndHideShimmer()
+                })
     }
 
     companion object {
-        const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
-        const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
-
         fun animateExpandImageViewFrom0to180(context: Context?, imageView: ImageView) {
             val animation = AnimationUtils.loadAnimation(context, R.anim.rotate_0_180)
             imageView.startAnimation(animation)
@@ -133,23 +188,5 @@ class SubscribedFragment : Fragment() {
             imageView.startAnimation(animation)
             imageView.setImageResource(R.drawable.ic_arrow_down_24)
         }
-
-        fun getTopicsUIListByStreamUid(streamUid: String, server: ServerApi): List<ViewTyped> {
-            val listOfTopics = server.topicsByStreamUid
-                .filter { (uid, _) ->
-                    uid == streamUid
-                }.values.flatten()
-            return listOfTopics.flatMap {
-                listOf(TopicUI(name = it.name, uid = it.uid)) + listOf(
-                    StreamAndTopicSeparatorUI(
-                        uid = "TOPIC_SEPARATOR_${it.uid}"
-                    )
-                )
-            }
-        }
-
-
     }
-
-
 }

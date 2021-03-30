@@ -1,5 +1,8 @@
 package com.turik2304.coursework.network
 
+import com.turik2304.coursework.recycler_view_base.ViewTyped
+import io.reactivex.rxjava3.core.Single
+
 interface ServerApi {
     data class User(
         val uid: String,
@@ -39,4 +42,9 @@ interface ServerApi {
     fun getMessages(): List<Message>
     fun getProfileDetailsById(uid: String): Map<String, String>
 
+    val userName: String
+    val password: String
+    val serverURL: String
+    fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<ViewTyped>>
+    fun getTopicsUIListByStreamUid(streamUid: String): Single<List<ViewTyped>>
 }
