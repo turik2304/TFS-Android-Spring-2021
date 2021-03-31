@@ -25,6 +25,7 @@ class PeopleFragment : Fragment() {
 
     private val api: ServerApi = FakeServerApi()
     private lateinit var innerViewTypedList: List<ViewTyped>
+    private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,7 +48,7 @@ class PeopleFragment : Fragment() {
             userShimmer.showShimmer(true)
             val positionOfClickedView =
                 recyclerViewUsers.getChildAdapterPosition(clickedView)
-            val clickedItem = innerViewTypedList[positionOfClickedView]
+            val clickedItem = asyncAdapter.items.currentList[positionOfClickedView]
             val uidOfClickedUser = clickedItem.uid
             val userUI = innerViewTypedList.find { it.uid == uidOfClickedUser } as UserUI
             val emailOfUser = userUI.email
@@ -73,7 +74,7 @@ class PeopleFragment : Fragment() {
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
 
-        val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
+        asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
 
         api.getUserUIListFromServer()

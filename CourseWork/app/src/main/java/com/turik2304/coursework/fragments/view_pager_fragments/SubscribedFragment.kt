@@ -51,7 +51,7 @@ class SubscribedFragment : Fragment() {
         val clickListener = clickListener@{ clickedView: View ->
             val positionOfClickedView =
                 recyclerViewSubscribedStreams.getChildAdapterPosition(clickedView)
-            val clickedItem = innerViewTypedList[positionOfClickedView]
+            val clickedItem = asyncAdapter.items.currentList[positionOfClickedView]
             if (clickedItem.viewType == R.layout.item_stream) {
                 val streamShimmer =
                     clickedView as ShimmerFrameLayout
