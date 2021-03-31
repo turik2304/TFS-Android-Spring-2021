@@ -26,7 +26,8 @@ class FakeServerApi : ServerApi {
 
     override val userName: String
         //generate random errors
-        get() = if (Random().nextBoolean()) "asibag98@gmail.com" else "bobob"
+//        get() = if (Random().nextBoolean()) "asibag98@gmail.com" else "bobob"
+        get() = "asibag98@gmail.com"
     override val password: String
         get() = "fjMrYYPpJBw87hculEvh47Ckc7eW08yN"
     override val serverURL: String
