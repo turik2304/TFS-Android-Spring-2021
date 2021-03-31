@@ -1,23 +1,29 @@
 package com.turik2304.coursework.network
 
+import com.turik2304.coursework.MyUserId
 import com.turik2304.coursework.recycler_view_base.ViewTyped
-import com.turik2304.coursework.recycler_view_base.items.StreamAndTopicSeparatorUI
-import com.turik2304.coursework.recycler_view_base.items.StreamUI
-import com.turik2304.coursework.recycler_view_base.items.TopicUI
+import com.turik2304.coursework.recycler_view_base.items.*
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.taliox.zulip.ZulipRestExecutor
+import io.taliox.zulip.calls.messages.AddReaction
+import io.taliox.zulip.calls.messages.DeleteReaction
+import io.taliox.zulip.calls.messages.GetMessages
+import io.taliox.zulip.calls.messages.PostMessage
 import io.taliox.zulip.calls.streams.GetAllStreams
 import io.taliox.zulip.calls.streams.GetAllTopicsOfAStream
 import io.taliox.zulip.calls.streams.GetSubscribedStreams
+import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.util.*
 
 class FakeServerApi : ServerApi {
 
     override val userName: String
         //generate random errors
-        get() =  if (Random().nextBoolean()) "asibag98@gmail.com" else "bobob"
+        get() = if (Random().nextBoolean()) "asibag98@gmail.com" else "bobob"
     override val password: String
         get() = "fjMrYYPpJBw87hculEvh47Ckc7eW08yN"
     override val serverURL: String
@@ -152,153 +158,6 @@ class FakeServerApi : ServerApi {
         ),
     )
 
-    private val react0 = ServerApi.Reaction(0x1F600, 1, listOf("ARTUR"))
-    private val react1 = ServerApi.Reaction(0x1F601, 2, listOf("ARTUR", "DENIS"))
-    private val react2 = ServerApi.Reaction(0x1F602, 3, listOf("IVAN", "ROMA", "ALEX"))
-    private val react3 = ServerApi.Reaction(0x1F603, 4, listOf("ANDREI", "ARTUR", "ROMA", "ALEX"))
-
-    private var messages = listOf(
-        ServerApi.Message(
-            "– Буддлея! – с досадой проговорил он, прочитав текст сообщения.",
-            1615628355222, "Ivan_0", listOf(react0), "1"
-        ),
-        ServerApi.Message(
-            "Наконец, для большей эффективности в тексте сообщения следует максимально использовать все возможные элементы",
-            1615628356222, "Ivan_1", listOf(react0), "2"
-        ),
-        ServerApi.Message(
-            "Он бегло просмотрел тексты сообщений, отобранных и систематизированных для него кибернетической системой логической обработки данных",
-            1615728355222, "Ivan_2", listOf(react1), "3"
-        ),
-        ServerApi.Message(
-            "ТЕКСТ, -а, м. 1. Слова, предложения в определенной связи и последовательности, образующие какое-л. высказывание, сочинение,",
-            1615728356222, "Ivan_3", listOf(react2), "4"
-        ),
-        ServerApi.Message(
-            "Текст воинской присяги. Текст пьесы. Записать текст сказки. (Малый академический словарь, МАС)",
-            1615728357222, "Ivan_4", listOf(react3), "5"
-        ),
-        ServerApi.Message(
-            "Привет! Меня зовут Лампобот, я компьютерная программа, которая помогает делать Карту слов",
-            1615728358222, "Ivan_5", listOf(react1, react2), "6"
-        ),
-        ServerApi.Message(
-            "Действие по знач. глаг. сообщить—сообщать и сообщиться—сообщаться. ",
-            1615728359222, "Ivan_6", listOf(react3), "7"
-        ),
-        ServerApi.Message(
-            "Осенью 1913 года весь мир облетело сенсационное сообщение об открытии русскими моряками неизвестных земель",
-            1615828360222, "Ivan_7", listOf(react0), "8"
-        ),
-        ServerApi.Message(
-            "По нехоженой земле. О расстреле мирной манифестации рабочих у Зимнего дворца первым принес сообщение Антон Топилкин. Марков, Строговы",
-            1615828361222, "Ivan_8", listOf(react2), "9"
-        ),
-        ServerApi.Message(
-            "Данные, сведения, передаваемые, сообщаемые, излагаемые кем-л. Сообщение бюро погоды.",
-            1615828355222, "Ivan_9", listOf(react1), "10"
-        ),
-        ServerApi.Message(
-            "Офицер доложил последнее сообщение рации; за исключением тридцать седьмой, размещение корпуса закончилось. ",
-            1615928356222, "Ivan_10", listOf(react1), "11"
-        ),
-        ServerApi.Message(
-            "Леонов, Взятие Великошумска. ",
-            1615928357222, "Ivan_11", listOf(react2, react3, react1), "12"
-        ),
-        ServerApi.Message(
-            "Небольшой доклад на какую-л. тему, информация. Котельников поехал в институт, к профессору Карелину, делать какое-то сообщение на кафедре. ",
-            1615928358222, "Ivan_12", listOf(react3), "13"
-        ),
-        ServerApi.Message(
-            "Возможность проникновения куда-л., связи, сношения с чем-л.",
-            1615928355222, "Ivan_13", listOf(react1), "14"
-        ),
-        ServerApi.Message(
-            "Связь на расстоянии при помощи каких-л. средств, а также средства связи. Железнодорожное сообщение.",
-            1616028356222, "Ivan_14", listOf(react2), "15"
-        ),
-        ServerApi.Message(
-            "Сообщение с севером было очень трудно. Почта не действовала. ",
-            161602835722, "Ivan_15", listOf(react0), "16"
-        ),
-        ServerApi.Message(
-            "Источник (печатная версия): Словарь русского языка: В 4-х т. / РАН, Ин-т лингвистич. исследований",
-            1616028498638, "Ivan_16", listOf(react3), "17"
-        ),
-        ServerApi.Message(
-            "Привет! Как Дела?",
-            1615828498638, "ARTUR", listOf(react3), "18"
-        ),
-        ServerApi.Message(
-            "Lorem ipsum test test test",
-            1615628498638, "ARTUR", listOf(), "19"
-        ),
-    )
-
-    override val topicsByStreamUid = mapOf(
-        "1" to listOf(
-            ServerApi.Topic("Testing1", 1240, "TOPIC_ID_1"),
-            ServerApi.Topic("Bruh1", 124, "TOPIC_ID_2")
-        ),
-
-        "2" to listOf(
-            ServerApi.Topic("Testing2", 12, "TOPIC_ID_3"),
-            ServerApi.Topic("Bruh2", 12234, "TOPIC_ID_4")
-        ),
-
-        "3" to listOf(
-            ServerApi.Topic("Testing3", 38, "TOPIC_ID_5"),
-            ServerApi.Topic("Bruh3", 234, "TOPIC_ID_6")
-        ),
-
-        "4" to listOf(
-            ServerApi.Topic("Testing4", 40, "TOPIC_ID_7"),
-            ServerApi.Topic("Bruh4", 14, "TOPIC_ID_8")
-        )
-    )
-
-    override val subscribedStreamsWithUid = mapOf(
-        "#general" to "1",
-        "#Development" to "2",
-        "#Design" to "3",
-        "#PR" to "4"
-    )
-
-    override val allStreams = mapOf(
-        "#general" to "1",
-        "#mems" to "2",
-        "#health" to "3",
-        "#jobs" to "4",
-        "#friends" to "5",
-        "#mobile" to "6",
-        "#food" to "7",
-        "#tinkoff" to "8",
-        "#bottle" to "9",
-        "#lamp" to "10",
-        "#stack" to "11",
-        "#fun" to "12",
-        "#cooking" to "13",
-        "#books" to "14",
-        "#cars" to "15",
-        "#computers" to "16",
-        "#building" to "17",
-    )
-
-    override fun getUserNameById(uid: String): String {
-        return userList.find { user ->
-            user.uid == uid
-        }?.userName ?: "none"
-    }
-
-    override fun sendMessages(listOfMessages: List<ServerApi.Message>) {
-        messages = listOfMessages
-    }
-
-    override fun getMessages(): List<ServerApi.Message> {
-        return messages
-    }
-
     override fun getProfileDetailsById(uid: String): Map<String, String> {
         val user = userList.find { user ->
             user.uid == uid
@@ -365,6 +224,178 @@ class FakeServerApi : ServerApi {
                 }
                 return@map listOfTopics
             }
+    }
+
+    override fun getMessageUIListFromServer(
+        nameOfTopic: String,
+        nameOfStream: String
+    ): Single<List<ViewTyped>> {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val getMessages = GetMessages(100, 0)
+        val operand = "\"operand\""
+        val operator = "\"operator\""
+        val streamKey = "\"stream\""
+        val topicKey = "\"topic\""
+        val jsonNameOfTopic = "\"$nameOfTopic\""
+        val jsonNameOfStream = "\"$nameOfStream\""
+        val narrow = "[{$operand: $jsonNameOfStream, $operator: $streamKey}," +
+                "{$operand: $jsonNameOfTopic, $operator: $topicKey}]"
+        getMessages.narrow = narrow
+        return Single
+            .fromCallable { getMessages.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { message -> JSONObject(message.toString()) }
+            .map { jsonObject -> jsonObject.getJSONArray("messages") }
+            .map { jsonArray ->
+                val listOfMessages = mutableListOf<ServerApi.Message>()
+                for (indexOfMessage in 0 until jsonArray.length()) {
+                    val jsonObjectMessage = jsonArray.get(indexOfMessage) as JSONObject
+                    val uid = jsonObjectMessage.get("id").toString()
+                    val userName = jsonObjectMessage.get("sender_full_name").toString()
+                    val dateInSeconds =
+                        Integer.parseInt(jsonObjectMessage.get("timestamp").toString())
+                    val senderId = jsonObjectMessage.get("sender_id").toString()
+                    val message = jsonObjectMessage.get("content").toString()
+                    val arrayOfReactions = jsonObjectMessage.getJSONArray("reactions")
+                    val reactions = parseReactions(arrayOfReactions)
+                    listOfMessages.add(
+                        ServerApi.Message(
+                            userName,
+                            message,
+                            dateInSeconds,
+                            senderId,
+                            reactions,
+                            uid
+                        )
+                    )
+
+                }
+                return@map listOfMessages
+            }
+            .map { messageList ->
+                messageList
+                    .sortedBy { it.dateInSeconds }
+                    .groupBy { message ->
+                        getFormattedDate(message.dateInSeconds)
+                    }
+                    .flatMap { (date, messages) ->
+                        listOf(DateSeparatorUI(date, "DATE_SEPARATOR_$date")) + parseMessages(
+                            messages
+                        )
+                    }
+            }
+    }
+
+    private fun parseMessages(remoteMessages: List<ServerApi.Message>): List<ViewTyped> {
+        val messageUIList = mutableListOf<ViewTyped>()
+        remoteMessages.forEach { messageToken ->
+            if (messageToken.userId == MyUserId.MY_USER_ID) {
+                messageUIList.add(
+                    OutMessageUI(
+                        userName = messageToken.userName,
+                        userId = messageToken.userId,
+                        message = messageToken.message,
+                        reactions = messageToken.reactions,
+                        dateInSeconds = messageToken.dateInSeconds,
+                        uid = messageToken.uid,
+                    )
+                )
+            } else {
+                messageUIList.add(
+                    InMessageUI(
+                        userName = messageToken.userName,
+                        userId = messageToken.userId,
+                        message = messageToken.message,
+                        reactions = messageToken.reactions,
+                        dateInSeconds = messageToken.dateInSeconds,
+                        uid = messageToken.uid,
+                    )
+                )
+            }
+        }
+        return messageUIList
+    }
+
+    private fun getFormattedDate(dateOfMessageInSeconds: Int): String {
+        val formatter = SimpleDateFormat("dd MMMM")
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = dateOfMessageInSeconds * 1000L
+        return formatter.format(calendar.time)
+    }
+
+    private fun parseReactions(jsonArrayOfReactions: JSONArray): List<ServerApi.Reaction> {
+        val listOfReactions = mutableListOf<ServerApi.Reaction>()
+        for (indexOfReaction in 0 until jsonArrayOfReactions.length()) {
+            val jsonObjectReaction = jsonArrayOfReactions.get(indexOfReaction) as JSONObject
+            val emojiType = jsonObjectReaction.get("reaction_type").toString()
+            if (emojiType == "unicode_emoji") {
+                val emojiCodeString = jsonObjectReaction.get("emoji_code").toString()
+                val emojiCode = Integer.parseInt(emojiCodeString, 16)
+                val userId = jsonObjectReaction.get("user_id").toString()
+                var isTheSameReaction = false
+                var indexOfSameReaction = -1
+                listOfReactions.forEachIndexed { index, reaction ->
+                    if (reaction.emojiCode == emojiCode) {
+                        isTheSameReaction = true
+                        indexOfSameReaction = index
+                    }
+                }
+                if (isTheSameReaction) {
+                    listOfReactions[indexOfSameReaction].counter++
+                    listOfReactions[indexOfSameReaction].usersWhoClicked.add(userId)
+                } else {
+                    listOfReactions.add(ServerApi.Reaction(emojiCode, 1, mutableListOf(userId)))
+                }
+            }
+        }
+        return listOfReactions
+    }
+
+    override fun sendMessageToServer(
+        nameOfTopic: String,
+        nameOfStream: String,
+        message: String
+    ): Completable {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val postMessage = PostMessage(
+            nameOfStream,
+            nameOfTopic,
+            message
+        )
+        return Completable
+            .fromCallable { executor.executeCall(postMessage) }
+            .subscribeOn(Schedulers.io())
+    }
+
+    override fun sendReaction(
+        uidOfMessage: String,
+        emojiCode: String,
+        emojiName: String
+    ): Completable {
+        val addReaction = AddReaction(uidOfMessage, emojiCode, emojiName)
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        return Completable.fromCallable { addReaction.execute(executor) }
+            .subscribeOn(Schedulers.io())
+    }
+
+    override fun removeReaction(
+        uidOfMessage: String,
+        emojiCode: String,
+        emojiName: String
+    ): Completable {
+        val deleteReaction = DeleteReaction(uidOfMessage, emojiCode, emojiName)
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        return Completable.fromCallable { deleteReaction.execute(executor) }
+            .subscribeOn(Schedulers.io())
     }
 
 

@@ -1,6 +1,7 @@
 package com.turik2304.coursework.network
 
 import com.turik2304.coursework.recycler_view_base.ViewTyped
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 
 interface ServerApi {
@@ -14,32 +15,20 @@ interface ServerApi {
 
     data class Reaction(
         val emojiCode: Int,
-        val counter: Int,
-        val usersWhoClicked: List<String>
+        var counter: Int,
+        val usersWhoClicked: MutableList<String>
     )
 
     data class Message(
+        val userName: String,
         val message: String,
-        val dateInMillis: Long,
+        val dateInSeconds: Int,
         val userId: String,
         val reactions: List<Reaction>,
         val uid: String
     )
 
-    data class Topic(
-        val name: String,
-        val numberOfMessages: Int,
-        val uid: String
-    )
-
     val userList: List<User>
-    val topicsByStreamUid: Map<String, List<Topic>>
-    val subscribedStreamsWithUid: Map<String, String>
-    val allStreams: Map<String, String>
-
-    fun getUserNameById(uid: String): String
-    fun sendMessages(listOfMessages: List<Message>)
-    fun getMessages(): List<Message>
     fun getProfileDetailsById(uid: String): Map<String, String>
 
     val userName: String
@@ -47,4 +36,12 @@ interface ServerApi {
     val serverURL: String
     fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<ViewTyped>>
     fun getTopicsUIListByStreamUid(streamUid: String): Single<List<ViewTyped>>
+    fun getMessageUIListFromServer(
+        nameOfTopic: String,
+        nameOfStream: String
+    ): Single<List<ViewTyped>>
+
+    fun sendMessageToServer(nameOfTopic: String, nameOfStream: String, message: String): Completable
+    fun sendReaction(uidOfMessage: String, emojiCode: String, emojiName: String): Completable
+    fun removeReaction(uidOfMessage: String, emojiCode: String, emojiName: String): Completable
 }

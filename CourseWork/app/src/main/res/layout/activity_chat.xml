@@ -15,7 +15,7 @@
         android:background="@color/teal_user_name">
 
         <ImageView
-            android:id="@+id/imBackChat"
+            android:id="@+id/imageViewBackButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_arrow_left" />
@@ -48,49 +48,56 @@
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:stackFromEnd="true" />
 
-    <LinearLayout
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/chatShimmer"
         android:layout_width="match_parent"
-        android:layout_height="62dp"
-        android:background="@color/gray"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:padding="5dp">
+        android:layout_height="wrap_content">
 
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="62dp"
+            android:background="@color/gray"
             android:gravity="center"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:padding="5dp">
 
-            <EditText
-                android:id="@+id/EditTextEnterMessage"
+            <LinearLayout
+
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_gravity="center"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_weight="0.6"
-                android:background="@drawable/round_edit_text_send_message"
-                android:hint="Написать..."
-                android:paddingStart="16dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="10dp"
-                android:textColor="@color/gray_send_message"
-                android:textColorHint="@color/gray_send_message"
-                android:textSize="20sp" />
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/ImageViewSendMessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:src="@drawable/ic_add_files" />
+                <EditText
+                    android:id="@+id/editTextEnterMessage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="0.6"
+                    android:background="@drawable/round_edit_text_send_message"
+                    android:hint="Написать..."
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp"
+                    android:textColor="@color/gray_send_message"
+                    android:textColorHint="@color/gray_send_message"
+                    android:textSize="20sp" />
+
+                <ImageView
+                    android:id="@+id/imageViewSendMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:src="@drawable/ic_add_files" />
+
+            </LinearLayout>
 
         </LinearLayout>
-
-    </LinearLayout>
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
 </LinearLayout>

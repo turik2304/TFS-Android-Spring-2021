@@ -1,6 +1,6 @@
 package com.turik2304.coursework
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Context
 import android.os.Bundle
 import android.text.*
 import android.text.method.LinkMovementMethod
@@ -8,150 +8,59 @@ import android.text.style.ClickableSpan
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.toSpannable
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.fragments.view_pager_fragments.SubscribedFragment
 import com.turik2304.coursework.network.FakeServerApi
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFactory
-import com.turik2304.coursework.recycler_view_base.items.DateSeparatorUI
-import com.turik2304.coursework.recycler_view_base.items.InMessageUI
-import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
-import java.text.SimpleDateFormat
-import java.util.*
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 
 class ChatActivity : AppCompatActivity() {
 
     companion object {
+        lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
+        lateinit var nameOfTopic: String
+        lateinit var nameOfStream: String
+
+        val api: ServerApi = FakeServerApi()
+        fun updateMessages(
+            context: Context,
+            shimmer: ShimmerFrameLayout
+        ) {
+            api.getMessageUIListFromServer(nameOfTopic, nameOfStream)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { list ->
+                        asyncAdapter.items.submitList(list)
+                        shimmer.stopAndHideShimmer()
+                    },
+                    { onError ->
+                        Error.showError(
+                            context,
+                            onError
+                        )
+                        shimmer.stopAndHideShimmer()
+                    })
+        }
+
         const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
         const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
-        lateinit var innerViewTypedList: MutableList<ViewTyped>
-        lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-        private val api: ServerApi = FakeServerApi()
-        fun updateReactionsOfMessages(
-            uidOfMessage: String,
-            handler: (MutableList<ServerApi.Reaction>) -> Boolean
-        ) {
-            innerViewTypedList.forEach { item ->
-                when (item.viewType) {
-                    R.layout.item_incoming_message -> {
-                        item as InMessageUI
-                        if (item.uid == uidOfMessage) {
-                            val reactions = item.reactions.toMutableList()
-                            handler(reactions)
-                            item.reactions = reactions
-                        }
-                    }
-                    R.layout.item_outcoming_message -> {
-                        item as OutMessageUI
-                        if (item.uid == uidOfMessage) {
-                            val reactions = item.reactions.toMutableList()
-                            handler(reactions)
-                            item.reactions = reactions
-                        }
-                    }
-                }
-            }
-            //!!!
-            sendMessagesToFakeServer(innerViewTypedList)
-            val refreshedList = getMessageItemsFromFakeServer()
-            asyncAdapter.items.submitList(refreshedList) {
-
-            }
-        }
-
-        private fun sendMessagesToFakeServer(viewTypedList: List<ViewTyped>) {
-            val messages = mutableListOf<ServerApi.Message>()
-            viewTypedList.forEach { item ->
-                when (item.viewType) {
-                    R.layout.item_incoming_message -> {
-                        item as InMessageUI
-                        messages.add(
-                            ServerApi.Message(
-                                message = item.message,
-                                dateInMillis = item.dateInMillis,
-                                userId = item.userId,
-                                reactions = item.reactions,
-                                uid = item.uid
-                            )
-                        )
-                    }
-                    R.layout.item_outcoming_message -> {
-                        item as OutMessageUI
-                        messages.add(
-                            ServerApi.Message(
-                                message = item.message,
-                                dateInMillis = item.dateInMillis,
-                                userId = item.userId,
-                                reactions = item.reactions,
-                                uid = item.uid
-                            )
-                        )
-                    }
-                }
-            }
-            api.sendMessages(messages)
-        }
-
-        private fun getMessageItemsFromFakeServer(): List<ViewTyped> {
-            val messagesByDate = api.getMessages()
-                .sortedBy { it.dateInMillis }
-                .groupBy { message ->
-                    getFormattedDate(message.dateInMillis)
-                }
-            return messagesByDate.flatMap { (date, messages) ->
-                listOf(DateSeparatorUI(date, "DATE_SEPARATOR_$date")) + parseMessages(messages)
-            }
-        }
-
-        private fun getFormattedDate(dateOfMessageInMillis: Long): String {
-            val formatter = SimpleDateFormat("dd MMMM")
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = dateOfMessageInMillis
-            return formatter.format(calendar.time)
-        }
-
-        private fun parseMessages(remoteMessages: List<ServerApi.Message>): List<ViewTyped> {
-            val messageUIList = mutableListOf<ViewTyped>()
-            remoteMessages.forEach { messageToken ->
-                if (messageToken.userId == MyUserId.MY_USER_ID) {
-                    messageUIList.add(
-                        OutMessageUI(
-                            userName = api.getUserNameById(messageToken.userId),
-                            userId = messageToken.userId,
-                            message = messageToken.message,
-                            reactions = messageToken.reactions,
-                            dateInMillis = messageToken.dateInMillis,
-                            uid = messageToken.uid,
-                        )
-                    )
-                } else {
-                    messageUIList.add(
-                        InMessageUI(
-                            userName = api.getUserNameById(messageToken.userId),
-                            userId = messageToken.userId,
-                            message = messageToken.message,
-                            reactions = messageToken.reactions,
-                            dateInMillis = messageToken.dateInMillis,
-                            uid = messageToken.uid,
-                        )
-                    )
-                }
-            }
-            return messageUIList
-        }
     }
 
     private lateinit var chatListBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
 
+
     private lateinit var dialog: BottomSheetDialog
-    private var uidOfClickedMessageInMillis: String = ""
+    private var uidOfClickedMessage: String = ""
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -162,28 +71,27 @@ class ChatActivity : AppCompatActivity() {
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
         dialog.setContentView(dialogBinding.bottomSheet)
 
-        val nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM)
-        val nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC)
-        chatListBinding.tvNameOfStream.text = nameOfStream
+        nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM).toString()
+        nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC).toString()
+        chatListBinding.tvNameOfStream.text = "#$nameOfStream"
         chatListBinding.tvNameOfTopic.text = "Topic:  #${nameOfTopic?.toLowerCase()}"
-        chatListBinding.imBackChat.setOnClickListener { onBackPressed() }
+        chatListBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
 
         fillTextViewWithEmojisAsSpannableText(
             textView = dialogBinding.emojiListTextView,
             emojiCodeRange = 0x1F600..0x1F645
         )
-
         val clickListener = { clickedView: View ->
             when (clickedView) {
                 is MessageViewGroup -> {
-                    uidOfClickedMessageInMillis = clickedView.uid
+                    uidOfClickedMessage = clickedView.uid
                     dialog.show()
                 }
                 //ImageView that adds Emoji("+"), it are located in FlexBoxLayout, and FlexBox located in MessageViewGroup
                 is ImageView -> {
                     val flexBoxLayout = clickedView.parent as FlexboxLayout
                     val messageViewGroup = flexBoxLayout.parent as MessageViewGroup
-                    uidOfClickedMessageInMillis = messageViewGroup.uid
+                    uidOfClickedMessage = messageViewGroup.uid
                     dialog.show()
                 }
             }
@@ -193,34 +101,47 @@ class ChatActivity : AppCompatActivity() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatListBinding.recycleView.adapter = asyncAdapter
-        innerViewTypedList = getMessageItemsFromFakeServer().toMutableList()
-        asyncAdapter.items.submitList(getMessageItemsFromFakeServer())
+        updateMessages(applicationContext, chatListBinding.chatShimmer)
 
-        chatListBinding.ImageViewSendMessage.setOnClickListener {
-            if (chatListBinding.EditTextEnterMessage.text.isNotEmpty()) {
-                innerViewTypedList.add(
-                    OutMessageUI(
-                        userName = "Sibagatullin Artur",
-                        userId = MyUserId.MY_USER_ID,
-                        uid = Random().nextInt().toString(),
-                        message = chatListBinding.EditTextEnterMessage.text.toString(),
-                        reactions = listOf(),
-                        dateInMillis = Calendar.getInstance().timeInMillis,
-                    )
-                )
-                chatListBinding.EditTextEnterMessage.text.clear()
-                //!!!
-                sendMessagesToFakeServer(innerViewTypedList)
-                val refreshedList = getMessageItemsFromFakeServer()
-                asyncAdapter.items.submitList(refreshedList) {
-                    chatListBinding.recycleView.smoothScrollToPosition(
-                        asyncAdapter.itemCount
-                    )
-                }
+        chatListBinding.imageViewSendMessage.setOnClickListener {
+            if (chatListBinding.editTextEnterMessage.text.isNotEmpty()) {
+                val message = chatListBinding.editTextEnterMessage.text.toString()
+                chatListBinding.chatShimmer.showShimmer(true)
+                api.sendMessageToServer(nameOfTopic, nameOfStream, message)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        {
+                            api.getMessageUIListFromServer(nameOfTopic, nameOfStream)
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                    { list ->
+                                        asyncAdapter.items.submitList(list) {
+                                            chatListBinding.recycleView.smoothScrollToPosition(
+                                                asyncAdapter.itemCount
+                                            )
+                                            chatListBinding.chatShimmer.stopAndHideShimmer()
+                                        }
+                                    },
+                                    { onError ->
+                                        Error.showError(
+                                            applicationContext,
+                                            onError
+                                        )
+                                        chatListBinding.chatShimmer.stopAndHideShimmer()
+                                    })
+                        },
+                        { onError ->
+                            Error.showError(
+                                applicationContext,
+                                onError
+                            )
+                            chatListBinding.chatShimmer.stopAndHideShimmer()
+                        })
+                chatListBinding.editTextEnterMessage.text.clear()
             }
         }
 
-        chatListBinding.EditTextEnterMessage.addTextChangedListener(object : TextWatcher {
+        chatListBinding.editTextEnterMessage.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(
                 s: CharSequence?,
                 start: Int,
@@ -236,14 +157,19 @@ class ChatActivity : AppCompatActivity() {
                 count: Int
             ) {
                 when (message.length) {
-                    0 -> chatListBinding.ImageViewSendMessage.setImageResource(R.drawable.ic_add_files)
-                    1 -> chatListBinding.ImageViewSendMessage.setImageResource(R.drawable.ic_send_message)
+                    0 -> chatListBinding.imageViewSendMessage.setImageResource(R.drawable.ic_add_files)
+                    1 -> chatListBinding.imageViewSendMessage.setImageResource(R.drawable.ic_send_message)
                 }
             }
 
             override fun afterTextChanged(s: Editable?) {
             }
         })
+    }
+
+    override fun onStart() {
+        super.onStart()
+        chatListBinding.chatShimmer.startShimmer()
     }
 
     private fun fillTextViewWithEmojisAsSpannableText(
@@ -273,13 +199,21 @@ class ChatActivity : AppCompatActivity() {
         override fun onClick(widget: View) {
             val emojiCodeString = (widget as TextView).text.subSequence(start, end).toString()
             val emojiCode = emojiCodeString.codePointAt(0)
-            val handlerAddingNewReaction = { reactions: MutableList<ServerApi.Reaction> ->
-                reactions.add(ServerApi.Reaction(emojiCode, 1, listOf(MyUserId.MY_USER_ID)))
-            }
-            updateReactionsOfMessages(
-                uidOfClickedMessageInMillis,
-                handlerAddingNewReaction
-            )
+            val nameAndZulipEmojiCode = EmojiEnum.getNameByCodePoint(emojiCode)
+            val name = nameAndZulipEmojiCode.first
+            val zulipEmojiCode = nameAndZulipEmojiCode.second
+            chatListBinding.chatShimmer.showShimmer(true)
+            api.sendReaction(uidOfClickedMessage, zulipEmojiCode, name)
+                .subscribe(
+                    {
+                        updateMessages(applicationContext, chatListBinding.chatShimmer)
+                    },
+                    { onError ->
+                        Error.showError(
+                            applicationContext,
+                            onError
+                        )
+                    })
             dialog.dismiss()
         }
 
