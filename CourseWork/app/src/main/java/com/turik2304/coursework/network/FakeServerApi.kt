@@ -15,6 +15,7 @@ import io.taliox.zulip.calls.streams.GetAllStreams
 import io.taliox.zulip.calls.streams.GetAllTopicsOfAStream
 import io.taliox.zulip.calls.streams.GetSubscribedStreams
 import io.taliox.zulip.calls.users.GetAllUsers
+import io.taliox.zulip.calls.users.GetProfile
 import io.taliox.zulip.calls.users.GetUserPresence
 import org.json.JSONArray
 import org.json.JSONObject
@@ -30,135 +31,6 @@ class FakeServerApi : ServerApi {
         get() = "fjMrYYPpJBw87hculEvh47Ckc7eW08yN"
     override val serverURL: String
         get() = "https://tfs-android-2021-spring.zulipchat.com/"
-
-    override val userList = listOf(
-        ServerApi.User(
-            "ARTUR",
-            "Artur Sibagatullin",
-            "Sibagatullin@gmail.com",
-            "In a meeting",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_0",
-            "Ivan Ivanov_0",
-            "Ivan Ivanov_0@gmail.com",
-            "In a meeting0",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_1",
-            "Ivan Ivanov_1",
-            "Ivan Ivanov_1@gmail.com",
-            "In a meeting1",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_2",
-            "Ivan Ivanov_2",
-            "Ivan Ivanov_2@gmail.com",
-            "In a meeting2",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_3",
-            "Ivan Ivanov_3",
-            "Ivan Ivanov_3@gmail.com",
-            "In a meeting3",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_4",
-            "Ivan Ivanov_4",
-            "Ivan Ivanov_4@gmail.com",
-            "In a meeting4",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_5",
-            "Ivan Ivanov_5",
-            "Ivan Ivanov_5@gmail.com",
-            "In a meeting5",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_6",
-            "Ivan Ivanov_6",
-            "Ivan Ivanov_6@gmail.com",
-            "In a meetin6",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_7",
-            "Ivan Ivanov_7",
-            "Ivan Ivanov_7@gmail.com",
-            "In a meeting7",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_8",
-            "Ivan Ivanov_8",
-            "Ivan Ivanov_8@gmail.com",
-            "In a meeting8",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_9",
-            "Ivan Ivanov_9",
-            "Ivan Ivanov_9@gmail.com",
-            "In a meeting9",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_10",
-            "Ivan Ivanov_10",
-            "Ivan Ivanov_10@gmail.com",
-            "In a meeting10",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_11",
-            "Ivan Ivanov_11",
-            "Ivan Ivanov_10@gmail.com",
-            "In a meeting11",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_12",
-            "Ivan Ivanov_12",
-            "Ivan Ivanov_12@gmail.com",
-            "In a meeting12",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_13",
-            "Ivan Ivanov_13",
-            "Ivan Ivanov_13@gmail.com",
-            "In a meeting13",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_14",
-            "Ivan Ivanov_14",
-            "Ivan Ivanov_14@gmail.com",
-            "In a meeting14",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_15",
-            "Ivan Ivanov_15",
-            "Ivan Ivanov_15@gmail.com",
-            "In a meeting15",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_16",
-            "Ivan Ivanov_16",
-            "Ivan Ivanov_16@gmail.com",
-            "In a meeting16",
-            "offline"
-        ),
-    )
 
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<ViewTyped>> {
         val key: String
@@ -429,6 +301,20 @@ class FakeServerApi : ServerApi {
                     )
                 }
                 return@map listOfUser
+            }
+    }
+
+    override fun getOwnProfile(): Single<Map<String, String>> {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val getOwnProfile = GetProfile()
+        return Single.fromCallable { getOwnProfile.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .map { respone -> JSONObject(respone) }
+            .map { jsonObjectResponse ->
+                val userName = jsonObjectResponse.get("full_name").toString()
+                return@map mapOf("userName" to userName)
             }
     }
 

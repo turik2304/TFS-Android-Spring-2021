@@ -5,13 +5,6 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 
 interface ServerApi {
-    data class User(
-        val uid: String,
-        val userName: String,
-        val email: String,
-        val statusText: String,
-        val status: String
-    )
 
     data class Reaction(
         val emojiCode: Int,
@@ -28,8 +21,6 @@ interface ServerApi {
         val uid: String
     )
 
-    val userList: List<User>
-
     val userName: String
     val password: String
     val serverURL: String
@@ -45,4 +36,5 @@ interface ServerApi {
     fun removeReaction(uidOfMessage: String, emojiCode: String, emojiName: String): Completable
     fun getProfileDetailsById(email: String): Single<String>
     fun getUserUIListFromServer(): Single<List<ViewTyped>>
+    fun getOwnProfile(): Single<Map<String, String>>
 }
