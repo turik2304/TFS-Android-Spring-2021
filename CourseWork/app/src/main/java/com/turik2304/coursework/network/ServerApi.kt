@@ -29,7 +29,6 @@ interface ServerApi {
     )
 
     val userList: List<User>
-    fun getProfileDetailsById(uid: String): Map<String, String>
 
     val userName: String
     val password: String
@@ -44,4 +43,6 @@ interface ServerApi {
     fun sendMessageToServer(nameOfTopic: String, nameOfStream: String, message: String): Completable
     fun sendReaction(uidOfMessage: String, emojiCode: String, emojiName: String): Completable
     fun removeReaction(uidOfMessage: String, emojiCode: String, emojiName: String): Completable
+    fun getProfileDetailsById(email: String): Single<String>
+    fun getUserUIListFromServer(): Single<List<ViewTyped>>
 }

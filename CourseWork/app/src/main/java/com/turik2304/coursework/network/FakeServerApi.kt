@@ -14,6 +14,8 @@ import io.taliox.zulip.calls.messages.PostMessage
 import io.taliox.zulip.calls.streams.GetAllStreams
 import io.taliox.zulip.calls.streams.GetAllTopicsOfAStream
 import io.taliox.zulip.calls.streams.GetSubscribedStreams
+import io.taliox.zulip.calls.users.GetAllUsers
+import io.taliox.zulip.calls.users.GetUserPresence
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -157,17 +159,6 @@ class FakeServerApi : ServerApi {
             "offline"
         ),
     )
-
-    override fun getProfileDetailsById(uid: String): Map<String, String> {
-        val user = userList.find { user ->
-            user.uid == uid
-        }
-        return mapOf(
-            "userName" to (user?.userName ?: "none"),
-            "statusText" to (user?.statusText ?: "none"),
-            "status" to (user?.status ?: "none"),
-        )
-    }
 
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<ViewTyped>> {
         val key: String
@@ -396,6 +387,49 @@ class FakeServerApi : ServerApi {
         )
         return Completable.fromCallable { deleteReaction.execute(executor) }
             .subscribeOn(Schedulers.io())
+    }
+
+    override fun getProfileDetailsById(email: String): Single<String> {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val getUserPresence = GetUserPresence(email)
+        return Single.fromCallable { getUserPresence.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response -> JSONObject(response) }
+            .map { jsonObject -> jsonObject.get("presence") as JSONObject }
+            .map { jsonObjectPresence -> jsonObjectPresence.get("aggregated") as JSONObject }
+            .map { jsonObjectAggregated -> jsonObjectAggregated.getString("status") }
+    }
+
+    override fun getUserUIListFromServer(): Single<List<ViewTyped>> {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val getAllUsers = GetAllUsers()
+        return Single.fromCallable { getAllUsers.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response -> JSONObject(response) }
+            .map { jsonObject -> jsonObject.getJSONArray("members") }
+            .map { jsonArrayOfUsers ->
+                val listOfUser = mutableListOf<ViewTyped>()
+                for (indexOfUser in 0 until jsonArrayOfUsers.length()) {
+                    val jsonObjectUser = jsonArrayOfUsers.get(indexOfUser) as JSONObject
+                    val email = jsonObjectUser.get("email").toString()
+                    val name = jsonObjectUser.get("full_name").toString()
+                    val uid = jsonObjectUser.get("user_id").toString()
+                    listOfUser.add(
+                        UserUI(
+                            userName = name,
+                            email = email,
+                            uid = uid
+                        )
+                    )
+                }
+                return@map listOfUser
+            }
     }
 
 

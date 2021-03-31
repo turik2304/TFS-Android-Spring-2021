@@ -1,7 +1,5 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
-import android.app.Activity
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -34,25 +32,37 @@ class ProfileDetailsFragment : Fragment() {
         userNameTextView.text = requireArguments().getString(ARG_USER_NAME, "none")
         statusTextTextView.text = requireArguments().getString(ARG_STATUS_TEXT, "none")
         statusTextView.text = requireArguments().getString(ARG_STATUS, "none")
-        if (statusTextView.text == "online") {
-            statusTextView.setTextColor(
-                resources.getColor(
-                    R.color.teal_status_online,
-                    context?.theme
+
+        when (statusTextView.text) {
+            "active" -> {
+                statusTextView.text = "online"
+                statusTextView.setTextColor(
+                    resources.getColor(
+                        R.color.green_status_online,
+                        context?.theme
+                    )
                 )
-            )
-        } else {
-            statusTextView.setTextColor(
-                resources.getColor(
-                    R.color.teal_status_offline,
-                    context?.theme
+            }
+            "idle" -> {
+                statusTextView.setTextColor(
+                    resources.getColor(
+                        R.color.yellow_status_idle,
+                        context?.theme
+                    )
                 )
-            )
+            }
+            else -> {
+                statusTextView.setTextColor(
+                    resources.getColor(
+                        R.color.red_status_offline,
+                        context?.theme
+                    )
+                )
+            }
         }
     }
 
     companion object {
-
         private const val ARG_USER_NAME = "userName"
         private const val ARG_STATUS_TEXT = "statusText"
         private const val ARG_STATUS = "status"

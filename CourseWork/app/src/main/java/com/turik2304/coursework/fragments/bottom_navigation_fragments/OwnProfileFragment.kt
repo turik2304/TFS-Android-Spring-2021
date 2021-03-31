@@ -27,7 +27,7 @@ class OwnProfileFragment : Fragment() {
         userName.text = "Artur Sibagatullin"
         statusText.text = "In a meeting"
         status.text = "online"
-        status.setTextColor(resources.getColor(R.color.teal_status_online, context?.theme))
+        status.setTextColor(resources.getColor(R.color.green_status_online, context?.theme))
 
     }
 }
