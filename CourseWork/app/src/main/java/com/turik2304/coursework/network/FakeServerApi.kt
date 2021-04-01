@@ -48,9 +48,8 @@ class FakeServerApi : ServerApi {
         return Single.fromCallable { getStreams.execute(executor) }
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
-            .map { response -> JSONObject(response) }
-            .map { jsonObject -> jsonObject.getJSONArray(key) }
-            .map { jsonArrayOfStreams ->
+            .map { response ->
+                val jsonArrayOfStreams = parseJsonArray(response, key)
                 val listOfStreams = mutableListOf<ViewTyped>()
                 for (indexOfStream in 0 until jsonArrayOfStreams.length()) {
                     val jsonObjectStream = jsonArrayOfStreams.get(indexOfStream) as JSONObject
@@ -71,9 +70,8 @@ class FakeServerApi : ServerApi {
         return Single.fromCallable { getTopicsOfStream.execute(executor) }
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
-            .map { response -> JSONObject(response) }
-            .map { jsonObject ->
-                val jsonArrayOfTopics = jsonObject.getJSONArray("topics")
+            .map { response ->
+                val jsonArrayOfTopics = parseJsonArray(response, "topics")
                 val listOfTopics = mutableListOf<ViewTyped>()
                 for (indexOfTopic in 0 until jsonArrayOfTopics.length()) {
                     val jsonObjectTopic = jsonArrayOfTopics.get(indexOfTopic) as JSONObject
@@ -111,12 +109,11 @@ class FakeServerApi : ServerApi {
             .fromCallable { getMessages.execute(executor) }
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
-            .map { message -> JSONObject(message.toString()) }
-            .map { jsonObject -> jsonObject.getJSONArray("messages") }
-            .map { jsonArray ->
+            .map { response ->
+                val jsonArrayOfMessages = parseJsonArray(response, "messages")
                 val listOfMessages = mutableListOf<ServerApi.Message>()
-                for (indexOfMessage in 0 until jsonArray.length()) {
-                    val jsonObjectMessage = jsonArray.get(indexOfMessage) as JSONObject
+                for (indexOfMessage in 0 until jsonArrayOfMessages.length()) {
+                    val jsonObjectMessage = jsonArrayOfMessages.get(indexOfMessage) as JSONObject
                     val uid = jsonObjectMessage.get("id").toString()
                     val userName = jsonObjectMessage.get("sender_full_name").toString()
                     val dateInSeconds =
@@ -270,10 +267,10 @@ class FakeServerApi : ServerApi {
         return Single.fromCallable { getUserPresence.execute(executor) }
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
-            .map { response -> JSONObject(response) }
-            .map { jsonObject -> jsonObject.get("presence") as JSONObject }
-            .map { jsonObjectPresence -> jsonObjectPresence.get("aggregated") as JSONObject }
-            .map { jsonObjectAggregated -> jsonObjectAggregated.getString("status") }
+            .map { response ->
+                val jsonObjectAggregated = parseJsonObject(response, "presence", "aggregated")
+                jsonObjectAggregated.getString("status")
+            }
     }
 
     override fun getUserUIListFromServer(): Single<List<ViewTyped>> {
@@ -284,9 +281,8 @@ class FakeServerApi : ServerApi {
         return Single.fromCallable { getAllUsers.execute(executor) }
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
-            .map { response -> JSONObject(response) }
-            .map { jsonObject -> jsonObject.getJSONArray("members") }
-            .map { jsonArrayOfUsers ->
+            .map { response ->
+                val jsonArrayOfUsers = parseJsonArray(response, "members")
                 val listOfUser = mutableListOf<ViewTyped>()
                 for (indexOfUser in 0 until jsonArrayOfUsers.length()) {
                     val jsonObjectUser = jsonArrayOfUsers.get(indexOfUser) as JSONObject
@@ -312,11 +308,24 @@ class FakeServerApi : ServerApi {
         val getOwnProfile = GetProfile()
         return Single.fromCallable { getOwnProfile.execute(executor) }
             .subscribeOn(Schedulers.io())
-            .map { respone -> JSONObject(respone) }
-            .map { jsonObjectResponse ->
-                val userName = jsonObjectResponse.get("full_name").toString()
+            .map { response ->
+                val jsonObjectProfile = JSONObject(response)
+                val userName = jsonObjectProfile.get("full_name").toString()
                 return@map mapOf("userName" to userName)
             }
+    }
+
+    private fun parseJsonArray(response: String, key: String): JSONArray {
+        return JSONObject(response)
+            .getJSONArray(key)
+    }
+
+    private fun parseJsonObject(response: String, vararg keys: String): JSONObject {
+        var jsonObject = JSONObject(response)
+        for (key in keys) {
+            jsonObject = jsonObject.get(key) as JSONObject
+        }
+        return jsonObject
     }
 
 
