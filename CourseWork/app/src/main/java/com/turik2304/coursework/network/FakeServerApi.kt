@@ -1,9 +1,12 @@
 package com.turik2304.coursework.network
 
+import androidx.fragment.app.FragmentActivity
 import com.turik2304.coursework.MyUserId
+import com.turik2304.coursework.network.RxLoader.Companion.attachLoader
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
 import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.taliox.zulip.ZulipRestExecutor
@@ -33,7 +36,17 @@ class FakeServerApi : ServerApi {
     override val serverURL: String
         get() = "https://tfs-android-2021-spring.zulipchat.com/"
 
-    override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<ViewTyped>> {
+    private val STREAM_LOADER_ID = 0
+    private val TOPIC_LOADER_ID = 1
+    private val MESSAGE_LOADER_ID = 2
+    private val USERS_LOADER_ID = 3
+    private val OWN_PROFILE_LOADER_ID = 4
+
+    override fun getStreamUIListFromServer(
+        needAllStreams: Boolean,
+        activity: FragmentActivity,
+        loaderId: Int
+    ): Observable<MutableList<ViewTyped>> {
         val key: String
         val getStreams = if (needAllStreams) {
             key = "streams"
@@ -60,9 +73,13 @@ class FakeServerApi : ServerApi {
                 }
                 return@map listOfStreams
             }
+            .attachLoader(activity, loaderId)
     }
 
-    override fun getTopicsUIListByStreamUid(streamUid: String): Single<List<ViewTyped>> {
+    override fun getTopicsUIListByStreamUid(
+        streamUid: String,
+        activity: FragmentActivity
+    ): Observable<MutableList<ViewTyped>> {
         val getTopicsOfStream = GetAllTopicsOfAStream(streamUid)
         val executor = ZulipRestExecutor(
             userName, password, serverURL
@@ -86,12 +103,15 @@ class FakeServerApi : ServerApi {
                 }
                 return@map listOfTopics
             }
+            .attachLoader(activity, streamUid.hashCode())
     }
 
     override fun getMessageUIListFromServer(
         nameOfTopic: String,
-        nameOfStream: String
-    ): Single<List<ViewTyped>> {
+        nameOfStream: String,
+        activity: FragmentActivity,
+        loaderId: Int
+    ): Observable<List<ViewTyped>> {
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -111,6 +131,8 @@ class FakeServerApi : ServerApi {
             .observeOn(Schedulers.computation())
             .map { response ->
                 val jsonArrayOfMessages = parseJsonArray(response, "messages")
+
+
                 val listOfMessages = mutableListOf<ServerApi.Message>()
                 for (indexOfMessage in 0 until jsonArrayOfMessages.length()) {
                     val jsonObjectMessage = jsonArrayOfMessages.get(indexOfMessage) as JSONObject
@@ -148,6 +170,7 @@ class FakeServerApi : ServerApi {
                         )
                     }
             }
+            .attachLoader(activity, loaderId)
     }
 
     private fun parseMessages(remoteMessages: List<ServerApi.Message>): List<ViewTyped> {
@@ -259,7 +282,10 @@ class FakeServerApi : ServerApi {
             .subscribeOn(Schedulers.io())
     }
 
-    override fun getProfileDetailsById(email: String): Single<String> {
+    override fun getProfileDetailsById(
+        email: String,
+        activity: FragmentActivity
+    ): Observable<String> {
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -271,9 +297,10 @@ class FakeServerApi : ServerApi {
                 val jsonObjectAggregated = parseJsonObject(response, "presence", "aggregated")
                 jsonObjectAggregated.getString("status")
             }
+            .attachLoader(activity, email.hashCode())
     }
 
-    override fun getUserUIListFromServer(): Single<List<ViewTyped>> {
+    override fun getUserUIListFromServer(activity: FragmentActivity, loaderId: Int): Observable<MutableList<ViewTyped>> {
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -299,9 +326,12 @@ class FakeServerApi : ServerApi {
                 }
                 return@map listOfUser
             }
+            .attachLoader(activity, loaderId)
     }
 
-    override fun getOwnProfile(): Single<Map<String, String>> {
+    override fun getOwnProfile(
+        activity: FragmentActivity,
+    ): Observable<Map<String, String>> {
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -313,6 +343,7 @@ class FakeServerApi : ServerApi {
                 val userName = jsonObjectProfile.get("full_name").toString()
                 return@map mapOf("userName" to userName)
             }
+            .attachLoader(activity, LoadersID.OWN_PROFILE_LOADER_ID)
     }
 
     private fun parseJsonArray(response: String, key: String): JSONArray {

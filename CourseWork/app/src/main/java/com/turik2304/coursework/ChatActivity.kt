@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.toSpannable
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.turik2304.coursework.network.LoadersID.MESSAGES_LOADER_ID
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
 import com.turik2304.coursework.network.FakeServerApi
@@ -21,33 +22,47 @@ import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFactory
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class ChatActivity : AppCompatActivity() {
 
     companion object {
+
         lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
         lateinit var nameOfTopic: String
         lateinit var nameOfStream: String
 
+        val compositeDisposable = CompositeDisposable()
         val api: ServerApi = FakeServerApi()
+
         fun updateMessages(
             context: Context,
-            shimmer: ShimmerFrameLayout
+            shimmer: ShimmerFrameLayout,
+            runnable: Runnable? = null
         ) {
-            api.getMessageUIListFromServer(nameOfTopic, nameOfStream)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { list ->
-                        asyncAdapter.items.submitList(list)
-                        shimmer.stopAndHideShimmer()
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        shimmer.stopAndHideShimmer()
-                    })
+            compositeDisposable.add(
+                api.getMessageUIListFromServer(
+                    nameOfTopic,
+                    nameOfStream,
+                    context as AppCompatActivity,
+                    MESSAGES_LOADER_ID++
+                )
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        { list ->
+                            asyncAdapter.items.submitList(list) {
+                                runnable?.run()
+                            }
+                            shimmer.stopAndHideShimmer()
+                        },
+                        { onError ->
+                            Error.showError(
+                                context,
+                                onError
+                            )
+                            shimmer.stopAndHideShimmer()
+                        })
+            )
         }
 
         const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
@@ -56,7 +71,6 @@ class ChatActivity : AppCompatActivity() {
 
     private lateinit var chatListBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
-
 
     private lateinit var dialog: BottomSheetDialog
     private var uidOfClickedMessage: String = ""
@@ -78,6 +92,7 @@ class ChatActivity : AppCompatActivity() {
         chatListBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
 
         fillTextViewWithEmojisAsSpannableText(
+            this,
             textView = dialogBinding.emojiListTextView,
             emojiCodeRange = 0x1F600..0x1F645
         )
@@ -101,42 +116,31 @@ class ChatActivity : AppCompatActivity() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatListBinding.recycleView.adapter = asyncAdapter
-        updateMessages(applicationContext, chatListBinding.chatShimmer)
+        updateMessages(this, chatListBinding.chatShimmer)
 
         chatListBinding.imageViewSendMessage.setOnClickListener {
             if (chatListBinding.editTextEnterMessage.text.isNotEmpty()) {
                 val message = chatListBinding.editTextEnterMessage.text.toString()
                 chatListBinding.chatShimmer.showShimmer(true)
-                api.sendMessageToServer(nameOfTopic, nameOfStream, message)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        {
-                            api.getMessageUIListFromServer(nameOfTopic, nameOfStream)
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(
-                                    { list ->
-                                        asyncAdapter.items.submitList(list) {
-                                            chatListBinding.recycleView.smoothScrollToPosition(
-                                                asyncAdapter.itemCount
-                                            )
-                                            chatListBinding.chatShimmer.stopAndHideShimmer()
-                                        }
-                                    },
-                                    { onError ->
-                                        Error.showError(
-                                            applicationContext,
-                                            onError
-                                        )
-                                        chatListBinding.chatShimmer.stopAndHideShimmer()
-                                    })
-                        },
-                        { onError ->
-                            Error.showError(
-                                applicationContext,
-                                onError
-                            )
-                            chatListBinding.chatShimmer.stopAndHideShimmer()
-                        })
+                compositeDisposable.add(
+                    api.sendMessageToServer(nameOfTopic, nameOfStream, message)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                            {
+                                updateMessages(this, chatListBinding.chatShimmer) {
+                                    chatListBinding.recycleView.smoothScrollToPosition(
+                                        asyncAdapter.itemCount
+                                    )
+                                }
+                            },
+                            { onError ->
+                                Error.showError(
+                                    applicationContext,
+                                    onError
+                                )
+                                chatListBinding.chatShimmer.stopAndHideShimmer()
+                            })
+                )
                 chatListBinding.editTextEnterMessage.text.clear()
             }
         }
@@ -167,12 +171,26 @@ class ChatActivity : AppCompatActivity() {
         })
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        MESSAGES_LOADER_ID--
+    }
+
     override fun onStart() {
         super.onStart()
         chatListBinding.chatShimmer.startShimmer()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        asyncAdapter.items.submitList(null)
+        asyncAdapter.holderFactory = null
+        chatListBinding.recycleView.adapter = null
+        compositeDisposable.clear()
+    }
+
     private fun fillTextViewWithEmojisAsSpannableText(
+        context: Context,
         textView: TextView,
         emojiCodeRange: IntRange
     ) {
@@ -183,7 +201,7 @@ class ChatActivity : AppCompatActivity() {
             stringBuilder.append(SpannableString(emojiString))
             val curInd = stringBuilder.length
             stringBuilder.setSpan(
-                MyClickableSpan(prevInd, curInd),
+                MyClickableSpan(context, prevInd, curInd),
                 prevInd,
                 curInd,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -193,7 +211,7 @@ class ChatActivity : AppCompatActivity() {
         textView.movementMethod = LinkMovementMethod.getInstance()
     }
 
-    inner class MyClickableSpan(private val start: Int, private val end: Int) :
+    inner class MyClickableSpan(private val context: Context, private val start: Int, private val end: Int) :
         ClickableSpan() {
 
         override fun onClick(widget: View) {
@@ -203,17 +221,20 @@ class ChatActivity : AppCompatActivity() {
             val name = nameAndZulipEmojiCode.first
             val zulipEmojiCode = nameAndZulipEmojiCode.second
             chatListBinding.chatShimmer.showShimmer(true)
-            api.sendReaction(uidOfClickedMessage, zulipEmojiCode, name)
-                .subscribe(
-                    {
-                        updateMessages(applicationContext, chatListBinding.chatShimmer)
-                    },
-                    { onError ->
-                        Error.showError(
-                            applicationContext,
-                            onError
-                        )
-                    })
+            compositeDisposable.add(
+                api.sendReaction(uidOfClickedMessage, zulipEmojiCode, name)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        {
+                            updateMessages(context, chatListBinding.chatShimmer)
+                        },
+                        { onError ->
+                            Error.showError(
+                                applicationContext,
+                                onError
+                            )
+                        })
+            )
             dialog.dismiss()
         }
 

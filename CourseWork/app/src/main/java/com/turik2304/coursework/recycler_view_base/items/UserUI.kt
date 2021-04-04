@@ -8,5 +8,6 @@ data class UserUI(
     val email: String,
     override val uid: String,
     override var viewType: Int = R.layout.item_user,
+    var profileDetailsLoadingStarted: Boolean = false
 ) : ViewTyped {
 }

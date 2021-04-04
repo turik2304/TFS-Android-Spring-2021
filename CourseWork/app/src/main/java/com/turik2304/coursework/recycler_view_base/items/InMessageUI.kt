@@ -1,5 +1,6 @@
 package com.turik2304.coursework.recycler_view_base.items
 
+import android.os.Parcelable
 import com.turik2304.coursework.R
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.ViewTyped

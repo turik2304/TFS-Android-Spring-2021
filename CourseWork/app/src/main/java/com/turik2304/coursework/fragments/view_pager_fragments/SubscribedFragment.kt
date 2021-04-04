@@ -15,6 +15,7 @@ import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
 import com.turik2304.coursework.network.FakeServerApi
+import com.turik2304.coursework.network.LoadersID
 import com.turik2304.coursework.network.ServerApi
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
@@ -23,6 +24,8 @@ import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFa
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+
 
 class SubscribedFragment : Fragment() {
 
@@ -30,6 +33,7 @@ class SubscribedFragment : Fragment() {
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
     private val api: ServerApi = FakeServerApi()
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -94,29 +98,33 @@ class SubscribedFragment : Fragment() {
                             )
                         )
                     } else {
-                        api.getTopicsUIListByStreamUid(uidOfClickedStreamUI)
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(
-                                { listOfTopics ->
-                                    innerViewTypedList.addAll(indexOfTopicInsertion, listOfTopics)
-                                    asyncAdapter.items.submitList(innerViewTypedList.map { it })
-                                    animateExpandImageViewFrom0to180(context, expandImageView)
-                                    streamShimmer.stopAndHideShimmer()
-                                    clickedView.setBackgroundColor(
-                                        resources.getColor(
-                                            R.color.gray_secondary_background,
-                                            context?.theme
+                        compositeDisposable.add(
+                            api.getTopicsUIListByStreamUid(uidOfClickedStreamUI, requireActivity())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                    { listOfTopics ->
+                                        innerViewTypedList.addAll(
+                                            indexOfTopicInsertion,
+                                            listOfTopics
                                         )
-                                    )
-                                },
-                                { onError ->
-                                    Error.showError(
-                                        context,
-                                        onError
-                                    )
-                                    streamShimmer.stopAndHideShimmer()
-                                })
-
+                                        asyncAdapter.items.submitList(innerViewTypedList.map { it })
+                                        animateExpandImageViewFrom0to180(context, expandImageView)
+                                        streamShimmer.stopAndHideShimmer()
+                                        clickedView.setBackgroundColor(
+                                            resources.getColor(
+                                                R.color.gray_secondary_background,
+                                                context?.theme
+                                            )
+                                        )
+                                    },
+                                    { onError ->
+                                        Error.showError(
+                                            context,
+                                            onError
+                                        )
+                                        streamShimmer.stopAndHideShimmer()
+                                    })
+                        )
                     }
                 } catch (e: IndexOutOfBoundsException) {
                     streamShimmer.stopAndHideShimmer()
@@ -152,28 +160,33 @@ class SubscribedFragment : Fragment() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
-
-        api.getStreamUIListFromServer(needAllStreams = false)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { streamList ->
-                    asyncAdapter.items.submitList(streamList)
-                    innerViewTypedList = streamList.toMutableList()
-                    Search.initSearch(
-                        editText,
-                        innerViewTypedList,
-                        asyncAdapter,
-                        recyclerViewSubscribedStreams
-                    )
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                },
-                { onError ->
-                    Error.showError(
-                        context,
-                        onError
-                    )
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                })
+        compositeDisposable.add(
+            api.getStreamUIListFromServer(
+                needAllStreams = false,
+                requireActivity(),
+                LoadersID.SUBSCRIBED_STREAM_LOADER_ID
+            )
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { streamList ->
+                        asyncAdapter.items.submitList(streamList)
+                        innerViewTypedList = streamList.toMutableList()
+                        Search.initSearch(
+                            editText,
+                            innerViewTypedList,
+                            asyncAdapter,
+                            recyclerViewSubscribedStreams
+                        )
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                    },
+                    { onError ->
+                        Error.showError(
+                            context,
+                            onError
+                        )
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                    })
+        )
     }
 
     companion object {
@@ -189,4 +202,23 @@ class SubscribedFragment : Fragment() {
             imageView.setImageResource(R.drawable.ic_arrow_down_24)
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        compositeDisposable.clear()
+
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        asyncAdapter.items.currentList.forEach { item ->
+            if (item is StreamUI) {
+                item.isExpanded = false
+            }
+        }
+    }
+
 }
+
+
+
