@@ -36,12 +36,6 @@ class ZulipAPICall : CallHandler {
     override val serverURL: String
         get() = "https://tfs-android-2021-spring.zulipchat.com/"
 
-    private val STREAM_LOADER_ID = 0
-    private val TOPIC_LOADER_ID = 1
-    private val MESSAGE_LOADER_ID = 2
-    private val USERS_LOADER_ID = 3
-    private val OWN_PROFILE_LOADER_ID = 4
-
     override fun getStreamUIListFromServer(
         needAllStreams: Boolean,
         activity: FragmentActivity,
@@ -67,9 +61,9 @@ class ZulipAPICall : CallHandler {
                 for (indexOfStream in 0 until jsonArrayOfStreams.length()) {
                     val jsonObjectStream = jsonArrayOfStreams.get(indexOfStream) as JSONObject
                     val nameOfStream = jsonObjectStream.get("name").toString()
-                    val uid = jsonObjectStream.get("stream_id").toString()
+                    val uid = Integer.parseInt(jsonObjectStream.get("stream_id").toString())
                     listOfStreams.add(StreamUI(nameOfStream, uid))
-                    listOfStreams.add(StreamAndTopicSeparatorUI(uid = "STREAM_SEPARATOR_$uid"))
+                    listOfStreams.add(StreamAndTopicSeparatorUI(uid = nameOfStream.hashCode()))
                 }
                 return@map listOfStreams
             }
@@ -77,10 +71,10 @@ class ZulipAPICall : CallHandler {
     }
 
     override fun getTopicsUIListByStreamUid(
-        streamUid: String,
+        streamUid: Int,
         activity: FragmentActivity
     ): Observable<MutableList<ViewTyped>> {
-        val getTopicsOfStream = GetAllTopicsOfAStream(streamUid)
+        val getTopicsOfStream = GetAllTopicsOfAStream(streamUid.toString())
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -93,11 +87,11 @@ class ZulipAPICall : CallHandler {
                 for (indexOfTopic in 0 until jsonArrayOfTopics.length()) {
                     val jsonObjectTopic = jsonArrayOfTopics.get(indexOfTopic) as JSONObject
                     val nameOfTopic = jsonObjectTopic.get("name").toString()
-                    val uid = jsonObjectTopic.get("max_id").toString()
+                    val uid = Integer.parseInt(jsonObjectTopic.get("max_id").toString())
                     listOfTopics.add(TopicUI(name = nameOfTopic, uid = uid))
                     listOfTopics.add(
                         StreamAndTopicSeparatorUI(
-                            uid = "TOPIC_SEPARATOR_${uid}"
+                            uid = nameOfTopic.hashCode()
                         )
                     )
                 }
@@ -136,11 +130,11 @@ class ZulipAPICall : CallHandler {
                 val listOfMessages = mutableListOf<CallHandler.Message>()
                 for (indexOfMessage in 0 until jsonArrayOfMessages.length()) {
                     val jsonObjectMessage = jsonArrayOfMessages.get(indexOfMessage) as JSONObject
-                    val uid = jsonObjectMessage.get("id").toString()
+                    val uid = Integer.parseInt(jsonObjectMessage.get("id").toString())
                     val userName = jsonObjectMessage.get("sender_full_name").toString()
                     val dateInSeconds =
                         Integer.parseInt(jsonObjectMessage.get("timestamp").toString())
-                    val senderId = jsonObjectMessage.get("sender_id").toString()
+                    val senderId = Integer.parseInt(jsonObjectMessage.get("sender_id").toString())
                     val message = jsonObjectMessage.get("content").toString()
                     val arrayOfReactions = jsonObjectMessage.getJSONArray("reactions")
                     val reactions = parseReactions(arrayOfReactions)
@@ -165,7 +159,7 @@ class ZulipAPICall : CallHandler {
                         getFormattedDate(message.dateInSeconds)
                     }
                     .flatMap { (date, messages) ->
-                        listOf(DateSeparatorUI(date, "DATE_SEPARATOR_$date")) + parseMessages(
+                        listOf(DateSeparatorUI(date, date.hashCode())) + parseMessages(
                             messages
                         )
                     }
@@ -218,7 +212,7 @@ class ZulipAPICall : CallHandler {
             if (emojiType == "unicode_emoji") {
                 val emojiCodeString = jsonObjectReaction.get("emoji_code").toString()
                 val emojiCode = Integer.parseInt(emojiCodeString, 16)
-                val userId = jsonObjectReaction.get("user_id").toString()
+                val userId = Integer.parseInt(jsonObjectReaction.get("user_id").toString())
                 var isTheSameReaction = false
                 var indexOfSameReaction = -1
                 listOfReactions.forEachIndexed { index, reaction ->
@@ -257,11 +251,11 @@ class ZulipAPICall : CallHandler {
     }
 
     override fun sendReaction(
-        uidOfMessage: String,
+        uidOfMessage: Int,
         emojiCode: String,
         emojiName: String
     ): Completable {
-        val addReaction = AddReaction(uidOfMessage, emojiCode, emojiName)
+        val addReaction = AddReaction(uidOfMessage.toString(), emojiCode, emojiName)
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -270,11 +264,11 @@ class ZulipAPICall : CallHandler {
     }
 
     override fun removeReaction(
-        uidOfMessage: String,
+        uidOfMessage: Int,
         emojiCode: String,
         emojiName: String
     ): Completable {
-        val deleteReaction = DeleteReaction(uidOfMessage, emojiCode, emojiName)
+        val deleteReaction = DeleteReaction(uidOfMessage.toString(), emojiCode, emojiName)
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -315,7 +309,7 @@ class ZulipAPICall : CallHandler {
                     val jsonObjectUser = jsonArrayOfUsers.get(indexOfUser) as JSONObject
                     val email = jsonObjectUser.get("email").toString()
                     val name = jsonObjectUser.get("full_name").toString()
-                    val uid = jsonObjectUser.get("user_id").toString()
+                    val uid = Integer.parseInt(jsonObjectUser.get("user_id").toString())
                     listOfUser.add(
                         UserUI(
                             userName = name,

@@ -6,11 +6,11 @@ import com.turik2304.coursework.recycler_view_base.ViewTyped
 
 data class InMessageUI(
     val userName: String,
-    val userId: String,
+    val userId: Int,
     val message: String,
     var reactions: List<CallHandler.Reaction>,
     val dateInSeconds: Int,
-    override val uid: String,
+    override val uid: Int,
     override val viewType: Int = R.layout.item_incoming_message
 ) : ViewTyped {
 

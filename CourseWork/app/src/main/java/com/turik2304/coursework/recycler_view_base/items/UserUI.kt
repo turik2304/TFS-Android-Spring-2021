@@ -2,11 +2,17 @@ package com.turik2304.coursework.recycler_view_base.items
 
 import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.ViewTyped
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class UserUI(
+    @SerialName("full_name")
     val userName: String,
+    @SerialName("email")
     val email: String,
-    override val uid: String,
+    @SerialName("user_id")
+    override val uid: Int,
     override var viewType: Int = R.layout.item_user,
     var profileDetailsLoadingStarted: Boolean = false
 ) : ViewTyped {

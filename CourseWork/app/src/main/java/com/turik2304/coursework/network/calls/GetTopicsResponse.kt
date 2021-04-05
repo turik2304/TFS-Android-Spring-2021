@@ -1,17 +1,12 @@
 package com.turik2304.coursework.network.calls
 
+import com.turik2304.coursework.recycler_view_base.items.TopicUI
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 class GetTopicsResponse(
     @SerialName("topics")
-    val topics: List<Topic>
-)
-
-@Serializable
-data class Topic(
-    @SerialName("name")
-    val name: String,
+    val topics: List<TopicUI>
 )
 

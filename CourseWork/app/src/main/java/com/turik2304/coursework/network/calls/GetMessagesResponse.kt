@@ -6,11 +6,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 class GetMessagesResponse(
     @SerialName("messages")
-    val messages: List<Message>
+    val messages: List<ZulipMessage>
 )
 
 @Serializable
-data class Message(
+data class ZulipMessage(
     @SerialName("sender_full_name")
     val userName: String,
     @SerialName("content")
@@ -19,14 +19,14 @@ data class Message(
     val dateInSeconds: Int,
     @SerialName("sender_id")
     val userId: String,
-    val reactions: List<Reaction>,
+    val reactions: List<ZulipReaction>,
     @SerialName("id")
     val uid: String
 )
 
 @Serializable
 @SerialName("reactions")
-data class Reaction(
+data class ZulipReaction(
     @SerialName("emoji_code")
     val emojiCode: String,
     @SerialName("user_id")

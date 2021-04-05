@@ -23,7 +23,7 @@ class MessageViewGroup @JvmOverloads constructor(
 
     val userName: TextView
     val message: TextView
-    var uid: String = "none"
+    var uid: Int = -1
     var dateInSeconds: Int = 0
     val flexboxLayout: FlexboxLayout
     val avatarImageView: ImageView

@@ -10,16 +10,16 @@ interface CallHandler {
     data class Reaction(
         val emojiCode: Int,
         var counter: Int,
-        val usersWhoClicked: MutableList<String>
+        val usersWhoClicked: MutableList<Int>
     )
 
     data class Message(
         val userName: String,
         val message: String,
         val dateInSeconds: Int,
-        val userId: String,
+        val userId: Int,
         val reactions: List<Reaction>,
-        val uid: String
+        val uid: Int
     )
 
     val userName: String
@@ -33,7 +33,7 @@ interface CallHandler {
     ): Observable<MutableList<ViewTyped>>
 
     fun getTopicsUIListByStreamUid(
-        streamUid: String,
+        streamUid: Int,
         activity: FragmentActivity
     ): Observable<MutableList<ViewTyped>>
 
@@ -59,6 +59,6 @@ interface CallHandler {
     ): Observable<Map<String, String>>
 
     fun sendMessageToServer(nameOfTopic: String, nameOfStream: String, message: String): Completable
-    fun sendReaction(uidOfMessage: String, emojiCode: String, emojiName: String): Completable
-    fun removeReaction(uidOfMessage: String, emojiCode: String, emojiName: String): Completable
+    fun sendReaction(uidOfMessage: Int, emojiCode: String, emojiName: String): Completable
+    fun removeReaction(uidOfMessage: Int, emojiCode: String, emojiName: String): Completable
 }

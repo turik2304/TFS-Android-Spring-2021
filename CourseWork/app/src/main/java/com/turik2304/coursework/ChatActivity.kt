@@ -73,7 +73,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var dialogBinding: BottomSheetBinding
 
     private lateinit var dialog: BottomSheetDialog
-    private var uidOfClickedMessage: String = ""
+    private var uidOfClickedMessage: Int = -1
 
 
     override fun onCreate(savedInstanceState: Bundle?) {

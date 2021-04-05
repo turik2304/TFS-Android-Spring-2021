@@ -33,7 +33,7 @@ class EmojiView @JvmOverloads constructor(
                 updateViewContent()
             }
         }
-    val listOfUsersWhoClicked = mutableListOf<String>()
+    val listOfUsersWhoClicked = mutableListOf<Int>()
 
     private val superellipseColor =
         resources.getColor(R.color.gray_not_selected_background, context.theme)
