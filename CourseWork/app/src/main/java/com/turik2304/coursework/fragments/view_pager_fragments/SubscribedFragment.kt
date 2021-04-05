@@ -15,7 +15,6 @@ import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
 import com.turik2304.coursework.network.ZulipAPICall
-import com.turik2304.coursework.network.LoadersID
 import com.turik2304.coursework.network.CallHandler
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
@@ -99,7 +98,7 @@ class SubscribedFragment : Fragment() {
                         )
                     } else {
                         compositeDisposable.add(
-                            api.getTopicsUIListByStreamUid(uidOfClickedStreamUI, requireActivity())
+                            api.getTopicsUIListByStreamUid(uidOfClickedStreamUI)
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(
                                     { listOfTopics ->
@@ -161,11 +160,7 @@ class SubscribedFragment : Fragment() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
         compositeDisposable.add(
-            api.getStreamUIListFromServer(
-                needAllStreams = false,
-                requireActivity(),
-                LoadersID.SUBSCRIBED_STREAM_LOADER_ID
-            )
+            api.getStreamUIListFromServer(needAllStreams = false)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { streamList ->

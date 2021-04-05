@@ -1,7 +1,6 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,19 +9,19 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
-import com.turik2304.coursework.*
-import com.turik2304.coursework.network.ZulipAPICall
-import com.turik2304.coursework.network.LoadersID
+import com.turik2304.coursework.Error
+import com.turik2304.coursework.R
+import com.turik2304.coursework.Search
 import com.turik2304.coursework.network.CallHandler
-import com.turik2304.coursework.network.RetroClient
+import com.turik2304.coursework.network.ZulipAPICall
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.UserUI
+import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
 
 class PeopleFragment : Fragment() {
 
@@ -62,7 +61,7 @@ class PeopleFragment : Fragment() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
         compositeDisposable.add(
-            api.getUserUIListFromServer(requireActivity(), LoadersID.PEOPLE_LOADER_ID)
+            api.getUserUIListFromServer()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { userList ->
@@ -131,7 +130,7 @@ class PeopleFragment : Fragment() {
         val email = userUI.email
         val name = userUI.userName
         compositeDisposable.add(
-            api.getProfileDetailsById(email, activity)
+            api.getProfileDetailsById(email)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { status ->

@@ -1,12 +1,10 @@
 package com.turik2304.coursework.network
 
-import androidx.fragment.app.FragmentActivity
 import com.turik2304.coursework.MyUserId
-import com.turik2304.coursework.network.RxLoader.Companion.attachLoader
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
+import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.taliox.zulip.ZulipRestExecutor
@@ -36,11 +34,7 @@ class ZulipAPICall : CallHandler {
     override val serverURL: String
         get() = "https://tfs-android-2021-spring.zulipchat.com/"
 
-    override fun getStreamUIListFromServer(
-        needAllStreams: Boolean,
-        activity: FragmentActivity,
-        loaderId: Int
-    ): Observable<MutableList<ViewTyped>> {
+    override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<MutableList<ViewTyped>> {
         val key: String
         val getStreams = if (needAllStreams) {
             key = "streams"
@@ -67,13 +61,9 @@ class ZulipAPICall : CallHandler {
                 }
                 return@map listOfStreams
             }
-            .attachLoader(activity, loaderId)
     }
 
-    override fun getTopicsUIListByStreamUid(
-        streamUid: Int,
-        activity: FragmentActivity
-    ): Observable<MutableList<ViewTyped>> {
+    override fun getTopicsUIListByStreamUid(streamUid: Int): Single<MutableList<ViewTyped>> {
         val getTopicsOfStream = GetAllTopicsOfAStream(streamUid.toString())
         val executor = ZulipRestExecutor(
             userName, password, serverURL
@@ -97,15 +87,12 @@ class ZulipAPICall : CallHandler {
                 }
                 return@map listOfTopics
             }
-            .attachLoader(activity, streamUid.hashCode())
     }
 
     override fun getMessageUIListFromServer(
         nameOfTopic: String,
-        nameOfStream: String,
-        activity: FragmentActivity,
-        loaderId: Int
-    ): Observable<List<ViewTyped>> {
+        nameOfStream: String
+    ): @NonNull Single<List<ViewTyped>> {
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -164,7 +151,6 @@ class ZulipAPICall : CallHandler {
                         )
                     }
             }
-            .attachLoader(activity, loaderId)
     }
 
     private fun parseMessages(remoteMessages: List<CallHandler.Message>): List<ViewTyped> {
@@ -276,10 +262,7 @@ class ZulipAPICall : CallHandler {
             .subscribeOn(Schedulers.io())
     }
 
-    override fun getProfileDetailsById(
-        email: String,
-        activity: FragmentActivity
-    ): Observable<String> {
+    override fun getProfileDetailsById(email: String): Single<String> {
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -291,10 +274,9 @@ class ZulipAPICall : CallHandler {
                 val jsonObjectAggregated = parseJsonObject(response, "presence", "aggregated")
                 jsonObjectAggregated.getString("status")
             }
-            .attachLoader(activity, email.hashCode())
     }
 
-    override fun getUserUIListFromServer(activity: FragmentActivity, loaderId: Int): Observable<MutableList<ViewTyped>> {
+    override fun getUserUIListFromServer(): Single<MutableList<ViewTyped>> {
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -320,12 +302,9 @@ class ZulipAPICall : CallHandler {
                 }
                 return@map listOfUser
             }
-            .attachLoader(activity, loaderId)
     }
 
-    override fun getOwnProfile(
-        activity: FragmentActivity,
-    ): Observable<Map<String, String>> {
+    override fun getOwnProfile(): Single<Map<String, String>> {
         val executor = ZulipRestExecutor(
             userName, password, serverURL
         )
@@ -337,7 +316,6 @@ class ZulipAPICall : CallHandler {
                 val userName = jsonObjectProfile.get("full_name").toString()
                 return@map mapOf("userName" to userName)
             }
-            .attachLoader(activity, LoadersID.OWN_PROFILE_LOADER_ID)
     }
 
     private fun parseJsonArray(response: String, key: String): JSONArray {

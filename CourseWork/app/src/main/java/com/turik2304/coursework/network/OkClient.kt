@@ -1,6 +1,7 @@
 package com.turik2304.coursework.network
 
 import okhttp3.*
+import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
 
 object OkClient {
@@ -11,6 +12,7 @@ object OkClient {
             .readTimeout(10, TimeUnit.SECONDS)
             .writeTimeout(10, TimeUnit.SECONDS)
             .addInterceptor(interceptor)
+            .addNetworkInterceptor(loggingInterceptor)
             .build()
 
     private val interceptor = Interceptor { chain ->
@@ -21,5 +23,9 @@ object OkClient {
                 Credentials.basic("asibag98@gmail.com", "fjMrYYPpJBw87hculEvh47Ckc7eW08yN")
             ).build()
         chain.proceed(authenticatedRequest)
+    }
+
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+        setLevel(HttpLoggingInterceptor.Level.BODY)
     }
 }

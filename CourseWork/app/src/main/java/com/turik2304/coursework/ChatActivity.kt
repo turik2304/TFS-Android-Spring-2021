@@ -12,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.toSpannable
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.turik2304.coursework.network.LoadersID.MESSAGES_LOADER_ID
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
 import com.turik2304.coursework.network.ZulipAPICall
@@ -41,12 +40,7 @@ class ChatActivity : AppCompatActivity() {
             runnable: Runnable? = null
         ) {
             compositeDisposable.add(
-                api.getMessageUIListFromServer(
-                    nameOfTopic,
-                    nameOfStream,
-                    context as AppCompatActivity,
-                    MESSAGES_LOADER_ID++
-                )
+                api.getMessageUIListFromServer(nameOfTopic, nameOfStream)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         { list ->
@@ -169,11 +163,6 @@ class ChatActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
             }
         })
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        MESSAGES_LOADER_ID--
     }
 
     override fun onStart() {

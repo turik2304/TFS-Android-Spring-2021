@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.*
 import com.turik2304.coursework.network.ZulipAPICall
-import com.turik2304.coursework.network.LoadersID
 import com.turik2304.coursework.network.CallHandler
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
@@ -63,7 +62,7 @@ class AllStreamsFragment : Fragment() {
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewAllStreams.adapter = asyncAdapter
         compositeDisposable.add(
-        api.getStreamUIListFromServer(true, requireActivity(), LoadersID.ALL_STREAMS_LOADER_ID)
+        api.getStreamUIListFromServer(true)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { streamList ->

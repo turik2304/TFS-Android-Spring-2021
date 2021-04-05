@@ -154,7 +154,6 @@ class EmojiView @JvmOverloads constructor(
             selectCounter++
             listOfUsersWhoClicked.add(MyUserId.MY_USER_ID)
             ChatActivity.api.sendReaction(uidOfMessage, zulipEmojiCode, name)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     {
                         ChatActivity.updateMessages(context, chatShimmer)
@@ -172,7 +171,6 @@ class EmojiView @JvmOverloads constructor(
             listOfUsersWhoClicked.remove(MyUserId.MY_USER_ID)
             directParent.checkZeroesCounters()
             ChatActivity.api.removeReaction(uidOfMessage, zulipEmojiCode, name)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     {
                         ChatActivity.updateMessages(context, chatShimmer)
