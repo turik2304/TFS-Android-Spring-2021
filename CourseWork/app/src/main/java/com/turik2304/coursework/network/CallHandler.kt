@@ -5,7 +5,7 @@ import com.turik2304.coursework.recycler_view_base.ViewTyped
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 
-interface ServerApi {
+interface CallHandler {
 
     data class Reaction(
         val emojiCode: Int,

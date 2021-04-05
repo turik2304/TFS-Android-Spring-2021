@@ -25,7 +25,7 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
-class FakeServerApi : ServerApi {
+class ZulipAPICall : CallHandler {
 
     override val userName: String
         //generate random errors
@@ -133,7 +133,7 @@ class FakeServerApi : ServerApi {
                 val jsonArrayOfMessages = parseJsonArray(response, "messages")
 
 
-                val listOfMessages = mutableListOf<ServerApi.Message>()
+                val listOfMessages = mutableListOf<CallHandler.Message>()
                 for (indexOfMessage in 0 until jsonArrayOfMessages.length()) {
                     val jsonObjectMessage = jsonArrayOfMessages.get(indexOfMessage) as JSONObject
                     val uid = jsonObjectMessage.get("id").toString()
@@ -145,7 +145,7 @@ class FakeServerApi : ServerApi {
                     val arrayOfReactions = jsonObjectMessage.getJSONArray("reactions")
                     val reactions = parseReactions(arrayOfReactions)
                     listOfMessages.add(
-                        ServerApi.Message(
+                        CallHandler.Message(
                             userName,
                             message,
                             dateInSeconds,
@@ -173,7 +173,7 @@ class FakeServerApi : ServerApi {
             .attachLoader(activity, loaderId)
     }
 
-    private fun parseMessages(remoteMessages: List<ServerApi.Message>): List<ViewTyped> {
+    private fun parseMessages(remoteMessages: List<CallHandler.Message>): List<ViewTyped> {
         val messageUIList = mutableListOf<ViewTyped>()
         remoteMessages.forEach { messageToken ->
             if (messageToken.userId == MyUserId.MY_USER_ID) {
@@ -210,8 +210,8 @@ class FakeServerApi : ServerApi {
         return formatter.format(calendar.time)
     }
 
-    private fun parseReactions(jsonArrayOfReactions: JSONArray): List<ServerApi.Reaction> {
-        val listOfReactions = mutableListOf<ServerApi.Reaction>()
+    private fun parseReactions(jsonArrayOfReactions: JSONArray): List<CallHandler.Reaction> {
+        val listOfReactions = mutableListOf<CallHandler.Reaction>()
         for (indexOfReaction in 0 until jsonArrayOfReactions.length()) {
             val jsonObjectReaction = jsonArrayOfReactions.get(indexOfReaction) as JSONObject
             val emojiType = jsonObjectReaction.get("reaction_type").toString()
@@ -231,7 +231,7 @@ class FakeServerApi : ServerApi {
                     listOfReactions[indexOfSameReaction].counter++
                     listOfReactions[indexOfSameReaction].usersWhoClicked.add(userId)
                 } else {
-                    listOfReactions.add(ServerApi.Reaction(emojiCode, 1, mutableListOf(userId)))
+                    listOfReactions.add(CallHandler.Reaction(emojiCode, 1, mutableListOf(userId)))
                 }
             }
         }

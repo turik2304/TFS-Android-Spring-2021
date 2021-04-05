@@ -1,6 +1,7 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,9 +11,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.*
-import com.turik2304.coursework.network.FakeServerApi
+import com.turik2304.coursework.network.ZulipAPICall
 import com.turik2304.coursework.network.LoadersID
-import com.turik2304.coursework.network.ServerApi
+import com.turik2304.coursework.network.CallHandler
+import com.turik2304.coursework.network.RetroClient
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -20,12 +22,13 @@ import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFa
 import com.turik2304.coursework.recycler_view_base.items.UserUI
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 class PeopleFragment : Fragment() {
 
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-    private val api: ServerApi = FakeServerApi()
+    private val api: CallHandler = ZulipAPICall()
     private var positionOfClickedView = -1
     private val compositeDisposable = CompositeDisposable()
 
@@ -82,6 +85,13 @@ class PeopleFragment : Fragment() {
                         usersToolbarShimmer.stopAndHideShimmer()
                     })
         )
+//        val narrow = NarrowConstructor.getNarrow("Vjbb", "general")
+//        val response = RetroClient.zulipApi.getMessages("newest",100, 0, narrow)
+//            .subscribeOn(Schedulers.io())
+//            .observeOn(AndroidSchedulers.mainThread())
+//            .subscribe { resp ->
+//                Log.d("xxx", "${resp.messages}")
+//            }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

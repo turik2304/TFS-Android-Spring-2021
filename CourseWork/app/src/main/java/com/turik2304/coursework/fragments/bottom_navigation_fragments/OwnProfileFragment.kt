@@ -1,23 +1,27 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
-import com.turik2304.coursework.network.FakeServerApi
-import com.turik2304.coursework.network.ServerApi
+import com.turik2304.coursework.network.ZulipAPICall
+import com.turik2304.coursework.network.CallHandler
+import com.turik2304.coursework.network.RetroClient
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 class OwnProfileFragment : Fragment() {
 
-    private val api: ServerApi = FakeServerApi()
+    private val api: CallHandler = ZulipAPICall()
     private lateinit var disposableGetOwnProfile: Disposable
 
     override fun onCreateView(

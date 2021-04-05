@@ -15,8 +15,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.turik2304.coursework.network.LoadersID.MESSAGES_LOADER_ID
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.network.FakeServerApi
-import com.turik2304.coursework.network.ServerApi
+import com.turik2304.coursework.network.ZulipAPICall
+import com.turik2304.coursework.network.CallHandler
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -33,7 +33,7 @@ class ChatActivity : AppCompatActivity() {
         lateinit var nameOfStream: String
 
         val compositeDisposable = CompositeDisposable()
-        val api: ServerApi = FakeServerApi()
+        val api: CallHandler = ZulipAPICall()
 
         fun updateMessages(
             context: Context,

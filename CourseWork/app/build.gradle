@@ -64,6 +64,7 @@ dependencies {
     implementation 'com.facebook.shimmer:shimmer:0.5.0'
 //    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava3:2.9.0'
     implementation 'com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0'
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1"
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'

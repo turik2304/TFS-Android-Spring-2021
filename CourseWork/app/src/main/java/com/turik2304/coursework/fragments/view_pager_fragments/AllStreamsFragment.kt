@@ -12,9 +12,9 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.*
-import com.turik2304.coursework.network.FakeServerApi
+import com.turik2304.coursework.network.ZulipAPICall
 import com.turik2304.coursework.network.LoadersID
-import com.turik2304.coursework.network.ServerApi
+import com.turik2304.coursework.network.CallHandler
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -27,7 +27,7 @@ class AllStreamsFragment : Fragment() {
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var listOfStreams: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-    private val api: ServerApi = FakeServerApi()
+    private val api: CallHandler = ZulipAPICall()
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
