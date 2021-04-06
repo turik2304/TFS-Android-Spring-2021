@@ -2,7 +2,6 @@ package com.turik2304.coursework.recycler_view_base.items
 
 import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.ViewTyped
-import io.taliox.zulip.calls.users.GetUserPresence
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

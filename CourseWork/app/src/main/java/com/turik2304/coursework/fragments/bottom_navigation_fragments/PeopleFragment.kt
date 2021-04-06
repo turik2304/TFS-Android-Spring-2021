@@ -29,8 +29,6 @@ class PeopleFragment : Fragment() {
 
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-    private val api: CallHandler = ZulipAPICall()
-    private var positionOfClickedView = -1
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
@@ -51,7 +49,7 @@ class PeopleFragment : Fragment() {
         val clickListener = { clickedView: View ->
             val userShimmer = clickedView as ShimmerFrameLayout
             userShimmer.showShimmer(true)
-            positionOfClickedView =
+            val positionOfClickedView =
                 recyclerViewUsers.getChildAdapterPosition(clickedView)
             val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
             loadProfileDetails(clickedUserUI)
@@ -81,9 +79,16 @@ class PeopleFragment : Fragment() {
                             if (!user.isBot) {
                                 RetroClient.zulipApi.getUserPresence(user.email)
                                     .subscribeOn(Schedulers.io())
-                                    .subscribe { presenceResponse ->
+                                    .subscribe({ presenceResponse ->
                                         user.presence = presenceResponse.presence.aggregated.status
-                                    }
+                                    },
+                                        { onError ->
+                                            Error.showError(
+                                                context,
+                                                onError
+                                            )
+                                            usersToolbarShimmer.stopAndHideShimmer()
+                                        })
                             }
                         }
                     },
@@ -95,13 +100,6 @@ class PeopleFragment : Fragment() {
                         usersToolbarShimmer.stopAndHideShimmer()
                     })
         )
-//        val narrow = NarrowConstructor.getNarrow("Vjbb", "general")
-//        val response = RetroClient.zulipApi.getMessages("newest",100, 0, narrow)
-//            .subscribeOn(Schedulers.io())
-//            .observeOn(AndroidSchedulers.mainThread())
-//            .subscribe { resp ->
-//                Log.d("xxx", "${resp.messages}")
-//            }
     }
 
     private fun startProfileDetailsFragment(userName: String, statusText: String, status: String) {
@@ -128,10 +126,6 @@ class PeopleFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        if (positionOfClickedView != -1) {
-            (asyncAdapter.items.currentList[positionOfClickedView] as UserUI)
-                .profileDetailsLoadingStarted = false
-        }
         compositeDisposable.clear()
     }
 }

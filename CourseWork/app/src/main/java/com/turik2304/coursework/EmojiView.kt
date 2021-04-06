@@ -7,6 +7,7 @@ import android.view.View
 import androidx.annotation.Px
 import androidx.core.view.setPadding
 import com.facebook.shimmer.ShimmerFrameLayout
+import com.turik2304.coursework.network.RetroClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
@@ -153,7 +154,7 @@ class EmojiView @JvmOverloads constructor(
             isSelected = !isSelected
             selectCounter++
             listOfUsersWhoClicked.add(MyUserId.MY_USER_ID)
-            ChatActivity.api.sendReaction(uidOfMessage, zulipEmojiCode, name)
+            RetroClient.zulipApi.sendReaction(uidOfMessage, name, zulipEmojiCode)
                 .subscribe(
                     {
                         ChatActivity.updateMessages(context, chatShimmer)
@@ -170,7 +171,7 @@ class EmojiView @JvmOverloads constructor(
             selectCounter--
             listOfUsersWhoClicked.remove(MyUserId.MY_USER_ID)
             directParent.checkZeroesCounters()
-            ChatActivity.api.removeReaction(uidOfMessage, zulipEmojiCode, name)
+            RetroClient.zulipApi.removeReaction(uidOfMessage, name, zulipEmojiCode)
                 .subscribe(
                     {
                         ChatActivity.updateMessages(context, chatShimmer)

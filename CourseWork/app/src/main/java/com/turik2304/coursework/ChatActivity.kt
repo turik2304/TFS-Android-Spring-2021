@@ -16,6 +16,7 @@ import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
 import com.turik2304.coursework.network.ZulipAPICall
 import com.turik2304.coursework.network.CallHandler
+import com.turik2304.coursework.network.RetroClient
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -117,7 +118,11 @@ class ChatActivity : AppCompatActivity() {
                 val message = chatListBinding.editTextEnterMessage.text.toString()
                 chatListBinding.chatShimmer.showShimmer(true)
                 compositeDisposable.add(
-                    api.sendMessageToServer(nameOfTopic, nameOfStream, message)
+                    RetroClient.zulipApi.sendMessage(
+                        nameOfStream = nameOfStream,
+                        nameOfTopic = nameOfTopic,
+                        message = message
+                    )
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                             {
@@ -200,9 +205,12 @@ class ChatActivity : AppCompatActivity() {
         textView.movementMethod = LinkMovementMethod.getInstance()
     }
 
-    inner class MyClickableSpan(private val context: Context, private val start: Int, private val end: Int) :
+    inner class MyClickableSpan(
+        private val context: Context,
+        private val start: Int,
+        private val end: Int
+    ) :
         ClickableSpan() {
-
         override fun onClick(widget: View) {
             val emojiCodeString = (widget as TextView).text.subSequence(start, end).toString()
             val emojiCode = emojiCodeString.codePointAt(0)
@@ -211,7 +219,7 @@ class ChatActivity : AppCompatActivity() {
             val zulipEmojiCode = nameAndZulipEmojiCode.second
             chatListBinding.chatShimmer.showShimmer(true)
             compositeDisposable.add(
-                api.sendReaction(uidOfClickedMessage, zulipEmojiCode, name)
+                RetroClient.zulipApi.sendReaction(uidOfClickedMessage, name, zulipEmojiCode)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         {

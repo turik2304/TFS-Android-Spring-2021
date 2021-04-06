@@ -18,10 +18,10 @@ data class ZulipMessage(
     @SerialName("timestamp")
     val dateInSeconds: Int,
     @SerialName("sender_id")
-    val userId: String,
-    val reactions: List<ZulipReaction>,
+    val userId: Int,
+    var reactions: List<ZulipReaction>,
     @SerialName("id")
-    val uid: String
+    val uid: Int
 )
 
 @Serializable
