@@ -27,10 +27,8 @@ interface CallHandler {
 
     fun getStreamUIListFromServer(needAllStreams: Boolean): Single<MutableList<ViewTyped>>
     fun getTopicsUIListByStreamUid(streamUid: Int): Single<MutableList<ViewTyped>>
+    fun List<ViewTyped>.addSeparators(): MutableList<ViewTyped>
     fun getMessageUIListFromServer(nameOfTopic: String, nameOfStream: String): Single<List<ViewTyped>>
-    fun getProfileDetailsById(email: String): Single<String>
-    fun getUserUIListFromServer(): Single<MutableList<ViewTyped>>
-    fun getOwnProfile(): Single<Map<String, String>>
 
     fun sendMessageToServer(nameOfTopic: String, nameOfStream: String, message: String): Completable
     fun sendReaction(uidOfMessage: Int, emojiCode: String, emojiName: String): Completable

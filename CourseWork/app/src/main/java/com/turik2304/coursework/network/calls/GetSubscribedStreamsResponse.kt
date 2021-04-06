@@ -5,8 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-class GetSubscribedResponse(
-
+class GetSubscribedStreamsResponse(
     @SerialName("subscriptions")
     val subscribedStreams: List<StreamUI>
 )

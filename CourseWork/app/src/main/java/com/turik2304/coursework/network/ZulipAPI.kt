@@ -2,6 +2,8 @@ package com.turik2304.coursework.network
 
 import com.turik2304.coursework.network.calls.*
 import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.core.Single
 import retrofit2.http.*
 
@@ -13,11 +15,14 @@ interface ZulipAPI {
     @GET("users/{user_id}")
     fun getUser(@Path("user_id") userId: Int): Single<GetUserResponse>
 
+    @GET("users/{user_email}/presence")
+    fun getUserPresence(@Path("user_email") email: String): Single<GetUserPresenceResponse>
+
     @GET("users/me")
     fun getOwnProfile(): Single<GetOwnProfileResponse>
 
     @GET("users/me/subscriptions")
-    fun getSubscribedStreams(): Single<GetSubscribedResponse>
+    fun getSubscribedStreams(): Single<GetSubscribedStreamsResponse>
 
     @GET("streams")
     fun getAllStreams(): Single<GetAllStreamsResponse>

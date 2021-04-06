@@ -1,6 +1,7 @@
 package com.turik2304.coursework.network
 
 import com.turik2304.coursework.MyUserId
+import com.turik2304.coursework.network.calls.GetAllStreamsResponse
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
 import io.reactivex.rxjava3.annotations.NonNull
@@ -12,12 +13,8 @@ import io.taliox.zulip.calls.messages.AddReaction
 import io.taliox.zulip.calls.messages.DeleteReaction
 import io.taliox.zulip.calls.messages.GetMessages
 import io.taliox.zulip.calls.messages.PostMessage
-import io.taliox.zulip.calls.streams.GetAllStreams
 import io.taliox.zulip.calls.streams.GetAllTopicsOfAStream
 import io.taliox.zulip.calls.streams.GetSubscribedStreams
-import io.taliox.zulip.calls.users.GetAllUsers
-import io.taliox.zulip.calls.users.GetProfile
-import io.taliox.zulip.calls.users.GetUserPresence
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -35,58 +32,40 @@ class ZulipAPICall : CallHandler {
         get() = "https://tfs-android-2021-spring.zulipchat.com/"
 
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<MutableList<ViewTyped>> {
-        val key: String
-        val getStreams = if (needAllStreams) {
-            key = "streams"
-            GetAllStreams()
-        } else {
-            key = "subscriptions"
-            GetSubscribedStreams()
-        }
-        val executor = ZulipRestExecutor(
-            userName, password, serverURL
-        )
-        return Single.fromCallable { getStreams.execute(executor) }
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.computation())
-            .map { response ->
-                val jsonArrayOfStreams = parseJsonArray(response, key)
-                val listOfStreams = mutableListOf<ViewTyped>()
-                for (indexOfStream in 0 until jsonArrayOfStreams.length()) {
-                    val jsonObjectStream = jsonArrayOfStreams.get(indexOfStream) as JSONObject
-                    val nameOfStream = jsonObjectStream.get("name").toString()
-                    val uid = Integer.parseInt(jsonObjectStream.get("stream_id").toString())
-                    listOfStreams.add(StreamUI(nameOfStream, uid))
-                    listOfStreams.add(StreamAndTopicSeparatorUI(uid = nameOfStream.hashCode()))
+        if (needAllStreams) {
+            return RetroClient.zulipApi.getAllStreams()
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.computation())
+                .map { allStreamsResponse ->
+                    return@map allStreamsResponse.allStreams.addSeparators()
                 }
-                return@map listOfStreams
-            }
+        } else {
+            return RetroClient.zulipApi.getSubscribedStreams()
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.computation())
+                .map { subscribedStreamsResponse ->
+                    return@map subscribedStreamsResponse.subscribedStreams.addSeparators()
+                }
+        }
     }
 
     override fun getTopicsUIListByStreamUid(streamUid: Int): Single<MutableList<ViewTyped>> {
-        val getTopicsOfStream = GetAllTopicsOfAStream(streamUid.toString())
-        val executor = ZulipRestExecutor(
-            userName, password, serverURL
-        )
-        return Single.fromCallable { getTopicsOfStream.execute(executor) }
+        return RetroClient.zulipApi.getTopics(streamUid)
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
-            .map { response ->
-                val jsonArrayOfTopics = parseJsonArray(response, "topics")
-                val listOfTopics = mutableListOf<ViewTyped>()
-                for (indexOfTopic in 0 until jsonArrayOfTopics.length()) {
-                    val jsonObjectTopic = jsonArrayOfTopics.get(indexOfTopic) as JSONObject
-                    val nameOfTopic = jsonObjectTopic.get("name").toString()
-                    val uid = Integer.parseInt(jsonObjectTopic.get("max_id").toString())
-                    listOfTopics.add(TopicUI(name = nameOfTopic, uid = uid))
-                    listOfTopics.add(
-                        StreamAndTopicSeparatorUI(
-                            uid = nameOfTopic.hashCode()
-                        )
-                    )
-                }
-                return@map listOfTopics
+            .map { topicsResponse ->
+                return@map topicsResponse.topics.addSeparators()
             }
+    }
+
+    override fun List<ViewTyped>.addSeparators(): MutableList<ViewTyped> {
+        return this.flatMap { item ->
+            when (item) {
+                is StreamUI -> listOf(item) + listOf(StreamAndTopicSeparatorUI(uid = item.name.hashCode()))
+                is TopicUI -> listOf(item) + listOf(StreamAndTopicSeparatorUI(uid = item.name.hashCode()))
+                else -> listOf(item)
+            }
+        }.toMutableList()
     }
 
     override fun getMessageUIListFromServer(
@@ -262,74 +241,8 @@ class ZulipAPICall : CallHandler {
             .subscribeOn(Schedulers.io())
     }
 
-    override fun getProfileDetailsById(email: String): Single<String> {
-        val executor = ZulipRestExecutor(
-            userName, password, serverURL
-        )
-        val getUserPresence = GetUserPresence(email)
-        return Single.fromCallable { getUserPresence.execute(executor) }
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.computation())
-            .map { response ->
-                val jsonObjectAggregated = parseJsonObject(response, "presence", "aggregated")
-                jsonObjectAggregated.getString("status")
-            }
-    }
-
-    override fun getUserUIListFromServer(): Single<MutableList<ViewTyped>> {
-        val executor = ZulipRestExecutor(
-            userName, password, serverURL
-        )
-        val getAllUsers = GetAllUsers()
-        return Single.fromCallable { getAllUsers.execute(executor) }
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.computation())
-            .map { response ->
-                val jsonArrayOfUsers = parseJsonArray(response, "members")
-                val listOfUser = mutableListOf<ViewTyped>()
-                for (indexOfUser in 0 until jsonArrayOfUsers.length()) {
-                    val jsonObjectUser = jsonArrayOfUsers.get(indexOfUser) as JSONObject
-                    val email = jsonObjectUser.get("email").toString()
-                    val name = jsonObjectUser.get("full_name").toString()
-                    val uid = Integer.parseInt(jsonObjectUser.get("user_id").toString())
-                    listOfUser.add(
-                        UserUI(
-                            userName = name,
-                            email = email,
-                            uid = uid
-                        )
-                    )
-                }
-                return@map listOfUser
-            }
-    }
-
-    override fun getOwnProfile(): Single<Map<String, String>> {
-        val executor = ZulipRestExecutor(
-            userName, password, serverURL
-        )
-        val getOwnProfile = GetProfile()
-        return Single.fromCallable { getOwnProfile.execute(executor) }
-            .subscribeOn(Schedulers.io())
-            .map { response ->
-                val jsonObjectProfile = JSONObject(response)
-                val userName = jsonObjectProfile.get("full_name").toString()
-                return@map mapOf("userName" to userName)
-            }
-    }
-
     private fun parseJsonArray(response: String, key: String): JSONArray {
         return JSONObject(response)
             .getJSONArray(key)
     }
-
-    private fun parseJsonObject(response: String, vararg keys: String): JSONObject {
-        var jsonObject = JSONObject(response)
-        for (key in keys) {
-            jsonObject = jsonObject.get(key) as JSONObject
-        }
-        return jsonObject
-    }
-
-
 }

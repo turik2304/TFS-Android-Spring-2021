@@ -10,6 +10,7 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.network.CallHandler
+import com.turik2304.coursework.network.RetroClient
 import com.turik2304.coursework.network.ZulipAPICall
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -38,11 +39,11 @@ class OwnProfileFragment : Fragment() {
         val statusText = view.findViewById<TextView>(R.id.tvStatusTextProfile)
         val status = view.findViewById<TextView>(R.id.tvStatusProfile)
 
-        disposableGetOwnProfile = api.getOwnProfile()
+        disposableGetOwnProfile = RetroClient.zulipApi.getOwnProfile()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { response ->
-                    val name = response["userName"]
+                    val name = response.name
                     userName.text = name
                     ownProfileShimmer.stopAndHideShimmer()
                 },

@@ -1,18 +1,19 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.Search
 import com.turik2304.coursework.network.CallHandler
+import com.turik2304.coursework.network.RetroClient
 import com.turik2304.coursework.network.ZulipAPICall
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
@@ -22,6 +23,7 @@ import com.turik2304.coursework.recycler_view_base.items.UserUI
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 class PeopleFragment : Fragment() {
 
@@ -52,7 +54,7 @@ class PeopleFragment : Fragment() {
             positionOfClickedView =
                 recyclerViewUsers.getChildAdapterPosition(clickedView)
             val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
-            loadProfileDetails(clickedUserUI, requireActivity())
+            loadProfileDetails(clickedUserUI)
         }
         val editText = view.findViewById<EditText>(R.id.edSearchUsers)
         val holderFactory = MainHolderFactory(clickListener)
@@ -61,12 +63,13 @@ class PeopleFragment : Fragment() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
         compositeDisposable.add(
-            api.getUserUIListFromServer()
+            RetroClient.zulipApi.getAllUsers()
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                    { userList ->
-                        asyncAdapter.items.submitList(userList)
-                        innerViewTypedList = userList
+                    { response ->
+                        asyncAdapter.items.submitList(response.members)
+                        innerViewTypedList = response.members
                         Search.initSearch(
                             editText,
                             innerViewTypedList,
@@ -74,7 +77,15 @@ class PeopleFragment : Fragment() {
                             recyclerViewUsers
                         )
                         usersToolbarShimmer.stopAndHideShimmer()
-                        checkSavedInstanceState(savedInstanceState)
+                        response.members.forEach { user ->
+                            if (!user.isBot) {
+                                RetroClient.zulipApi.getUserPresence(user.email)
+                                    .subscribeOn(Schedulers.io())
+                                    .subscribe { presenceResponse ->
+                                        user.presence = presenceResponse.presence.aggregated.status
+                                    }
+                            }
+                        }
                     },
                     { onError ->
                         Error.showError(
@@ -93,21 +104,6 @@ class PeopleFragment : Fragment() {
 //            }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putInt(BUNDLE_POSITION_OF_CLICKED_VIEW, positionOfClickedView)
-    }
-
-    private fun checkSavedInstanceState(bundle: Bundle?) {
-        if (bundle != null) {
-            positionOfClickedView = bundle.getInt(BUNDLE_POSITION_OF_CLICKED_VIEW)
-            if (positionOfClickedView != -1) {
-                val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
-                loadProfileDetails(clickedUserUI, requireActivity())
-            }
-        }
-    }
-
     private fun startProfileDetailsFragment(userName: String, statusText: String, status: String) {
         parentFragmentManager.beginTransaction()
             .replace(
@@ -124,29 +120,10 @@ class PeopleFragment : Fragment() {
 
     private fun loadProfileDetails(
         userUI: UserUI,
-        activity: FragmentActivity,
     ) {
-        userUI.profileDetailsLoadingStarted = true
-        val email = userUI.email
         val name = userUI.userName
-        compositeDisposable.add(
-            api.getProfileDetailsById(email)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { status ->
-                        startProfileDetailsFragment(name, status, status)
-                        userUI.profileDetailsLoadingStarted = false
-                        positionOfClickedView = -1
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        userUI.profileDetailsLoadingStarted = false
-                        positionOfClickedView = -1
-                    })
-        )
+        val status = userUI.presence
+        startProfileDetailsFragment(name, status, status)
     }
 
     override fun onStop() {
@@ -157,10 +134,5 @@ class PeopleFragment : Fragment() {
         }
         compositeDisposable.clear()
     }
-
-    companion object {
-        const val BUNDLE_POSITION_OF_CLICKED_VIEW = "POSITION"
-    }
-
 }
 

@@ -35,7 +35,6 @@ class ProfileDetailsFragment : Fragment() {
 
         when (statusTextView.text) {
             "active" -> {
-                statusTextView.text = "online"
                 statusTextView.setTextColor(
                     resources.getColor(
                         R.color.green_status_online,
