@@ -14,8 +14,7 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.network.ZulipAPICall
-import com.turik2304.coursework.network.CallHandler
+import com.turik2304.coursework.network.ZulipAPICallHandler
 import com.turik2304.coursework.network.RetroClient
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
@@ -33,7 +32,6 @@ class ChatActivity : AppCompatActivity() {
         lateinit var nameOfStream: String
 
         val compositeDisposable = CompositeDisposable()
-        val api: CallHandler = ZulipAPICall()
 
         fun updateMessages(
             context: Context,
@@ -41,7 +39,7 @@ class ChatActivity : AppCompatActivity() {
             runnable: Runnable? = null
         ) {
             compositeDisposable.add(
-                api.getMessageUIListFromServer(nameOfTopic, nameOfStream)
+                ZulipAPICallHandler.getMessageUIListFromServer(nameOfTopic, nameOfStream)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         { list ->

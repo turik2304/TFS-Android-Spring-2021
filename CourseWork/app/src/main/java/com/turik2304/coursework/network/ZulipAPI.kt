@@ -15,8 +15,8 @@ interface ZulipAPI {
     @GET("users/{user_id}")
     fun getUser(@Path("user_id") userId: Int): Single<GetUserResponse>
 
-    @GET("users/{user_email}/presence")
-    fun getUserPresence(@Path("user_email") email: String): Single<GetUserPresenceResponse>
+    @GET("users/{user_email_or_id}/presence")
+    fun getUserPresence(@Path("user_email_or_id") email: String): Single<GetUserPresenceResponse>
 
     @GET("users/me")
     fun getOwnProfile(): Single<GetOwnProfileResponse>

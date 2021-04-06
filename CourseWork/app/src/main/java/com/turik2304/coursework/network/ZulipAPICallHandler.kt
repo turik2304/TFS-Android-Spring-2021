@@ -7,11 +7,12 @@ import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
 
-class ZulipAPICall : CallHandler {
+object ZulipAPICallHandler : CallHandler {
 
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<MutableList<ViewTyped>> {
         if (needAllStreams) {
@@ -40,7 +41,20 @@ class ZulipAPICall : CallHandler {
             }
     }
 
-    override fun List<ViewTyped>.addSeparators(): MutableList<ViewTyped> {
+    override fun getOwnProfile(): Single<Pair<String, String>> {
+        val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
+        val getOwnPresence = RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
+        return Single.zip(getOwnProfile, getOwnPresence,
+        BiFunction { ownProfileResponse, ownPresence ->
+            val status = ownPresence.presence.aggregated.status
+            val ownProfileName  = ownProfileResponse.name
+            return@BiFunction (ownProfileName to status)
+        })
+            .subscribeOn(Schedulers.io())
+
+    }
+
+    private fun List<ViewTyped>.addSeparators(): MutableList<ViewTyped> {
         return this.flatMap { item ->
             when (item) {
                 is StreamUI -> listOf(item) + listOf(StreamAndTopicSeparatorUI(uid = item.name.hashCode()))

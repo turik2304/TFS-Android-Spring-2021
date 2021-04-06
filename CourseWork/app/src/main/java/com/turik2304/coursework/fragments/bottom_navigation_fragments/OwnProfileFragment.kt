@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
-import com.turik2304.coursework.network.RetroClient
+import com.turik2304.coursework.network.ZulipAPICallHandler
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
@@ -31,17 +31,17 @@ class OwnProfileFragment : Fragment() {
 
         val ownProfileShimmer = view as ShimmerFrameLayout
         ownProfileShimmer.startShimmer()
-        val userName = view.findViewById<TextView>(R.id.tvUserNameProfileTab)
-        val status = view.findViewById<TextView>(R.id.tvStatusProfile)
+        val userNameTextView = view.findViewById<TextView>(R.id.tvUserNameProfileTab)
+        val statusTextView = view.findViewById<TextView>(R.id.tvStatusProfile)
 
-        disposableGetOwnProfile = RetroClient.zulipApi.getOwnProfile()
+        disposableGetOwnProfile = ZulipAPICallHandler.getOwnProfile()
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { response ->
-                    val name = response.name
-                    userName.text = name
-                    ownProfileShimmer.stopAndHideShimmer()
-                },
+            .subscribe({ nameAndPresenceResponse ->
+                userNameTextView.text = nameAndPresenceResponse.first
+                statusTextView.text = nameAndPresenceResponse.second
+                SetStatusUtil.setColoredStatus(statusTextView)
+                ownProfileShimmer.stopAndHideShimmer()
+            },
                 { onError ->
                     Error.showError(
                         context,
@@ -49,9 +49,6 @@ class OwnProfileFragment : Fragment() {
                     )
                     ownProfileShimmer.stopAndHideShimmer()
                 })
-
-        status.text = "online"
-        status.setTextColor(resources.getColor(R.color.green_status_online, context?.theme))
     }
 
     override fun onStop() {

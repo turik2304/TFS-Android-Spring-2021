@@ -30,33 +30,7 @@ class ProfileDetailsFragment : Fragment() {
 
         userNameTextView.text = requireArguments().getString(ARG_USER_NAME, "none")
         statusTextView.text = requireArguments().getString(ARG_STATUS, "none")
-
-        when (statusTextView.text) {
-            "active" -> {
-                statusTextView.setTextColor(
-                    resources.getColor(
-                        R.color.green_status_online,
-                        context?.theme
-                    )
-                )
-            }
-            "idle" -> {
-                statusTextView.setTextColor(
-                    resources.getColor(
-                        R.color.yellow_status_idle,
-                        context?.theme
-                    )
-                )
-            }
-            else -> {
-                statusTextView.setTextColor(
-                    resources.getColor(
-                        R.color.red_status_offline,
-                        context?.theme
-                    )
-                )
-            }
-        }
+        SetStatusUtil.setColoredStatus(statusTextView)
     }
 
     companion object {

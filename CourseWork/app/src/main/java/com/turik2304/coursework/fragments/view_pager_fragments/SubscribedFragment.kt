@@ -14,8 +14,7 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
-import com.turik2304.coursework.network.ZulipAPICall
-import com.turik2304.coursework.network.CallHandler
+import com.turik2304.coursework.network.ZulipAPICallHandler
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -31,7 +30,6 @@ class SubscribedFragment : Fragment() {
     private lateinit var innerViewTypedList: MutableList<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
-    private val api: CallHandler = ZulipAPICall()
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
@@ -98,7 +96,7 @@ class SubscribedFragment : Fragment() {
                         )
                     } else {
                         compositeDisposable.add(
-                            api.getTopicsUIListByStreamUid(uidOfClickedStreamUI)
+                            ZulipAPICallHandler.getTopicsUIListByStreamUid(uidOfClickedStreamUI)
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(
                                     { listOfTopics ->
@@ -160,7 +158,7 @@ class SubscribedFragment : Fragment() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
         compositeDisposable.add(
-            api.getStreamUIListFromServer(needAllStreams = false)
+            ZulipAPICallHandler.getStreamUIListFromServer(needAllStreams = false)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { streamList ->
