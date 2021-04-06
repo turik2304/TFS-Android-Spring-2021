@@ -102,13 +102,12 @@ class PeopleFragment : Fragment() {
         )
     }
 
-    private fun startProfileDetailsFragment(userName: String, statusText: String, status: String) {
+    private fun startProfileDetailsFragment(userName: String, status: String) {
         parentFragmentManager.beginTransaction()
             .replace(
                 R.id.fragmentContainer,
                 ProfileDetailsFragment.newInstance(
                     userName,
-                    statusText,
                     status
                 )
             )
@@ -121,7 +120,7 @@ class PeopleFragment : Fragment() {
     ) {
         val name = userUI.userName
         val status = userUI.presence
-        startProfileDetailsFragment(name, status, status)
+        startProfileDetailsFragment(name, status)
     }
 
     override fun onStop() {

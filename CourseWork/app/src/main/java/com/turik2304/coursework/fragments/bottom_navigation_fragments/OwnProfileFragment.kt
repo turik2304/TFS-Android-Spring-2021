@@ -9,16 +9,13 @@ import androidx.fragment.app.Fragment
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
-import com.turik2304.coursework.network.CallHandler
 import com.turik2304.coursework.network.RetroClient
-import com.turik2304.coursework.network.ZulipAPICall
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
 
 class OwnProfileFragment : Fragment() {
 
-    private val api: CallHandler = ZulipAPICall()
     private lateinit var disposableGetOwnProfile: Disposable
 
     override fun onCreateView(
@@ -27,7 +24,6 @@ class OwnProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_own_profile, container, false)
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -36,7 +32,6 @@ class OwnProfileFragment : Fragment() {
         val ownProfileShimmer = view as ShimmerFrameLayout
         ownProfileShimmer.startShimmer()
         val userName = view.findViewById<TextView>(R.id.tvUserNameProfileTab)
-        val statusText = view.findViewById<TextView>(R.id.tvStatusTextProfile)
         val status = view.findViewById<TextView>(R.id.tvStatusProfile)
 
         disposableGetOwnProfile = RetroClient.zulipApi.getOwnProfile()
@@ -55,7 +50,6 @@ class OwnProfileFragment : Fragment() {
                     ownProfileShimmer.stopAndHideShimmer()
                 })
 
-        statusText.text = "In a meeting"
         status.text = "online"
         status.setTextColor(resources.getColor(R.color.green_status_online, context?.theme))
     }
