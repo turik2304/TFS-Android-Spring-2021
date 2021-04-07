@@ -59,8 +59,8 @@ class OwnProfileFragment : Fragment() {
         status.setTextColor(resources.getColor(R.color.green_status_online, context?.theme))
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         disposableGetOwnProfile.dispose()
     }
 }
