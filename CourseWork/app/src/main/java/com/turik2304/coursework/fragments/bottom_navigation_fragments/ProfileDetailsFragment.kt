@@ -30,7 +30,7 @@ class ProfileDetailsFragment : Fragment() {
 
         userNameTextView.text = requireArguments().getString(ARG_USER_NAME, "none")
         statusTextView.text = requireArguments().getString(ARG_STATUS, "none")
-        SetStatusUtil.setColoredStatus(statusTextView)
+        SetStatusUtil.setColoredTextStatus(statusTextView)
     }
 
     companion object {

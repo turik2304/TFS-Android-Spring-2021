@@ -45,13 +45,12 @@ object ZulipAPICallHandler : CallHandler {
         val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
         val getOwnPresence = RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
         return Single.zip(getOwnProfile, getOwnPresence,
-        BiFunction { ownProfileResponse, ownPresence ->
-            val status = ownPresence.presence.aggregated.status
-            val ownProfileName  = ownProfileResponse.name
-            return@BiFunction (ownProfileName to status)
-        })
+            BiFunction { ownProfileResponse, ownPresence ->
+                val status = ownPresence.presence.aggregated.status
+                val ownProfileName = ownProfileResponse.name
+                return@BiFunction (ownProfileName to status)
+            })
             .subscribeOn(Schedulers.io())
-
     }
 
     private fun List<ViewTyped>.addSeparators(): MutableList<ViewTyped> {

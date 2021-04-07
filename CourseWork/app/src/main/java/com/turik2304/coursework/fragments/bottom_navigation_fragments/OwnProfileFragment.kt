@@ -1,6 +1,7 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -39,7 +40,7 @@ class OwnProfileFragment : Fragment() {
             .subscribe({ nameAndPresenceResponse ->
                 userNameTextView.text = nameAndPresenceResponse.first
                 statusTextView.text = nameAndPresenceResponse.second
-                SetStatusUtil.setColoredStatus(statusTextView)
+                SetStatusUtil.setColoredTextStatus(statusTextView)
                 ownProfileShimmer.stopAndHideShimmer()
             },
                 { onError ->
@@ -51,8 +52,8 @@ class OwnProfileFragment : Fragment() {
                 })
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         disposableGetOwnProfile.dispose()
     }
 }

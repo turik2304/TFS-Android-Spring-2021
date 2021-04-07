@@ -199,7 +199,6 @@ class SubscribedFragment : Fragment() {
     override fun onStop() {
         super.onStop()
         compositeDisposable.clear()
-
     }
 
     override fun onDestroyView() {

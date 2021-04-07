@@ -7,5 +7,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 class GetAllUsersResponse(
     @SerialName("members")
-   val members: List<UserUI>,
+    val members: List<UserUI>
 )

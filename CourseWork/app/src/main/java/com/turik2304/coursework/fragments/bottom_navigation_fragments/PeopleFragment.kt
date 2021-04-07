@@ -1,6 +1,7 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,7 @@ import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.Search
 import com.turik2304.coursework.network.RetroClient
+import com.turik2304.coursework.network.ZulipAPICallHandler
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -63,7 +65,9 @@ class PeopleFragment : Fragment() {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { response ->
-                        asyncAdapter.items.submitList(response.members)
+                        asyncAdapter.items.submitList(
+                            response.members.sortedBy { user -> user.userName }
+                        )
                         innerViewTypedList = response.members
                         Search.initSearch(
                             editText,
@@ -72,7 +76,7 @@ class PeopleFragment : Fragment() {
                             recyclerViewUsers
                         )
                         usersToolbarShimmer.stopAndHideShimmer()
-                        response.members.forEach { user ->
+                        response.members.forEachIndexed { index, user ->
                             if (!user.isBot) {
                                 RetroClient.zulipApi.getUserPresence(user.email)
                                     .subscribeOn(Schedulers.io())
@@ -120,8 +124,8 @@ class PeopleFragment : Fragment() {
         startProfileDetailsFragment(name, status)
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         compositeDisposable.clear()
     }
 }
