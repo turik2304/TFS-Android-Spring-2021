@@ -124,6 +124,14 @@ class PeopleFragment : Fragment() {
         startProfileDetailsFragment(name, status)
     }
 
+    override fun onStop() {
+        super.onStop()
+        if (positionOfClickedView != -1) {
+            (asyncAdapter.items.currentList[positionOfClickedView] as UserUI)
+                .profileDetailsLoadingStarted = false
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         compositeDisposable.clear()
