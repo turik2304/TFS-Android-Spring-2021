@@ -157,7 +157,7 @@ class EmojiView @JvmOverloads constructor(
             RetroClient.zulipApi.sendReaction(uidOfMessage, name, zulipEmojiCode)
                 .subscribe(
                     {
-                        ChatActivity.updateMessages(context, chatShimmer)
+                    ChatActivity.updateMessage(uidOfMessage, chatShimmer)
                     },
                     { onError ->
                         Error.showError(
@@ -174,7 +174,7 @@ class EmojiView @JvmOverloads constructor(
             RetroClient.zulipApi.removeReaction(uidOfMessage, name, zulipEmojiCode)
                 .subscribe(
                     {
-                        ChatActivity.updateMessages(context, chatShimmer)
+                        ChatActivity.updateMessage(uidOfMessage, chatShimmer)
                     },
                     { onError ->
                         Error.showError(

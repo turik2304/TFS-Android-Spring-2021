@@ -45,7 +45,7 @@ interface ZulipAPI {
         @Query("to") nameOfStream: String,
         @Query("topic") nameOfTopic: String,
         @Query("content") message: String
-    ): Completable
+    ): Single<SendMessageResponse>
 
     @POST("messages/{message_id}/reactions")
     fun sendReaction(
