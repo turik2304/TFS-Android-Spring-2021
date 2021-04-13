@@ -8,19 +8,25 @@ import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.Search
 import com.turik2304.coursework.network.RetroClient
+import com.turik2304.coursework.network.ZulipAPI
 import com.turik2304.coursework.network.ZulipAPICallHandler
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.UserUI
+import com.turik2304.coursework.room.Database
+import com.turik2304.coursework.room.DatabaseClient
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 
@@ -31,9 +37,9 @@ class PeopleFragment : Fragment() {
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_people, container, false)
     }
@@ -49,75 +55,91 @@ class PeopleFragment : Fragment() {
             val userShimmer = clickedView as ShimmerFrameLayout
             userShimmer.showShimmer(true)
             val positionOfClickedView =
-                recyclerViewUsers.getChildAdapterPosition(clickedView)
+                    recyclerViewUsers.getChildAdapterPosition(clickedView)
             val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
             loadProfileDetails(clickedUserUI)
         }
         val editText = view.findViewById<EditText>(R.id.edSearchUsers)
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
-
+        val db = DatabaseClient.getInstance(requireContext())
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
         compositeDisposable.add(
-            RetroClient.zulipApi.getAllUsers()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
-                        asyncAdapter.items.submitList(
-                            response.members.sortedBy { user -> user.userName }
-                        )
-                        innerViewTypedList = response.members
-                        Search.initSearch(
-                            editText,
-                            innerViewTypedList,
-                            asyncAdapter,
-                            recyclerViewUsers
-                        )
-                        usersToolbarShimmer.stopAndHideShimmer()
-                        response.members.forEachIndexed { index, user ->
-                            if (!user.isBot) {
-                                RetroClient.zulipApi.getUserPresence(user.email)
-                                    .subscribeOn(Schedulers.io())
-                                    .subscribe({ presenceResponse ->
-                                        user.presence = presenceResponse.presence.aggregated.status
-                                    },
-                                        { onError ->
-                                            Error.showError(
-                                                context,
-                                                onError
-                                            )
-                                            usersToolbarShimmer.stopAndHideShimmer()
-                                        })
+                Single.fromCallable { db?.userDao()?.getAll() }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe { userList ->
+                            asyncAdapter.items.submitList(userList) {
+                                if (asyncAdapter.itemCount != 0) {
+                                    usersToolbarShimmer.stopAndHideShimmer()
+                                }
                             }
-                        }
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        usersToolbarShimmer.stopAndHideShimmer()
-                    })
+                        })
+        compositeDisposable.add(
+                RetroClient.zulipApi.getAllUsers()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                { response ->
+                                    val sortedList = response.members.sortedBy { user -> user.userName }
+                                    sortedList.forEachIndexed { index, user ->
+                                        if (!user.isBot) {
+                                            RetroClient.zulipApi.getUserPresence(user.email)
+                                                    .subscribeOn(Schedulers.io())
+                                                    .observeOn(AndroidSchedulers.mainThread())
+                                                    .subscribe({ presenceResponse ->
+                                                        user.presence = presenceResponse.presence.aggregated.status
+                                                        if (index == sortedList.size - 1) {
+                                                            asyncAdapter.items.submitList(sortedList)
+                                                            Completable.fromCallable { db?.userDao()?.deleteAndCreate(sortedList) }
+                                                                    .subscribeOn(Schedulers.io())
+                                                                    .subscribe()
+                                                            usersToolbarShimmer.stopAndHideShimmer()
+                                                            innerViewTypedList = sortedList
+                                                            Search.initSearch(
+                                                                    editText,
+                                                                    innerViewTypedList,
+                                                                    asyncAdapter,
+                                                                    recyclerViewUsers
+                                                            )
+                                                        }
+                                                    },
+                                                            { onError ->
+                                                                Error.showError(
+                                                                        context,
+                                                                        onError
+                                                                )
+                                                                usersToolbarShimmer.stopAndHideShimmer()
+                                                            })
+                                        }
+                                    }
+                                },
+                                { onError ->
+                                    Error.showError(
+                                            context,
+                                            onError
+                                    )
+                                    usersToolbarShimmer.stopAndHideShimmer()
+                                })
         )
     }
 
     private fun startProfileDetailsFragment(userName: String, status: String) {
         parentFragmentManager.beginTransaction()
-            .replace(
-                R.id.fragmentContainer,
-                ProfileDetailsFragment.newInstance(
-                    userName,
-                    status
+                .replace(
+                        R.id.fragmentContainer,
+                        ProfileDetailsFragment.newInstance(
+                                userName,
+                                status
+                        )
                 )
-            )
-            .addToBackStack(null)
-            .commit()
+                .addToBackStack(null)
+                .commit()
     }
 
     private fun loadProfileDetails(
-        userUI: UserUI,
+            userUI: UserUI,
     ) {
         val name = userUI.userName
         val status = userUI.presence
