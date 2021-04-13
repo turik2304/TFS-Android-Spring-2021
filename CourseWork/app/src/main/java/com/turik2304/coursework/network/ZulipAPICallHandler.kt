@@ -14,30 +14,30 @@ import java.util.*
 
 object ZulipAPICallHandler : CallHandler {
 
-    override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<MutableList<ViewTyped>> {
+    override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>> {
         if (needAllStreams) {
             return RetroClient.zulipApi.getAllStreams()
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.computation())
                     .map { allStreamsResponse ->
-                        return@map allStreamsResponse.allStreams.addSeparators()
+                        return@map allStreamsResponse.allStreams
                     }
         } else {
             return RetroClient.zulipApi.getSubscribedStreams()
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.computation())
                     .map { subscribedStreamsResponse ->
-                        return@map subscribedStreamsResponse.subscribedStreams.addSeparators()
+                        return@map subscribedStreamsResponse.subscribedStreams
                     }
         }
     }
 
-    override fun getTopicsUIListByStreamUid(streamUid: Int): Single<MutableList<ViewTyped>> {
+    override fun getTopicsUIListByStreamUid(streamUid: Int): Single<List<TopicUI>> {
         return RetroClient.zulipApi.getTopics(streamUid)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.computation())
                 .map { topicsResponse ->
-                    return@map topicsResponse.topics.addSeparators()
+                    return@map topicsResponse.topics
                 }
     }
 
@@ -51,16 +51,6 @@ object ZulipAPICallHandler : CallHandler {
                     return@BiFunction (ownProfileName to status)
                 })
                 .subscribeOn(Schedulers.io())
-    }
-
-    private fun List<ViewTyped>.addSeparators(): MutableList<ViewTyped> {
-        return this.flatMap { item ->
-            when (item) {
-                is StreamUI -> listOf(item) + listOf(StreamAndTopicSeparatorUI(uid = item.name.hashCode()))
-                is TopicUI -> listOf(item) + listOf(StreamAndTopicSeparatorUI(uid = item.name.hashCode()))
-                else -> listOf(item)
-            }
-        }.toMutableList()
     }
 
     override fun updateMessageUIListAfterSendingMessage(

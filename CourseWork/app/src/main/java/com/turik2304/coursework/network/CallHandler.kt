@@ -1,6 +1,8 @@
 package com.turik2304.coursework.network
 
 import com.turik2304.coursework.recycler_view_base.ViewTyped
+import com.turik2304.coursework.recycler_view_base.items.StreamUI
+import com.turik2304.coursework.recycler_view_base.items.TopicUI
 import io.reactivex.rxjava3.core.Single
 
 interface CallHandler {
@@ -11,8 +13,8 @@ interface CallHandler {
             val usersWhoClicked: MutableList<Int>
     )
 
-    fun getStreamUIListFromServer(needAllStreams: Boolean): Single<MutableList<ViewTyped>>
-    fun getTopicsUIListByStreamUid(streamUid: Int): Single<MutableList<ViewTyped>>
+    fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>>
+    fun getTopicsUIListByStreamUid(streamUid: Int): Single<List<TopicUI>>
     fun getMessageUIListFromServer(
             nameOfTopic: String,
             nameOfStream: String,

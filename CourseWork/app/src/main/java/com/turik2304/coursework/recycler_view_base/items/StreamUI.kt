@@ -11,6 +11,7 @@ data class StreamUI(
     val name: String,
     @SerialName("stream_id")
     override val uid: Int,
+    var topics: List<TopicUI> = emptyList(),
     var isExpanded: Boolean = false,
     override val viewType: Int = R.layout.item_stream,
 ) : ViewTyped {
