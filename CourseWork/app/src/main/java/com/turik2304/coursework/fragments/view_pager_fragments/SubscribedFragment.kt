@@ -25,7 +25,9 @@ import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
+import com.turik2304.coursework.room.DatabaseClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 
@@ -115,6 +117,15 @@ class SubscribedFragment : Fragment() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
+        val db = DatabaseClient.getInstance(requireContext())
+        Completable.fromCallable { asyncAdapter.items.submitList(db?.streamDao()?.getAll()) }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    if (asyncAdapter.itemCount != 0)
+                        listOfStreams = asyncAdapter.items.currentList as List<StreamUI>
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                }
 
         compositeDisposable.add(
                 ZulipAPICallHandler.getStreamUIListFromServer(needAllStreams = false)
@@ -129,6 +140,11 @@ class SubscribedFragment : Fragment() {
                                                     streamUI.topics = topics
                                                     if (index == streamList.size - 1) {
                                                         asyncAdapter.items.submitList(streamList)
+                                                        Completable.fromCallable {
+                                                            db?.streamDao()?.deleteAndCreate(streamList)
+                                                        }.subscribeOn(Schedulers.io())
+                                                                .subscribe()
+                                                        tabLayoutShimmer?.stopAndHideShimmer()
                                                         listOfStreams = streamList
                                                         innerViewTypedList = streamList
                                                         Search.initSearch(
@@ -137,7 +153,6 @@ class SubscribedFragment : Fragment() {
                                                                 asyncAdapter,
                                                                 recyclerViewSubscribedStreams
                                                         )
-                                                        tabLayoutShimmer?.stopAndHideShimmer()
                                                     }
                                                 }
                                     }

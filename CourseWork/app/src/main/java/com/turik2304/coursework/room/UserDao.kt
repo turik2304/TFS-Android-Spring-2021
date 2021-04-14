@@ -5,19 +5,14 @@ import com.turik2304.coursework.recycler_view_base.items.UserUI
 
 @Dao
 interface UserDao {
-    @Query("SELECT * FROM user ORDER BY userName")
+
+    @Query("SELECT * FROM users ORDER BY userName")
     fun getAll(): List<UserUI>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertUser(user:UserUI)
+    fun insertAll(users: List<UserUI>)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAll(list: List<UserUI>)
-
-    @Delete
-    fun delete(user: UserUI)
-
-    @Query("DELETE FROM user")
+    @Query("DELETE FROM users")
     fun deleteAll()
 
     @Transaction

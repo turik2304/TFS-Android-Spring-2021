@@ -71,9 +71,8 @@ class PeopleFragment : Fragment() {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe { userList ->
                             asyncAdapter.items.submitList(userList) {
-                                if (asyncAdapter.itemCount != 0) {
+                                if (asyncAdapter.itemCount != 0)
                                     usersToolbarShimmer.stopAndHideShimmer()
-                                }
                             }
                         })
         compositeDisposable.add(

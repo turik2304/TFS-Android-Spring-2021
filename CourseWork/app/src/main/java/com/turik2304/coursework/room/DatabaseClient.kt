@@ -13,7 +13,8 @@ object DatabaseClient {
                     context.applicationContext,
                     Database::class.java,
                     "AppDatabase"
-            ).fallbackToDestructiveMigration()
+            )
+                    .fallbackToDestructiveMigration()
                     .build()
         }
         return instance

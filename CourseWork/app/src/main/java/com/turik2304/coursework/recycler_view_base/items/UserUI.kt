@@ -7,7 +7,7 @@ import com.turik2304.coursework.recycler_view_base.ViewTyped
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@Entity(tableName = "user")
+@Entity(tableName = "users")
 @Serializable
 data class UserUI(
         @SerialName("full_name")
@@ -22,5 +22,4 @@ data class UserUI(
         var presence: String = "offline",
         override var viewType: Int = R.layout.item_user,
         var profileDetailsLoadingStarted: Boolean = false
-) : ViewTyped {
-}
+) : ViewTyped

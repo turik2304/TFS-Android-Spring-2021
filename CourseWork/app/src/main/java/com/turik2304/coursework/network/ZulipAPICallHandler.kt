@@ -37,6 +37,9 @@ object ZulipAPICallHandler : CallHandler {
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.computation())
                 .map { topicsResponse ->
+                    topicsResponse.topics.forEach { topic ->
+                        topic.streamUid = streamUid
+                    }
                     return@map topicsResponse.topics
                 }
     }
