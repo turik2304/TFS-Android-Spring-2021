@@ -1,10 +1,10 @@
 package com.turik2304.coursework
 
-import android.content.Context
 import android.os.Bundle
 import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -22,8 +22,12 @@ import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.PaginationScrollListener
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFactory
+import com.turik2304.coursework.room.Database
+import com.turik2304.coursework.room.DatabaseClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 class ChatActivity : AppCompatActivity() {
 
@@ -104,7 +108,7 @@ class ChatActivity : AppCompatActivity() {
 
     private lateinit var chatListBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
-
+    private lateinit var db: Database
     private lateinit var dialog: BottomSheetDialog
     private var uidOfClickedMessage: Int = -1
 
@@ -114,6 +118,10 @@ class ChatActivity : AppCompatActivity() {
         chatListBinding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(chatListBinding.root)
 
+        db = DatabaseClient.getInstance(this)!!
+        Completable.fromCallable { Log.d("xxx", "${db.messageDao().getAll()}") }
+                .subscribeOn(Schedulers.io())
+                .subscribe()
         dialog = BottomSheetDialog(this)
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
         dialog.setContentView(dialogBinding.bottomSheet)
@@ -228,6 +236,10 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Completable.fromCallable {
+            db.messageDao().insertAll(asyncAdapter.items.currentList)
+        }.subscribeOn(Schedulers.io())
+                .subscribe()
         asyncAdapter.items.submitList(null)
         asyncAdapter.holderFactory = null
         chatListBinding.recycleView.adapter = null

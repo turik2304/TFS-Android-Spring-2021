@@ -12,7 +12,7 @@ object DatabaseClient {
             instance = Room.databaseBuilder(
                     context.applicationContext,
                     Database::class.java,
-                    "AppDatabase"
+                    "AppDatabasee"
             )
                     .fallbackToDestructiveMigration()
                     .build()

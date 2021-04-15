@@ -1,16 +1,29 @@
 package com.turik2304.coursework.network
 
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
 import com.turik2304.coursework.recycler_view_base.ViewTyped
+import com.turik2304.coursework.recycler_view_base.items.InMessageUI
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
 import io.reactivex.rxjava3.core.Single
+import kotlinx.serialization.Serializable
 
 interface CallHandler {
 
+    @Entity(tableName = "reactions",
+            foreignKeys = [ForeignKey(entity = InMessageUI::class,
+                    parentColumns = arrayOf("uid"),
+                    childColumns = arrayOf("uidOfMessage"),
+                    onDelete = ForeignKey.CASCADE)])
+    @Serializable
     data class Reaction(
+            @PrimaryKey
             val emojiCode: Int,
             var counter: Int,
-            val usersWhoClicked: MutableList<Int>
+            val usersWhoClicked: MutableList<Int>,
+            val uidOfMessage: Int
     )
 
     fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>>
@@ -30,4 +43,5 @@ interface CallHandler {
     ): Single<List<ViewTyped>>
 
     fun getOwnProfile(): Single<Pair<String, String>>
+    fun getFormattedDate(dateOfMessageInSeconds: Int): String
 }

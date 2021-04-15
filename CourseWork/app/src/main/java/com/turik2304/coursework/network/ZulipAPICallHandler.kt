@@ -124,7 +124,7 @@ object ZulipAPICallHandler : CallHandler {
                                 userName = messageToken.userName,
                                 userId = messageToken.userId,
                                 message = messageToken.message,
-                                reactions = parseReactions(messageToken.reactions),
+                                reactions = parseReactions(messageToken.reactions, messageToken.uid),
                                 dateInSeconds = messageToken.dateInSeconds,
                                 uid = messageToken.uid,
                         )
@@ -135,7 +135,7 @@ object ZulipAPICallHandler : CallHandler {
                                 userName = messageToken.userName,
                                 userId = messageToken.userId,
                                 message = messageToken.message,
-                                reactions = parseReactions(messageToken.reactions),
+                                reactions = parseReactions(messageToken.reactions, messageToken.uid),
                                 dateInSeconds = messageToken.dateInSeconds,
                                 uid = messageToken.uid,
                         )
@@ -145,14 +145,14 @@ object ZulipAPICallHandler : CallHandler {
         return messageUIList
     }
 
-    private fun getFormattedDate(dateOfMessageInSeconds: Int): String {
+    override fun getFormattedDate(dateOfMessageInSeconds: Int): String {
         val formatter = SimpleDateFormat("dd MMMM")
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = dateOfMessageInSeconds * 1000L
         return formatter.format(calendar.time)
     }
 
-    private fun parseReactions(zulipReactions: List<ZulipReaction>): List<CallHandler.Reaction> {
+    private fun parseReactions(zulipReactions: List<ZulipReaction>, uidOfMessage: Int): List<CallHandler.Reaction> {
         val listOfReactions = mutableListOf<CallHandler.Reaction>()
         zulipReactions.forEach { zulipReaction ->
             var isTheSameReaction = false
@@ -169,7 +169,7 @@ object ZulipAPICallHandler : CallHandler {
                 listOfReactions[indexOfSameReaction].counter++
                 listOfReactions[indexOfSameReaction].usersWhoClicked.add(userId)
             } else {
-                listOfReactions.add(CallHandler.Reaction(emojiCode, 1, mutableListOf(userId)))
+                listOfReactions.add(CallHandler.Reaction(emojiCode, 1, mutableListOf(userId), uidOfMessage))
             }
         }
         return listOfReactions.reversed()
