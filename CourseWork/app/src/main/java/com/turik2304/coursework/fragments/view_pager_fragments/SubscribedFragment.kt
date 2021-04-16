@@ -121,11 +121,18 @@ class SubscribedFragment : Fragment() {
         Completable.fromCallable { asyncAdapter.items.submitList(db?.streamDao()?.getStreams(needSubscribed = true)) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe {
+                .subscribe({
                     if (asyncAdapter.itemCount != 0)
                         listOfStreams = asyncAdapter.items.currentList as List<StreamUI>
-                        tabLayoutShimmer?.stopAndHideShimmer()
-                }
+                    tabLayoutShimmer?.stopAndHideShimmer()
+                },
+                        { onError ->
+                            Error.showError(
+                                    context,
+                                    onError
+                            )
+                            tabLayoutShimmer?.stopAndHideShimmer()
+                        })
 
         compositeDisposable.add(
                 ZulipAPICallHandler.getStreamUIListFromServer(needAllStreams = false)

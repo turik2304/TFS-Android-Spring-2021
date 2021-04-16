@@ -58,6 +58,7 @@ class PeopleFragment : Fragment() {
                     recyclerViewUsers.getChildAdapterPosition(clickedView)
             val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
             loadProfileDetails(clickedUserUI)
+            userShimmer.stopAndHideShimmer()
         }
         val editText = view.findViewById<EditText>(R.id.edSearchUsers)
         val holderFactory = MainHolderFactory(clickListener)
@@ -76,26 +77,19 @@ class PeopleFragment : Fragment() {
                             }
                         })
         compositeDisposable.add(
-                RetroClient.zulipApi.getAllUsers()
-                        .subscribeOn(Schedulers.io())
+                ZulipAPICallHandler.getAllUsers()
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                { response ->
-                                    val sortedList = response.members.sortedBy { user -> user.userName }
-                                    sortedList.forEachIndexed { index, user ->
+                                { userList ->
+                                    userList.forEachIndexed { index, user ->
                                         if (!user.isBot) {
-                                            RetroClient.zulipApi.getUserPresence(user.email)
-                                                    .subscribeOn(Schedulers.io())
+                                            ZulipAPICallHandler.updateUserPresence(user)
                                                     .observeOn(AndroidSchedulers.mainThread())
-                                                    .subscribe({ presenceResponse ->
-                                                        user.presence = presenceResponse.presence.aggregated.status
-                                                        if (index == sortedList.size - 1) {
-                                                            asyncAdapter.items.submitList(sortedList)
-                                                            Completable.fromCallable { db?.userDao()?.deleteAndCreate(sortedList) }
-                                                                    .subscribeOn(Schedulers.io())
-                                                                    .subscribe()
+                                                    .subscribe({ _ ->
+                                                        if (index == userList.size - 1) {
+                                                            asyncAdapter.items.submitList(userList)
                                                             usersToolbarShimmer.stopAndHideShimmer()
-                                                            innerViewTypedList = sortedList
+                                                            innerViewTypedList = userList
                                                             Search.initSearch(
                                                                     editText,
                                                                     innerViewTypedList,
@@ -126,7 +120,7 @@ class PeopleFragment : Fragment() {
 
     private fun startProfileDetailsFragment(userName: String, status: String) {
         parentFragmentManager.beginTransaction()
-                .replace(
+                .add(
                         R.id.fragmentContainer,
                         ProfileDetailsFragment.newInstance(
                                 userName,

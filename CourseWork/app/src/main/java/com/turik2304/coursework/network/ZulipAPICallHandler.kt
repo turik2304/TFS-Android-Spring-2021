@@ -19,6 +19,26 @@ object ZulipAPICallHandler : CallHandler {
 
     val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
+    fun getAllUsers(): Single<List<UserUI>> {
+        return RetroClient.zulipApi.getAllUsers()
+                .subscribeOn(Schedulers.io())
+                .map { response ->
+                    //users will be inserted after loading presences
+                    db?.userDao()?.deleteAll()
+                    return@map response.members.sortedBy { user -> user.userName }
+                }
+    }
+
+    fun updateUserPresence(user: UserUI): Single<String> {
+        return RetroClient.zulipApi.getUserPresence(user.email)
+                .subscribeOn(Schedulers.io())
+                .map { response ->
+                    user.presence = response.presence.aggregated.status
+                    db?.userDao()?.insert(user)
+                    return@map user.presence
+                }
+    }
+
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>> {
         if (needAllStreams) {
             return RetroClient.zulipApi.getAllStreams()
