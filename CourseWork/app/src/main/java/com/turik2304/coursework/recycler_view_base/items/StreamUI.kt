@@ -1,7 +1,6 @@
 package com.turik2304.coursework.recycler_view_base.items
 
 import androidx.room.*
-import androidx.room.ForeignKey.CASCADE
 import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import kotlinx.serialization.SerialName
@@ -17,5 +16,6 @@ data class StreamUI(
         override val uid: Int,
         var topics: List<TopicUI> = emptyList(),
         var isExpanded: Boolean = false,
+        var isSubscribed: Boolean = false,
         override val viewType: Int = R.layout.item_stream,
 ) : ViewTyped

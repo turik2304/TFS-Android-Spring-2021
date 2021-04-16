@@ -27,7 +27,7 @@ interface CallHandler {
     )
 
     fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>>
-    fun getTopicsUIListByStreamUid(streamUid: Int): Single<List<TopicUI>>
+    fun updateTopicsOfStream(stream: StreamUI): Single<List<TopicUI>>
     fun getMessageUIListFromServer(
             nameOfTopic: String,
             nameOfStream: String,

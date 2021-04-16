@@ -2,23 +2,27 @@ package com.turik2304.coursework.room
 
 import androidx.room.*
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
+import java.util.concurrent.Flow
 
 @Dao
 interface StreamDao {
 
-    @Query("SELECT * FROM streams ORDER BY name")
-    fun getAll(): List<StreamUI>
+    @Query("SELECT * FROM streams WHERE isSubscribed = :needSubscribed ORDER BY name ")
+    fun getStreams(needSubscribed: Boolean): List<StreamUI>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(streams: List<StreamUI>)
 
-    @Query("DELETE FROM streams")
-    fun deleteAll()
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(stream: StreamUI)
+
+    @Query("DELETE FROM streams WHERE isSubscribed = :deleteSubscriptions")
+    fun deleteStreams(deleteSubscriptions: Boolean)
 
     @Transaction
-    fun deleteAndCreate(streams: List<StreamUI>) {
-        deleteAll()
-        insertAll(streams)
+    fun deleteAndCreate(deleteSubscriptions: Boolean, newStreams: List<StreamUI>) {
+        deleteStreams(deleteSubscriptions)
+        insertAll(newStreams)
     }
 
 }

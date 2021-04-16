@@ -19,6 +19,7 @@ import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
 import com.turik2304.coursework.network.ZulipAPICallHandler
+import com.turik2304.coursework.network.ZulipAPICallHandler.db
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -117,8 +118,7 @@ class SubscribedFragment : Fragment() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
-        val db = DatabaseClient.getInstance(requireContext())
-        Completable.fromCallable { asyncAdapter.items.submitList(db?.streamDao()?.getAll()) }
+        Completable.fromCallable { asyncAdapter.items.submitList(db?.streamDao()?.getStreams(needSubscribed = true)) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe {
@@ -133,17 +133,12 @@ class SubscribedFragment : Fragment() {
                         .subscribe(
                                 { streamList ->
                                     streamList.forEachIndexed { index, streamUI ->
-                                        ZulipAPICallHandler.getTopicsUIListByStreamUid(streamUI.uid)
+                                        ZulipAPICallHandler.updateTopicsOfStream(streamUI)
                                                 .subscribeOn(Schedulers.io())
                                                 .observeOn(AndroidSchedulers.mainThread())
                                                 .subscribe { topics ->
-                                                    streamUI.topics = topics
                                                     if (index == streamList.size - 1) {
                                                         asyncAdapter.items.submitList(streamList)
-                                                        Completable.fromCallable {
-                                                            db?.streamDao()?.deleteAndCreate(streamList)
-                                                        }.subscribeOn(Schedulers.io())
-                                                                .subscribe()
                                                         tabLayoutShimmer?.stopAndHideShimmer()
                                                         listOfStreams = streamList
                                                         innerViewTypedList = streamList

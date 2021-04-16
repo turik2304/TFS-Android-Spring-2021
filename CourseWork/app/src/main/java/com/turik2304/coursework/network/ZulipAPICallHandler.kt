@@ -1,5 +1,6 @@
 package com.turik2304.coursework.network
 
+import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.MyUserId
 import com.turik2304.coursework.network.calls.ZulipMessage
@@ -7,14 +8,12 @@ import com.turik2304.coursework.network.calls.ZulipReaction
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
-import com.turik2304.coursework.room.Database
 import com.turik2304.coursework.room.DatabaseClient
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.sin
 
 object ZulipAPICallHandler : CallHandler {
 
@@ -26,26 +25,34 @@ object ZulipAPICallHandler : CallHandler {
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.computation())
                     .map { allStreamsResponse ->
+                        //streams will be inserted after the topics are loaded
+                        db?.streamDao()?.deleteStreams(deleteSubscriptions = false)
                         return@map allStreamsResponse.allStreams
                     }
         } else {
             return RetroClient.zulipApi.getSubscribedStreams()
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.computation())
-                    .map { subscribedStreamsResponse ->
-                        return@map subscribedStreamsResponse.subscribedStreams
+                    .map map1@{ subscribedStreamsResponse ->
+                        return@map1 subscribedStreamsResponse.subscribedStreams.map { stream ->
+                            stream.isSubscribed = true
+                            db?.streamDao()?.deleteStreams(deleteSubscriptions = true)
+                            return@map stream
+                        }
                     }
         }
     }
 
-    override fun getTopicsUIListByStreamUid(streamUid: Int): Single<List<TopicUI>> {
-        return RetroClient.zulipApi.getTopics(streamUid)
+    override fun updateTopicsOfStream(stream: StreamUI): Single<List<TopicUI>> {
+        return RetroClient.zulipApi.getTopics(stream.uid)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.computation())
                 .map { topicsResponse ->
                     topicsResponse.topics.forEach { topic ->
-                        topic.streamUid = streamUid
+                        topic.streamUid = stream.uid
                     }
+                    stream.topics = topicsResponse.topics
+                    db?.streamDao()?.insert(stream)
                     return@map topicsResponse.topics
                 }
     }
