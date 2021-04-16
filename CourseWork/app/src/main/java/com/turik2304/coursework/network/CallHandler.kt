@@ -32,7 +32,8 @@ interface CallHandler {
             nameOfTopic: String,
             nameOfStream: String,
             uidOfLastLoadedMessage: String,
-            needOneMessage: Boolean
+            needOneMessage: Boolean,
+            isFirstLoad: Boolean = false
     ): Single<List<ViewTyped>>
 
     fun updateMessageUIListAfterSendingMessage(

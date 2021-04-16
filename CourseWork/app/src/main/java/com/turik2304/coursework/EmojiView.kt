@@ -9,15 +9,16 @@ import androidx.core.view.setPadding
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.network.RetroClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.schedulers.Schedulers
 import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
 
 
 class EmojiView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0,
-    defStyleRes: Int = 0,
+        context: Context,
+        attrs: AttributeSet? = null,
+        defStyleAttr: Int = 0,
+        defStyleRes: Int = 0,
 ) : View(context, attrs, defStyleAttr, defStyleRes) {
     var emojiCode = DEFAULT_EMOJI_CODE
         set(value) {
@@ -37,11 +38,11 @@ class EmojiView @JvmOverloads constructor(
     val listOfUsersWhoClicked = mutableListOf<Int>()
 
     private val superellipseColor =
-        resources.getColor(R.color.gray_not_selected_background, context.theme)
+            resources.getColor(R.color.gray_not_selected_background, context.theme)
     private val superellipseColorSelected =
-        resources.getColor(R.color.gray_selected_background, context.theme)
+            resources.getColor(R.color.gray_selected_background, context.theme)
     private val contentColor =
-        resources.getColor(R.color.gray_send_message, context.theme)
+            resources.getColor(R.color.gray_send_message, context.theme)
 
     private val superellipsePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = superellipseColor
@@ -117,9 +118,9 @@ class EmojiView @JvmOverloads constructor(
         coordinateYOfContent = when (heightMode) {
             MeasureSpec.EXACTLY -> height / 2 + paddingTop
             MeasureSpec.AT_MOST -> contentPaint.fontMetrics
-                .run { height - paddingBottom - bottom }
+                    .run { height - paddingBottom - bottom }
             else -> contentPaint.fontMetrics
-                .run { height - paddingBottom - bottom }
+                    .run { height - paddingBottom - bottom }
         }
         setMeasuredDimension(width.toInt(), height.toInt())
     }
@@ -155,34 +156,38 @@ class EmojiView @JvmOverloads constructor(
             selectCounter++
             listOfUsersWhoClicked.add(MyUserId.MY_USER_ID)
             RetroClient.zulipApi.sendReaction(uidOfMessage, name, zulipEmojiCode)
-                .subscribe(
-                    {
-                    ChatActivity.updateMessage(uidOfMessage, chatShimmer)
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        chatShimmer.stopAndHideShimmer()
-                    })
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            {
+                                ChatActivity.updateMessage(uidOfMessage, chatShimmer)
+                            },
+                            { onError ->
+                                Error.showError(
+                                        context,
+                                        onError
+                                )
+                                chatShimmer.stopAndHideShimmer()
+                            })
         } else {
             isSelected = !isSelected
             selectCounter--
             listOfUsersWhoClicked.remove(MyUserId.MY_USER_ID)
             directParent.checkZeroesCounters()
             RetroClient.zulipApi.removeReaction(uidOfMessage, name, zulipEmojiCode)
-                .subscribe(
-                    {
-                        ChatActivity.updateMessage(uidOfMessage, chatShimmer)
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        chatShimmer.stopAndHideShimmer()
-                    })
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            {
+                                ChatActivity.updateMessage(uidOfMessage, chatShimmer)
+                            },
+                            { onError ->
+                                Error.showError(
+                                        context,
+                                        onError
+                                )
+                                chatShimmer.stopAndHideShimmer()
+                            })
         }
         return super.performClick()
     }

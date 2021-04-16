@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -17,16 +16,13 @@ import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
 import com.turik2304.coursework.network.ZulipAPICallHandler
 import com.turik2304.coursework.network.RetroClient
+import com.turik2304.coursework.network.ZulipAPICallHandler.db
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.PaginationScrollListener
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFactory
-import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
-import com.turik2304.coursework.room.Database
-import com.turik2304.coursework.room.DatabaseClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -47,13 +43,13 @@ class ChatActivity : AppCompatActivity() {
         fun updateMessages(
                 shimmer: ShimmerFrameLayout,
                 uidOfLastLoadedMessage: String,
-                firstLoad: Boolean = false,
+                isFirstLoad: Boolean = false,
                 needOneMessage: Boolean = false,
                 runnable: Runnable? = null
         ) {
             isLoading = true
             compositeDisposable.add(
-                    ZulipAPICallHandler.getMessageUIListFromServer(nameOfTopic, nameOfStream, uidOfLastLoadedMessage, needOneMessage)
+                    ZulipAPICallHandler.getMessageUIListFromServer(nameOfTopic, nameOfStream, uidOfLastLoadedMessage, needOneMessage, isFirstLoad)
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(
                                     { list ->
@@ -64,7 +60,7 @@ class ChatActivity : AppCompatActivity() {
                                         } else {
                                             val lastUidOfMessageInPage = list[1].uid.toString()
                                             if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
-                                                val updatedList = if (firstLoad) list else list + asyncAdapter.items.currentList
+                                                val updatedList = if (isFirstLoad) list else list + asyncAdapter.items.currentList
                                                 asyncAdapter.items.submitList(updatedList.distinct()) {
                                                     runnable?.run()
                                                 }
@@ -111,7 +107,6 @@ class ChatActivity : AppCompatActivity() {
 
     private lateinit var chatListBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
-    private lateinit var db: Database
     private lateinit var dialog: BottomSheetDialog
     private var uidOfClickedMessage: Int = -1
 
@@ -121,7 +116,6 @@ class ChatActivity : AppCompatActivity() {
         chatListBinding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(chatListBinding.root)
 
-        db = DatabaseClient.getInstance(this)!!
         dialog = BottomSheetDialog(this)
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
         dialog.setContentView(dialogBinding.bottomSheet)
@@ -157,14 +151,14 @@ class ChatActivity : AppCompatActivity() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatListBinding.recycleView.adapter = asyncAdapter
         compositeDisposable.add(
-                Single.fromCallable { db.messageDao().getAll(nameOfStream, nameOfTopic) }
+                Single.fromCallable { db?.messageDao()?.getAll(nameOfStream, nameOfTopic) }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe { messages ->
                             asyncAdapter.items.submitList(messages)
                             if (asyncAdapter.itemCount != 0)
                                 chatListBinding.chatShimmer.stopAndHideShimmer()
-                            updateMessages(chatListBinding.chatShimmer, uidOfLastLoadedMessage, firstLoad = true) {
+                            updateMessages(chatListBinding.chatShimmer, uidOfLastLoadedMessage, isFirstLoad = true) {
                                 chatListBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
                             }
                         })
@@ -243,15 +237,6 @@ class ChatActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         chatListBinding.chatShimmer.startShimmer()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        compositeDisposable.add(
-                Completable.fromCallable {
-                    db.messageDao().deleteAndCreate(nameOfStream, nameOfTopic, asyncAdapter.items.currentList)
-                }.subscribeOn(Schedulers.io())
-                        .subscribe())
     }
 
     override fun onDestroy() {

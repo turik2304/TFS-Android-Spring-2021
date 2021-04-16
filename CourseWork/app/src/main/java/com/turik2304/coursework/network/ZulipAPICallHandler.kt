@@ -1,18 +1,24 @@
 package com.turik2304.coursework.network
 
+import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.MyUserId
 import com.turik2304.coursework.network.calls.ZulipMessage
 import com.turik2304.coursework.network.calls.ZulipReaction
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
+import com.turik2304.coursework.room.Database
+import com.turik2304.coursework.room.DatabaseClient
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.sin
 
 object ZulipAPICallHandler : CallHandler {
+
+    val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>> {
         if (needAllStreams) {
@@ -84,7 +90,8 @@ object ZulipAPICallHandler : CallHandler {
             nameOfTopic: String,
             nameOfStream: String,
             uidOfLastLoadedMessage: String,
-            needOneMessage: Boolean
+            needOneMessage: Boolean,
+            isFirstLoad: Boolean
     ): Single<List<ViewTyped>> {
         val narrow = NarrowConstructor.getNarrow(nameOfTopic, nameOfStream)
         var numBefore = 20
@@ -99,7 +106,9 @@ object ZulipAPICallHandler : CallHandler {
                 }
                 .map { messageList ->
                     if (needOneMessage) {
-                        return@map parseMessages(messageList, nameOfTopic, nameOfStream)
+                        val singleMessage = parseMessages(messageList, nameOfTopic, nameOfStream)
+                        db?.messageDao()?.update(singleMessage)
+                        return@map singleMessage
                     } else {
                         return@map messageList
                                 .sortedBy { it.dateInSeconds }
@@ -112,6 +121,16 @@ object ZulipAPICallHandler : CallHandler {
                                     )
                                 }
                     }
+                }
+                .map { viewTypedList ->
+                    if (isFirstLoad) db?.messageDao()?.deleteAndCreate(nameOfStream, nameOfTopic, viewTypedList)
+                    else {
+                        val numberOfMessagesCanBeInserted = 50 - (db?.messageDao()?.getCount(nameOfStream, nameOfTopic)
+                                ?: 50)
+                        val messagesToDatabase = viewTypedList.filter { it !is DateSeparatorUI }.takeLast(numberOfMessagesCanBeInserted)
+                        db?.messageDao()?.insertAll(messagesToDatabase)
+                    }
+                    return@map viewTypedList
                 }
     }
 

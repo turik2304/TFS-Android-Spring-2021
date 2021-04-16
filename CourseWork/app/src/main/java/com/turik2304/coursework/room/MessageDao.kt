@@ -15,6 +15,12 @@ interface MessageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertConverted(inMessages: List<InMessageUI>)
 
+    @Update
+    fun updateConverted(inMessages: List<InMessageUI>)
+
+    @Query("SELECT COUNT(*) FROM messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic")
+    fun getCount(nameOfStream: String, nameOfTopic: String): Int
+
     @Query("DELETE FROM messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic")
     fun deleteAll(nameOfStream: String, nameOfTopic: String)
 
@@ -22,6 +28,10 @@ interface MessageDao {
     fun deleteAndCreate(nameOfStream: String, nameOfTopic: String, viewTypedMessages: List<ViewTyped>) {
         deleteAll(nameOfStream, nameOfTopic)
         insertAll(viewTypedMessages)
+    }
+
+    fun update(viewTypedMessages: List<ViewTyped>) {
+        updateConverted(viewTypedMessages.toInMessages())
     }
 
     fun insertAll(viewTypedMessages: List<ViewTyped>) {

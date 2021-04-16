@@ -10,7 +10,6 @@ object MessagesExt {
 
     fun List<ViewTyped>.toInMessages(): List<InMessageUI> {
         return this.filter { it !is DateSeparatorUI }
-                .takeLast(50)
                 .map { message ->
                     if (message is OutMessageUI) {
                         return@map InMessageUI(
