@@ -22,10 +22,12 @@ import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.PaginationScrollListener
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFactory
+import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
 import com.turik2304.coursework.room.Database
 import com.turik2304.coursework.room.DatabaseClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 
@@ -45,6 +47,7 @@ class ChatActivity : AppCompatActivity() {
         fun updateMessages(
                 shimmer: ShimmerFrameLayout,
                 uidOfLastLoadedMessage: String,
+                firstLoad: Boolean = false,
                 needOneMessage: Boolean = false,
                 runnable: Runnable? = null
         ) {
@@ -61,7 +64,7 @@ class ChatActivity : AppCompatActivity() {
                                         } else {
                                             val lastUidOfMessageInPage = list[1].uid.toString()
                                             if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
-                                                val updatedList = list + asyncAdapter.items.currentList
+                                                val updatedList = if (firstLoad) list else list + asyncAdapter.items.currentList
                                                 asyncAdapter.items.submitList(updatedList.distinct()) {
                                                     runnable?.run()
                                                 }
@@ -119,9 +122,6 @@ class ChatActivity : AppCompatActivity() {
         setContentView(chatListBinding.root)
 
         db = DatabaseClient.getInstance(this)!!
-        Completable.fromCallable { Log.d("xxx", "${db.messageDao().getAll()}") }
-                .subscribeOn(Schedulers.io())
-                .subscribe()
         dialog = BottomSheetDialog(this)
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
         dialog.setContentView(dialogBinding.bottomSheet)
@@ -156,7 +156,18 @@ class ChatActivity : AppCompatActivity() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatListBinding.recycleView.adapter = asyncAdapter
-        updateMessages(chatListBinding.chatShimmer, uidOfLastLoadedMessage)
+        compositeDisposable.add(
+                Single.fromCallable { db.messageDao().getAll(nameOfStream, nameOfTopic) }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe { messages ->
+                            asyncAdapter.items.submitList(messages)
+                            if (asyncAdapter.itemCount != 0)
+                                chatListBinding.chatShimmer.stopAndHideShimmer()
+                            updateMessages(chatListBinding.chatShimmer, uidOfLastLoadedMessage, firstLoad = true) {
+                                chatListBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+                            }
+                        })
         chatListBinding.recycleView.addOnScrollListener(object : PaginationScrollListener(chatListBinding.recycleView.layoutManager as LinearLayoutManager) {
             override fun isLastPage(): Boolean {
                 return isLastPage
@@ -234,12 +245,17 @@ class ChatActivity : AppCompatActivity() {
         chatListBinding.chatShimmer.startShimmer()
     }
 
+    override fun onStop() {
+        super.onStop()
+        compositeDisposable.add(
+                Completable.fromCallable {
+                    db.messageDao().deleteAndCreate(nameOfStream, nameOfTopic, asyncAdapter.items.currentList)
+                }.subscribeOn(Schedulers.io())
+                        .subscribe())
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        Completable.fromCallable {
-            db.messageDao().insertAll(asyncAdapter.items.currentList)
-        }.subscribeOn(Schedulers.io())
-                .subscribe()
         asyncAdapter.items.submitList(null)
         asyncAdapter.holderFactory = null
         chatListBinding.recycleView.adapter = null

@@ -99,7 +99,7 @@ object ZulipAPICallHandler : CallHandler {
                 }
                 .map { messageList ->
                     if (needOneMessage) {
-                        return@map parseMessages(messageList)
+                        return@map parseMessages(messageList, nameOfTopic, nameOfStream)
                     } else {
                         return@map messageList
                                 .sortedBy { it.dateInSeconds }
@@ -108,19 +108,21 @@ object ZulipAPICallHandler : CallHandler {
                                 }
                                 .flatMap { (date, messages) ->
                                     listOf(DateSeparatorUI(date, date.hashCode())) + parseMessages(
-                                            messages
+                                            messages, nameOfTopic, nameOfStream
                                     )
                                 }
                     }
                 }
     }
 
-    private fun parseMessages(remoteMessages: List<ZulipMessage>): List<ViewTyped> {
+    private fun parseMessages(remoteMessages: List<ZulipMessage>, nameOfTopic: String, nameOfStream: String): List<ViewTyped> {
         val messageUIList = mutableListOf<ViewTyped>()
         remoteMessages.forEach { messageToken ->
             if (messageToken.userId == MyUserId.MY_USER_ID) {
                 messageUIList.add(
                         OutMessageUI(
+                                nameOfStream = nameOfStream,
+                                nameOfTopic = nameOfTopic,
                                 userName = messageToken.userName,
                                 userId = messageToken.userId,
                                 message = messageToken.message,
@@ -132,6 +134,8 @@ object ZulipAPICallHandler : CallHandler {
             } else {
                 messageUIList.add(
                         InMessageUI(
+                                nameOfStream = nameOfStream,
+                                nameOfTopic = nameOfTopic,
                                 userName = messageToken.userName,
                                 userId = messageToken.userId,
                                 message = messageToken.message,

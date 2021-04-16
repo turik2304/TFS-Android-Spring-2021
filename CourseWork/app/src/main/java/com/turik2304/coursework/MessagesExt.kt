@@ -10,9 +10,12 @@ object MessagesExt {
 
     fun List<ViewTyped>.toInMessages(): List<InMessageUI> {
         return this.filter { it !is DateSeparatorUI }
+                .takeLast(50)
                 .map { message ->
                     if (message is OutMessageUI) {
                         return@map InMessageUI(
+                                nameOfStream = message.nameOfStream,
+                                nameOfTopic = message.nameOfTopic,
                                 userName = message.userName,
                                 userId = message.userId,
                                 message = message.message,
@@ -38,6 +41,8 @@ object MessagesExt {
         return inMessages.map { inMessage ->
             if (inMessage.userId == MyUserId.MY_USER_ID) {
                 return@map OutMessageUI(
+                        nameOfStream = inMessage.nameOfStream,
+                        nameOfTopic = inMessage.nameOfTopic,
                         userName = inMessage.userName,
                         userId = inMessage.userId,
                         message = inMessage.message,
