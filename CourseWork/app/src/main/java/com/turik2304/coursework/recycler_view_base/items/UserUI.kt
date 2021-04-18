@@ -11,6 +11,8 @@ data class UserUI(
     val userName: String,
     @SerialName("email")
     val email: String,
+    @SerialName("avatar_url")
+    val avatarUrl: String,
     @SerialName("user_id")
     override val uid: Int,
     @SerialName("is_bot")

@@ -5,8 +5,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
@@ -34,12 +36,15 @@ class OwnProfileFragment : Fragment() {
         ownProfileShimmer.startShimmer()
         val userNameTextView = view.findViewById<TextView>(R.id.tvUserNameProfileTab)
         val statusTextView = view.findViewById<TextView>(R.id.tvStatusProfile)
+        val avatar = view.findViewById<ImageView>(R.id.imUserAvatarProfileTab)
 
         disposableGetOwnProfile = ZulipAPICallHandler.getOwnProfile()
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ nameAndPresenceResponse ->
-                userNameTextView.text = nameAndPresenceResponse.first
-                statusTextView.text = nameAndPresenceResponse.second
+            .subscribe({ ownProfileResponse ->
+                userNameTextView.text = ownProfileResponse["name"]
+                statusTextView.text = ownProfileResponse["status"]
+                val avatarUrl = ownProfileResponse["avatarUrl"]
+                Glide.with(this).load(avatarUrl).into(avatar)
                 SetStatusUtil.setColoredTextStatus(statusTextView)
                 ownProfileShimmer.stopAndHideShimmer()
             },

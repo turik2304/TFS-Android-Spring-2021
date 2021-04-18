@@ -21,7 +21,9 @@ data class ZulipMessage(
     val userId: Int,
     var reactions: List<ZulipReaction>,
     @SerialName("id")
-    val uid: Int
+    val uid: Int,
+    @SerialName("avatar_url")
+    val avatarUrl: String
 )
 
 @Serializable

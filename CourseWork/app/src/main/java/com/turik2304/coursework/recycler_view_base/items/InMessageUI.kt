@@ -10,6 +10,7 @@ data class InMessageUI(
     val message: String,
     var reactions: List<CallHandler.Reaction>,
     val dateInSeconds: Int,
+    val avatarUrl: String,
     override val uid: Int,
     override val viewType: Int = R.layout.item_incoming_message
 ) : ViewTyped {

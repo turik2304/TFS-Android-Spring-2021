@@ -17,5 +17,5 @@ interface CallHandler {
         nameOfTopic: String,
         nameOfStream: String
     ): Single<List<ViewTyped>>
-    fun getOwnProfile(): Single<Pair<String, String>>
+    fun getOwnProfile(): Single<Map<String, String>>
 }

@@ -8,6 +8,8 @@ class GetOwnProfileResponse(
     @SerialName("full_name")
     val name: String,
     @SerialName("email")
-    val email: String
+    val email: String,
+    @SerialName("avatar_url")
+    val avatarUrl: String
 )
 

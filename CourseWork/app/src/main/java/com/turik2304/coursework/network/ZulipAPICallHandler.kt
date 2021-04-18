@@ -6,6 +6,7 @@ import com.turik2304.coursework.network.calls.ZulipReaction
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
+import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -41,14 +42,15 @@ object ZulipAPICallHandler : CallHandler {
             }
     }
 
-    override fun getOwnProfile(): Single<Pair<String, String>> {
+    override fun getOwnProfile(): Single<Map<String, String>> {
         val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
         val getOwnPresence = RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
         return Single.zip(getOwnProfile, getOwnPresence,
             BiFunction { ownProfileResponse, ownPresence ->
                 val status = ownPresence.presence.aggregated.status
                 val ownProfileName = ownProfileResponse.name
-                return@BiFunction (ownProfileName to status)
+                val avatarUrl = ownProfileResponse.avatarUrl
+                return@BiFunction mapOf("name" to ownProfileName, "status" to status, "avatarUrl" to avatarUrl)
             })
             .subscribeOn(Schedulers.io())
     }
@@ -110,6 +112,7 @@ object ZulipAPICallHandler : CallHandler {
                         message = messageToken.message,
                         reactions = parseReactions(messageToken.reactions),
                         dateInSeconds = messageToken.dateInSeconds,
+                        avatarUrl = messageToken.avatarUrl,
                         uid = messageToken.uid,
                     )
                 )

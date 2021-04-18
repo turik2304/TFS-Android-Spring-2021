@@ -103,13 +103,14 @@ class PeopleFragment : Fragment() {
         )
     }
 
-    private fun startProfileDetailsFragment(userName: String, status: String) {
+    private fun startProfileDetailsFragment(userName: String, status: String, avatarUrl: String) {
         parentFragmentManager.beginTransaction()
-            .replace(
+            .add(
                 R.id.fragmentContainer,
                 ProfileDetailsFragment.newInstance(
                     userName,
-                    status
+                    status,
+                    avatarUrl
                 )
             )
             .addToBackStack(null)
@@ -121,7 +122,8 @@ class PeopleFragment : Fragment() {
     ) {
         val name = userUI.userName
         val status = userUI.presence
-        startProfileDetailsFragment(name, status)
+        val avatarUrl = userUI.avatarUrl
+        startProfileDetailsFragment(name, status, avatarUrl)
     }
 
     override fun onDestroyView() {
