@@ -1,6 +1,6 @@
 package com.turik2304.coursework
 
-import com.turik2304.coursework.network.ZulipAPICallHandler
+import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.DateSeparatorUI
 import com.turik2304.coursework.recycler_view_base.items.InMessageUI
@@ -28,7 +28,7 @@ object MessagesExt {
     fun List<InMessageUI>.toViewTypedMessages(): List<ViewTyped> {
         return this.sortedBy { it.dateInSeconds }
                 .groupBy { inMessage ->
-                    ZulipAPICallHandler.getFormattedDate(inMessage.dateInSeconds)
+                    ZulipRepository.getFormattedDate(inMessage.dateInSeconds)
                 }
                 .flatMap { (date, inMessages) ->
                     listOf(DateSeparatorUI(date, date.hashCode())) + parseIncomingMessages(inMessages)

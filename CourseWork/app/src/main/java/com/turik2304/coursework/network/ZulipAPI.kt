@@ -1,9 +1,7 @@
 package com.turik2304.coursework.network
 
-import com.turik2304.coursework.network.calls.*
+import com.turik2304.coursework.network.models.response.*
 import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.core.Single
 import retrofit2.http.*
 

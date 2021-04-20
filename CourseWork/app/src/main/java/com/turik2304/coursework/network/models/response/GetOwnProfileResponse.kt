@@ -1,4 +1,4 @@
-package com.turik2304.coursework.network.calls
+package com.turik2304.coursework.network.models.response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -10,4 +10,3 @@ class GetOwnProfileResponse(
     @SerialName("email")
     val email: String
 )
-

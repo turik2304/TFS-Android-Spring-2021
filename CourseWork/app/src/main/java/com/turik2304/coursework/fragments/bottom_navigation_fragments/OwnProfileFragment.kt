@@ -1,7 +1,6 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,7 +9,7 @@ import androidx.fragment.app.Fragment
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
-import com.turik2304.coursework.network.ZulipAPICallHandler
+import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
@@ -35,7 +34,7 @@ class OwnProfileFragment : Fragment() {
         val userNameTextView = view.findViewById<TextView>(R.id.tvUserNameProfileTab)
         val statusTextView = view.findViewById<TextView>(R.id.tvStatusProfile)
 
-        disposableGetOwnProfile = ZulipAPICallHandler.getOwnProfile()
+        disposableGetOwnProfile = ZulipRepository.getOwnProfile()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ nameAndPresenceResponse ->
                 userNameTextView.text = nameAndPresenceResponse.first

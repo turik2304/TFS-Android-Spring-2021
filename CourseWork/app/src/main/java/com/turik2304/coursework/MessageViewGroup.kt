@@ -11,7 +11,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.*
-import com.turik2304.coursework.network.CallHandler
+import com.turik2304.coursework.network.models.data.Reaction
 
 class MessageViewGroup @JvmOverloads constructor(
     context: Context,
@@ -46,7 +46,7 @@ class MessageViewGroup @JvmOverloads constructor(
 
     }
 
-    fun addReactions(reactions: List<CallHandler.Reaction>) {
+    fun addReactions(reactions: List<Reaction>) {
         flexboxLayout.removeViews(0, flexboxLayout.childCount - 1)
         if (reactions.isNotEmpty()) {
             reactions.forEach { reaction ->

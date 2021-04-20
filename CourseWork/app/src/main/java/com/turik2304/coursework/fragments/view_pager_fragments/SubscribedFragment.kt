@@ -3,7 +3,6 @@ package com.turik2304.coursework.fragments.view_pager_fragments
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,15 +17,14 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
-import com.turik2304.coursework.network.ZulipAPICallHandler
-import com.turik2304.coursework.network.ZulipAPICallHandler.db
+import com.turik2304.coursework.network.ZulipRepository
+import com.turik2304.coursework.network.ZulipRepository.db
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
-import com.turik2304.coursework.room.DatabaseClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -135,12 +133,12 @@ class SubscribedFragment : Fragment() {
                         })
 
         compositeDisposable.add(
-                ZulipAPICallHandler.getStreamUIListFromServer(needAllStreams = false)
+                ZulipRepository.getStreamUIListFromServer(needAllStreams = false)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 { streamList ->
                                     streamList.forEachIndexed { index, streamUI ->
-                                        ZulipAPICallHandler.updateTopicsOfStream(streamUI)
+                                        ZulipRepository.updateTopicsOfStream(streamUI)
                                                 .subscribeOn(Schedulers.io())
                                                 .observeOn(AndroidSchedulers.mainThread())
                                                 .subscribe { topics ->

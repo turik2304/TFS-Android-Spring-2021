@@ -1,13 +1,7 @@
-package com.turik2304.coursework.network.calls
+package com.turik2304.coursework.network.models.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
-@Serializable
-class GetMessagesResponse(
-    @SerialName("messages")
-    val messages: List<ZulipMessage>
-)
 
 @Serializable
 data class ZulipMessage(
@@ -22,13 +16,4 @@ data class ZulipMessage(
     var reactions: List<ZulipReaction>,
     @SerialName("id")
     val uid: Int
-)
-
-@Serializable
-@SerialName("reactions")
-data class ZulipReaction(
-    @SerialName("emoji_code")
-    val emojiCode: String,
-    @SerialName("user_id")
-    var userId: Int,
 )

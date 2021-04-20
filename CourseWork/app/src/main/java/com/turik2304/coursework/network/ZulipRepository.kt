@@ -1,10 +1,10 @@
 package com.turik2304.coursework.network
 
-import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.MyUserId
-import com.turik2304.coursework.network.calls.ZulipMessage
-import com.turik2304.coursework.network.calls.ZulipReaction
+import com.turik2304.coursework.network.models.data.Reaction
+import com.turik2304.coursework.network.models.data.ZulipMessage
+import com.turik2304.coursework.network.models.data.ZulipReaction
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
@@ -15,7 +15,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
 
-object ZulipAPICallHandler : CallHandler {
+object ZulipRepository : Repository {
 
     val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
@@ -202,8 +202,8 @@ object ZulipAPICallHandler : CallHandler {
         return formatter.format(calendar.time)
     }
 
-    private fun parseReactions(zulipReactions: List<ZulipReaction>, uidOfMessage: Int): List<CallHandler.Reaction> {
-        val listOfReactions = mutableListOf<CallHandler.Reaction>()
+    private fun parseReactions(zulipReactions: List<ZulipReaction>, uidOfMessage: Int): List<Reaction> {
+        val listOfReactions = mutableListOf<Reaction>()
         zulipReactions.forEach { zulipReaction ->
             var isTheSameReaction = false
             var indexOfSameReaction = -1
@@ -219,7 +219,7 @@ object ZulipAPICallHandler : CallHandler {
                 listOfReactions[indexOfSameReaction].counter++
                 listOfReactions[indexOfSameReaction].usersWhoClicked.add(userId)
             } else {
-                listOfReactions.add(CallHandler.Reaction(emojiCode, 1, mutableListOf(userId), uidOfMessage))
+                listOfReactions.add(Reaction(emojiCode, 1, mutableListOf(userId), uidOfMessage))
             }
         }
         return listOfReactions.reversed()

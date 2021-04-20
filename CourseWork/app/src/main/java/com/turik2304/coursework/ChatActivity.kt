@@ -14,9 +14,9 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.network.ZulipAPICallHandler
+import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.network.RetroClient
-import com.turik2304.coursework.network.ZulipAPICallHandler.db
+import com.turik2304.coursework.network.ZulipRepository.db
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.PaginationScrollListener
@@ -49,7 +49,7 @@ class ChatActivity : AppCompatActivity() {
         ) {
             isLoading = true
             compositeDisposable.add(
-                    ZulipAPICallHandler.getMessageUIListFromServer(nameOfTopic, nameOfStream, uidOfLastLoadedMessage, needOneMessage, isFirstLoad)
+                    ZulipRepository.getMessageUIListFromServer(nameOfTopic, nameOfStream, uidOfLastLoadedMessage, needOneMessage, isFirstLoad)
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(
                                     { list ->
@@ -82,7 +82,7 @@ class ChatActivity : AppCompatActivity() {
 
         fun updateMessage(uidOfMessage: Int, shimmer: ShimmerFrameLayout) {
             compositeDisposable.add(
-                    ZulipAPICallHandler.updateMessageUIListAfterSendingMessage(nameOfTopic,
+                    ZulipRepository.updateMessageUIListAfterSendingMessage(nameOfTopic,
                             nameOfStream,
                             uidOfMessage.toString(),
                             asyncAdapter.items.currentList

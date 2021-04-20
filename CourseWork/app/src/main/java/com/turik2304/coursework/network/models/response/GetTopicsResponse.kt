@@ -1,4 +1,4 @@
-package com.turik2304.coursework.network.calls
+package com.turik2304.coursework.network.models.response
 
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
 import kotlinx.serialization.SerialName
