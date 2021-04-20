@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -15,14 +14,13 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.network.ZulipAPICallHandler
+import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.network.RetroClient
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFactory
-import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -47,7 +45,7 @@ class ChatActivity : AppCompatActivity() {
                 runnable: Runnable? = null
         ) {
             compositeDisposable.add(
-                    ZulipAPICallHandler.getMessageUIListFromServer(nameOfTopic, nameOfStream)
+                    ZulipRepository.getMessageUIListFromServer(nameOfTopic, nameOfStream)
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(
                                     { list ->
@@ -137,7 +135,7 @@ class ChatActivity : AppCompatActivity() {
                                                 if (resp.events.isNotEmpty()) {
                                                     lastEventId = resp.events.last().id
                                                     val zulipMessages = resp.events.map { it.message }
-                                                    val newMessages = ZulipAPICallHandler.parseMessages(zulipMessages)
+                                                    val newMessages = ZulipRepository.parseMessages(zulipMessages)
                                                     val currList = asyncAdapter.items.currentList
                                                     asyncAdapter.items.submitList((currList + newMessages).distinct()) {
                                                         chatListBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)

@@ -1,12 +1,9 @@
 package com.turik2304.coursework.network
 
-import com.turik2304.coursework.network.calls.*
+import com.turik2304.coursework.network.models.response.*
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import org.json.JSONArray
 import retrofit2.http.*
 
 interface ZulipAPI {

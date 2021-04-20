@@ -1,20 +1,19 @@
 package com.turik2304.coursework.network
 
 import com.turik2304.coursework.MyUserId
-import com.turik2304.coursework.network.calls.ZulipMessage
-import com.turik2304.coursework.network.calls.ZulipReaction
+import com.turik2304.coursework.network.models.data.Reaction
+import com.turik2304.coursework.network.models.data.ZulipMessage
+import com.turik2304.coursework.network.models.data.ZulipReaction
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
-import io.reactivex.rxjava3.annotations.NonNull
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
 
-object ZulipAPICallHandler : CallHandler {
+object ZulipRepository : Repository {
 
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<MutableList<ViewTyped>> {
         if (needAllStreams) {
@@ -129,8 +128,8 @@ object ZulipAPICallHandler : CallHandler {
         return formatter.format(calendar.time)
     }
 
-    private fun parseReactions(zulipReactions: List<ZulipReaction>): List<CallHandler.Reaction> {
-        val listOfReactions = mutableListOf<CallHandler.Reaction>()
+    private fun parseReactions(zulipReactions: List<ZulipReaction>): List<Reaction> {
+        val listOfReactions = mutableListOf<Reaction>()
         zulipReactions.forEach { zulipReaction ->
             var isTheSameReaction = false
             var indexOfSameReaction = -1
@@ -146,7 +145,7 @@ object ZulipAPICallHandler : CallHandler {
                 listOfReactions[indexOfSameReaction].counter++
                 listOfReactions[indexOfSameReaction].usersWhoClicked.add(userId)
             } else {
-                listOfReactions.add(CallHandler.Reaction(emojiCode, 1, mutableListOf(userId)))
+                listOfReactions.add(Reaction(emojiCode, 1, mutableListOf(userId)))
             }
         }
         return listOfReactions

@@ -11,7 +11,7 @@ import com.bumptech.glide.Glide
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
-import com.turik2304.coursework.network.ZulipAPICallHandler
+import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
@@ -37,7 +37,7 @@ class OwnProfileFragment : Fragment() {
         val statusTextView = view.findViewById<TextView>(R.id.tvStatusProfile)
         val avatar = view.findViewById<ImageView>(R.id.imUserAvatarProfileTab)
 
-        disposableGetOwnProfile = ZulipAPICallHandler.getOwnProfile()
+        disposableGetOwnProfile = ZulipRepository.getOwnProfile()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ ownProfileResponse ->
                 userNameTextView.text = ownProfileResponse["name"]

@@ -1,12 +1,7 @@
-package com.turik2304.coursework.network.calls
+package com.turik2304.coursework.network.models.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
-@Serializable
-class GetUserPresenceResponse(
-    val presence: Presence
-)
 
 @Serializable
 @SerialName("presence")
