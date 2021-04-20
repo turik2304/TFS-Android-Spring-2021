@@ -4,6 +4,7 @@ import com.turik2304.coursework.MyUserId
 import com.turik2304.coursework.network.models.data.Reaction
 import com.turik2304.coursework.network.models.data.ZulipMessage
 import com.turik2304.coursework.network.models.data.ZulipReaction
+import com.turik2304.coursework.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
@@ -42,15 +43,13 @@ object ZulipRepository : Repository {
                 }
     }
 
-    override fun getOwnProfile(): Single<Map<String, String>> {
+    override fun getOwnProfile(): Single<GetOwnProfileResponse> {
         val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
         val getOwnPresence = RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
         return Single.zip(getOwnProfile, getOwnPresence,
                 BiFunction { ownProfileResponse, ownPresence ->
-                    val status = ownPresence.presence.aggregated.status
-                    val ownProfileName = ownProfileResponse.name
-                    val avatarUrl = ownProfileResponse.avatarUrl
-                    return@BiFunction mapOf("name" to ownProfileName, "status" to status, "avatarUrl" to avatarUrl)
+                    ownProfileResponse.statusEnum = ownPresence.presence.aggregated.statusEnum
+                    return@BiFunction ownProfileResponse
                 })
                 .subscribeOn(Schedulers.io())
     }

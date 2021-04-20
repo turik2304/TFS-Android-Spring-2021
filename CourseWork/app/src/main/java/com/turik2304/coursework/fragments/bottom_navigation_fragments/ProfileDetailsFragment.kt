@@ -10,6 +10,8 @@ import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.turik2304.coursework.MainActivity
 import com.turik2304.coursework.R
+import com.turik2304.coursework.fragments.bottom_navigation_fragments.SetStatusUtil.setColoredTextStatus
+import com.turik2304.coursework.network.models.data.StatusEnum
 
 class ProfileDetailsFragment : Fragment() {
 
@@ -31,10 +33,12 @@ class ProfileDetailsFragment : Fragment() {
         backImageView.setOnClickListener { (context as MainActivity).onBackPressed() }
 
         userNameTextView.text = requireArguments().getString(ARG_USER_NAME, "none")
-        statusTextView.text = requireArguments().getString(ARG_STATUS, "none")
+//        statusTextView.text = requireArguments().getString(ARG_STATUS, "none")
+        val statusEnum = requireArguments().getSerializable(ARG_STATUS) as StatusEnum
+        statusTextView.text = statusEnum.status
+        statusTextView.setColoredTextStatus(statusEnum)
         val avatarUrl = requireArguments().getString(ARG_AVATAR_URL, "")
         Glide.with(this).load(avatarUrl).into(avatar)
-        SetStatusUtil.setColoredTextStatus(statusTextView)
     }
 
     companion object {
@@ -44,13 +48,13 @@ class ProfileDetailsFragment : Fragment() {
 
         fun newInstance(
             userName: String,
-            status: String,
+            status: StatusEnum,
             avatarUrl: String
         ): ProfileDetailsFragment {
             val fragment = ProfileDetailsFragment()
             val arguments = Bundle().apply {
                 putString(ARG_USER_NAME, userName)
-                putString(ARG_STATUS, status)
+                putSerializable(ARG_STATUS, status)
                 putString(ARG_AVATAR_URL, avatarUrl)
             }
             fragment.arguments = arguments

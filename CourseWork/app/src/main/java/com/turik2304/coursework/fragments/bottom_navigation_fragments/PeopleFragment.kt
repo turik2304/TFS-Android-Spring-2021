@@ -12,6 +12,7 @@ import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.Search
 import com.turik2304.coursework.network.RetroClient
+import com.turik2304.coursework.network.models.data.StatusEnum
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -50,6 +51,7 @@ class PeopleFragment : Fragment() {
                 recyclerViewUsers.getChildAdapterPosition(clickedView)
             val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
             loadProfileDetails(clickedUserUI)
+            userShimmer.stopAndHideShimmer()
         }
         val editText = view.findViewById<EditText>(R.id.edSearchUsers)
         val holderFactory = MainHolderFactory(clickListener)
@@ -79,7 +81,7 @@ class PeopleFragment : Fragment() {
                                 RetroClient.zulipApi.getUserPresence(user.email)
                                     .subscribeOn(Schedulers.io())
                                     .subscribe({ presenceResponse ->
-                                        user.presence = presenceResponse.presence.aggregated.status
+                                        user.presence = presenceResponse.presence.aggregated.statusEnum
                                     },
                                         { onError ->
                                             Error.showError(
@@ -101,7 +103,7 @@ class PeopleFragment : Fragment() {
         )
     }
 
-    private fun startProfileDetailsFragment(userName: String, status: String, avatarUrl: String) {
+    private fun startProfileDetailsFragment(userName: String, status: StatusEnum, avatarUrl: String) {
         parentFragmentManager.beginTransaction()
             .add(
                 R.id.fragmentContainer,

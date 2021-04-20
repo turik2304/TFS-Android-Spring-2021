@@ -11,6 +11,7 @@ import com.bumptech.glide.Glide
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
+import com.turik2304.coursework.fragments.bottom_navigation_fragments.SetStatusUtil.setColoredTextStatus
 import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -40,11 +41,11 @@ class OwnProfileFragment : Fragment() {
         disposableGetOwnProfile = ZulipRepository.getOwnProfile()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ ownProfileResponse ->
-                userNameTextView.text = ownProfileResponse["name"]
-                statusTextView.text = ownProfileResponse["status"]
-                val avatarUrl = ownProfileResponse["avatarUrl"]
+                userNameTextView.text = ownProfileResponse.name
+                statusTextView.text = ownProfileResponse.statusEnum.status
+                val avatarUrl = ownProfileResponse.avatarUrl
                 Glide.with(this).load(avatarUrl).into(avatar)
-                SetStatusUtil.setColoredTextStatus(statusTextView)
+                statusTextView.setColoredTextStatus(ownProfileResponse.statusEnum)
                 ownProfileShimmer.stopAndHideShimmer()
             },
                 { onError ->

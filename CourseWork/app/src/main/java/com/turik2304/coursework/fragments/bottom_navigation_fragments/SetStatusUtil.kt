@@ -3,23 +3,24 @@ package com.turik2304.coursework.fragments.bottom_navigation_fragments
 import android.widget.ImageView
 import android.widget.TextView
 import com.turik2304.coursework.R
+import com.turik2304.coursework.network.models.data.StatusEnum
 
 object SetStatusUtil {
 
-    fun setColoredTextStatus(textViewStatus: TextView) {
-        val resources = textViewStatus.resources
-        val context = textViewStatus.context
-        when (textViewStatus.text) {
-            "active" -> {
-                textViewStatus.setTextColor(
+    fun TextView.setColoredTextStatus(status: StatusEnum) {
+        val resources = this.resources
+        val context = this.context
+        when (status) {
+            StatusEnum.ACTIVE -> {
+                this.setTextColor(
                     resources.getColor(
                         R.color.green_status_online,
                         context?.theme
                     )
                 )
             }
-            "idle" -> {
-                textViewStatus.setTextColor(
+            StatusEnum.IDLE -> {
+                this.setTextColor(
                     resources.getColor(
                         R.color.yellow_status_idle,
                         context?.theme
@@ -27,7 +28,7 @@ object SetStatusUtil {
                 )
             }
             else -> {
-                textViewStatus.setTextColor(
+                this.setTextColor(
                     resources.getColor(
                         R.color.red_status_offline,
                         context?.theme
@@ -37,16 +38,16 @@ object SetStatusUtil {
         }
     }
 
-    fun setColoredImageStatus(status: String, imageView: ImageView) {
+    fun ImageView.setColoredImageStatus(status: StatusEnum) {
         when (status) {
-            "active" -> {
-                imageView.setImageResource(R.drawable.ic_status_online)
+            StatusEnum.ACTIVE -> {
+                this.setImageResource(R.drawable.ic_status_online)
             }
-            "idle" -> {
-                imageView.setImageResource(R.drawable.ic_status_idle)
+            StatusEnum.IDLE -> {
+                this.setImageResource(R.drawable.ic_status_idle)
             }
             else -> {
-                imageView.setImageResource(R.drawable.ic_status_offline)
+                this.setImageResource(R.drawable.ic_status_offline)
             }
         }
     }
