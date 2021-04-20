@@ -10,9 +10,7 @@ import com.turik2304.coursework.recycler_view_base.items.*
 @Database(entities = [
     UserUI::class,
     StreamUI::class,
-    TopicUI::class,
     InMessageUI::class,
-    Reaction::class
 ], version = 1)
 @TypeConverters(Converters::class)
 abstract class Database : RoomDatabase() {

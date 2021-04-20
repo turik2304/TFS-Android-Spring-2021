@@ -40,9 +40,9 @@ class SubscribedFragment : Fragment() {
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_subscribed, container, false)
     }
@@ -52,14 +52,17 @@ class SubscribedFragment : Fragment() {
 
         val editText = parentFragment?.view?.findViewById<EditText>(R.id.edSearchStreams)
         val tabLayoutShimmer =
-                parentFragment?.view?.findViewById<ShimmerFrameLayout>(R.id.tabLayoutShimmer)
+            parentFragment?.view?.findViewById<ShimmerFrameLayout>(R.id.tabLayoutShimmer)
         tabLayoutShimmer?.startShimmer()
 
         val recyclerViewSubscribedStreams =
-                view.findViewById<RecyclerView>(R.id.recycleViewSubscribedStreams)
-        val divider = DividerItemDecoration(recyclerViewSubscribedStreams.context,
-                (recyclerViewSubscribedStreams.layoutManager as LinearLayoutManager).orientation)
-        val drawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_stream_separator, context?.theme)
+            view.findViewById<RecyclerView>(R.id.recycleViewSubscribedStreams)
+        val divider = DividerItemDecoration(
+            recyclerViewSubscribedStreams.context,
+            (recyclerViewSubscribedStreams.layoutManager as LinearLayoutManager).orientation
+        )
+        val drawable =
+            ResourcesCompat.getDrawable(resources, R.drawable.ic_stream_separator, context?.theme)
         if (drawable != null) {
             divider.setDrawable(drawable)
         }
@@ -68,7 +71,7 @@ class SubscribedFragment : Fragment() {
         val listOfExpandedStreams = mutableListOf<Int>()
         val clickListener = clickListener@{ clickedView: View ->
             val positionOfClickedView =
-                    recyclerViewSubscribedStreams.getChildAdapterPosition(clickedView)
+                recyclerViewSubscribedStreams.getChildAdapterPosition(clickedView)
             val clickedItem = asyncAdapter.items.currentList[positionOfClickedView]
             if (clickedItem.viewType == R.layout.item_stream) {
                 val expandImageView = clickedView.findViewById<ImageView>(R.id.imExpandStream)
@@ -77,13 +80,13 @@ class SubscribedFragment : Fragment() {
                     listOfExpandedStreams.remove(uidOfClickedStreamUI)
                     animateExpandImageViewFrom180to0(context, expandImageView)
                     clickedView.setBackgroundColor(
-                            resources.getColor(R.color.gray_primary_background, context?.theme)
+                        resources.getColor(R.color.gray_primary_background, context?.theme)
                     )
                 } else {
                     listOfExpandedStreams.add(uidOfClickedStreamUI)
                     animateExpandImageViewFrom0to180(context, expandImageView)
                     clickedView.setBackgroundColor(
-                            resources.getColor(R.color.gray_secondary_background, context?.theme)
+                        resources.getColor(R.color.gray_secondary_background, context?.theme)
                     )
                 }
                 innerViewTypedList = listOfStreams.flatMap { stream ->
@@ -116,54 +119,58 @@ class SubscribedFragment : Fragment() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
-        Completable.fromCallable { asyncAdapter.items.submitList(db?.streamDao()?.getStreams(needSubscribed = true)) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    if (asyncAdapter.itemCount != 0)
-                        listOfStreams = asyncAdapter.items.currentList as List<StreamUI>
+        Completable.fromCallable {
+            asyncAdapter.items.submitList(
+                db?.streamDao()?.getStreams(needSubscribed = true)
+            )
+        }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                if (asyncAdapter.itemCount != 0)
+                    listOfStreams = asyncAdapter.items.currentList as List<StreamUI>
+                tabLayoutShimmer?.stopAndHideShimmer()
+            },
+                { onError ->
+                    Error.showError(
+                        context,
+                        onError
+                    )
                     tabLayoutShimmer?.stopAndHideShimmer()
-                },
-                        { onError ->
-                            Error.showError(
-                                    context,
-                                    onError
-                            )
-                            tabLayoutShimmer?.stopAndHideShimmer()
-                        })
+                })
 
         compositeDisposable.add(
-                ZulipRepository.getStreamUIListFromServer(needAllStreams = false)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                { streamList ->
-                                    streamList.forEachIndexed { index, streamUI ->
-                                        ZulipRepository.updateTopicsOfStream(streamUI)
-                                                .subscribeOn(Schedulers.io())
-                                                .observeOn(AndroidSchedulers.mainThread())
-                                                .subscribe { topics ->
-                                                    if (index == streamList.size - 1) {
-                                                        asyncAdapter.items.submitList(streamList)
-                                                        tabLayoutShimmer?.stopAndHideShimmer()
-                                                        listOfStreams = streamList
-                                                        innerViewTypedList = streamList
-                                                        Search.initSearch(
-                                                                editText,
-                                                                innerViewTypedList,
-                                                                asyncAdapter,
-                                                                recyclerViewSubscribedStreams
-                                                        )
-                                                    }
-                                                }
+            ZulipRepository.getStreamUIListFromServer(needAllStreams = false)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { streamList ->
+                        streamList.forEachIndexed { index, streamUI ->
+                            ZulipRepository.updateTopicsOfStream(streamUI)
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe { _ ->
+                                    if (index == streamList.size - 1) {
+                                        asyncAdapter.items.submitList(streamList)
+                                        tabLayoutShimmer?.stopAndHideShimmer()
+                                        listOfStreams = streamList
+                                        innerViewTypedList = streamList
+                                        Search.initSearch(
+                                            editText,
+                                            innerViewTypedList,
+                                            asyncAdapter,
+                                            recyclerViewSubscribedStreams
+                                        )
                                     }
-                                },
-                                { onError ->
-                                    Error.showError(
-                                            context,
-                                            onError
-                                    )
-                                    tabLayoutShimmer?.stopAndHideShimmer()
-                                })
+                                }
+                        }
+                    },
+                    { onError ->
+                        Error.showError(
+                            context,
+                            onError
+                        )
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                    })
         )
     }
 

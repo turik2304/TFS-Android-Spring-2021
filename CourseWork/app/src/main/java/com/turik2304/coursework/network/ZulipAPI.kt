@@ -2,6 +2,7 @@ package com.turik2304.coursework.network
 
 import com.turik2304.coursework.network.models.response.*
 import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import retrofit2.http.*
 
@@ -43,7 +44,7 @@ interface ZulipAPI {
         @Query("to") nameOfStream: String,
         @Query("topic") nameOfTopic: String,
         @Query("content") message: String
-    ): Single<SendMessageResponse>
+    ): Completable
 
     @POST("messages/{message_id}/reactions")
     fun sendReaction(
@@ -58,4 +59,24 @@ interface ZulipAPI {
         @Query("emoji_name") emojiName: String,
         @Query("emoji_code") emojiCode: String,
     ): Completable
+
+    @POST("register")
+    fun registerMessageEvents(
+            @Query("narrow") narrow: String,
+            @Query("event_types") eventTypes: String = "[\"message\"]"
+    ): Single<RegisterMessageEventsResponse>
+
+    @DELETE("events")
+    fun unregisterMessageEvents(
+            @Query("queue_id") queueId: String
+    ): Completable
+
+    @GET("events")
+    fun getMessageEvents(
+            @Query("queue_id") queueId: String,
+            @Query("last_event_id") lastEventId: String
+    ): Observable<GetMessageEventResponse>
 }
+
+
+

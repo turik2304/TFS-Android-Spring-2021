@@ -3,9 +3,11 @@ package com.turik2304.coursework.recycler_view_base.holders
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import com.bumptech.glide.Glide
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.R
 import com.turik2304.coursework.fragments.bottom_navigation_fragments.SetStatusUtil
+import com.turik2304.coursework.fragments.bottom_navigation_fragments.SetStatusUtil.setColoredImageStatus
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.UserUI
 import com.turik2304.coursework.stopAndHideShimmer
@@ -33,7 +35,10 @@ class UserHolder(
         }
         userName.text = item.userName
         email.text = item.email
-        SetStatusUtil.setColoredImageStatus(item.presence, status)
+        status.setColoredImageStatus(item.presence)
+        Glide.with(avatar)
+                .load(item.avatarUrl)
+                .into(avatar)
     }
 
 }

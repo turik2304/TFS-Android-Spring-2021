@@ -12,6 +12,7 @@ import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.Search
 import com.turik2304.coursework.network.ZulipRepository
+import com.turik2304.coursework.network.models.data.StatusEnum
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -31,9 +32,9 @@ class PeopleFragment : Fragment() {
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_people, container, false)
     }
@@ -49,7 +50,7 @@ class PeopleFragment : Fragment() {
             val userShimmer = clickedView as ShimmerFrameLayout
             userShimmer.showShimmer(true)
             val positionOfClickedView =
-                    recyclerViewUsers.getChildAdapterPosition(clickedView)
+                recyclerViewUsers.getChildAdapterPosition(clickedView)
             val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
             loadProfileDetails(clickedUserUI)
             userShimmer.stopAndHideShimmer()
@@ -61,76 +62,82 @@ class PeopleFragment : Fragment() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
         compositeDisposable.add(
-                Single.fromCallable { db?.userDao()?.getAll() }
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe { userList ->
-                            asyncAdapter.items.submitList(userList) {
-                                if (asyncAdapter.itemCount != 0)
-                                    usersToolbarShimmer.stopAndHideShimmer()
-                            }
-                        })
+            Single.fromCallable { db?.userDao()?.getAll() }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { userList ->
+                    asyncAdapter.items.submitList(userList) {
+                        if (asyncAdapter.itemCount != 0)
+                            usersToolbarShimmer.stopAndHideShimmer()
+                    }
+                })
         compositeDisposable.add(
-                ZulipRepository.getAllUsers()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                { userList ->
-                                    userList.forEachIndexed { index, user ->
-                                        if (!user.isBot) {
-                                            ZulipRepository.updateUserPresence(user)
-                                                    .observeOn(AndroidSchedulers.mainThread())
-                                                    .subscribe({ _ ->
-                                                        if (index == userList.size - 1) {
-                                                            asyncAdapter.items.submitList(userList)
-                                                            usersToolbarShimmer.stopAndHideShimmer()
-                                                            innerViewTypedList = userList
-                                                            Search.initSearch(
-                                                                    editText,
-                                                                    innerViewTypedList,
-                                                                    asyncAdapter,
-                                                                    recyclerViewUsers
-                                                            )
-                                                        }
-                                                    },
-                                                            { onError ->
-                                                                Error.showError(
-                                                                        context,
-                                                                        onError
-                                                                )
-                                                                usersToolbarShimmer.stopAndHideShimmer()
-                                                            })
+            ZulipRepository.getAllUsers()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { userList ->
+                        userList.forEachIndexed { index, user ->
+                            if (!user.isBot) {
+                                ZulipRepository.updateUserPresence(user)
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe({ _ ->
+                                        if (index == userList.size - 1) {
+                                            asyncAdapter.items.submitList(userList)
+                                            usersToolbarShimmer.stopAndHideShimmer()
+                                            innerViewTypedList = userList
+                                            Search.initSearch(
+                                                editText,
+                                                innerViewTypedList,
+                                                asyncAdapter,
+                                                recyclerViewUsers
+                                            )
                                         }
-                                    }
-                                },
-                                { onError ->
-                                    Error.showError(
-                                            context,
-                                            onError
-                                    )
-                                    usersToolbarShimmer.stopAndHideShimmer()
-                                })
+                                    },
+                                        { onError ->
+                                            Error.showError(
+                                                context,
+                                                onError
+                                            )
+                                            usersToolbarShimmer.stopAndHideShimmer()
+                                        })
+                            }
+                        }
+                    },
+                    { onError ->
+                        Error.showError(
+                            context,
+                            onError
+                        )
+                        usersToolbarShimmer.stopAndHideShimmer()
+                    })
         )
     }
 
-    private fun startProfileDetailsFragment(userName: String, status: String) {
+    private fun startProfileDetailsFragment(
+        userName: String,
+        status: StatusEnum,
+        avatarUrl: String
+    ) {
         parentFragmentManager.beginTransaction()
-                .add(
-                        R.id.fragmentContainer,
-                        ProfileDetailsFragment.newInstance(
-                                userName,
-                                status
-                        )
+            .add(
+                R.id.fragmentContainer,
+                ProfileDetailsFragment.newInstance(
+                    userName,
+                    status,
+                    avatarUrl
                 )
-                .addToBackStack(null)
-                .commit()
+            )
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun loadProfileDetails(
-            userUI: UserUI,
+        userUI: UserUI,
     ) {
         val name = userUI.userName
         val status = userUI.presence
-        startProfileDetailsFragment(name, status)
+        val avatarUrl = userUI.avatarUrl
+        startProfileDetailsFragment(name, status, avatarUrl)
     }
 
     override fun onDestroyView() {

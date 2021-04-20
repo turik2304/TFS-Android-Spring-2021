@@ -1,5 +1,6 @@
 package com.turik2304.coursework.network
 
+import com.turik2304.coursework.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
@@ -23,6 +24,6 @@ interface Repository {
             currentList: MutableList<ViewTyped>
     ): Single<List<ViewTyped>>
 
-    fun getOwnProfile(): Single<Pair<String, String>>
+    fun getOwnProfile(): Single<GetOwnProfileResponse>
     fun getFormattedDate(dateOfMessageInSeconds: Int): String
 }

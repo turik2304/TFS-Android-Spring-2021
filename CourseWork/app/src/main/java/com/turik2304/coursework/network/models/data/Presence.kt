@@ -13,5 +13,17 @@ class Presence(
 @SerialName("aggregated")
 class Aggregated(
     @SerialName("status")
-    val status: String
+    val statusEnum: StatusEnum
 )
+
+@Serializable
+enum class StatusEnum(val status: String) {
+    @SerialName("active")
+    ACTIVE("active"),
+
+    @SerialName("idle")
+    IDLE("idle"),
+
+    @SerialName("offline")
+    OFFLINE("offline")
+}

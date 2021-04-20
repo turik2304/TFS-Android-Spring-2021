@@ -15,6 +15,7 @@ data class InMessageUI(
         val message: String,
         var reactions: List<Reaction> = emptyList(),
         val dateInSeconds: Int,
+        val avatarUrl: String,
         @PrimaryKey
         override val uid: Int,
         override val viewType: Int = R.layout.item_incoming_message
