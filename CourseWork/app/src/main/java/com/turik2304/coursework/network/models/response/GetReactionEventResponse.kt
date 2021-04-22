@@ -1,12 +1,12 @@
 package com.turik2304.coursework.network.models.response
 
-import com.turik2304.coursework.network.models.data.MessageEvent
+import com.turik2304.coursework.network.models.data.ReactionEvent
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-class GetMessageEventResponse(
+class GetReactionEventResponse(
         @SerialName("events")
-        val messageEvents: List<MessageEvent>
+        val reactionEvents: List<ReactionEvent>
 )
 

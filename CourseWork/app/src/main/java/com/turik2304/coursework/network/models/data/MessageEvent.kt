@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Event(
+data class MessageEvent(
     @SerialName("message")
     val message: ZulipMessage,
     @SerialName("id")

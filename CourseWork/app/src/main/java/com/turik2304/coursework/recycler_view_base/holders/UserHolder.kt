@@ -6,7 +6,6 @@ import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.R
-import com.turik2304.coursework.fragments.bottom_navigation_fragments.SetStatusUtil
 import com.turik2304.coursework.fragments.bottom_navigation_fragments.SetStatusUtil.setColoredImageStatus
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.UserUI

@@ -2,28 +2,25 @@ package com.turik2304.coursework.network
 
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.MyUserId
-import com.turik2304.coursework.network.models.data.Reaction
-import com.turik2304.coursework.network.models.data.StatusEnum
-import com.turik2304.coursework.network.models.data.ZulipMessage
-import com.turik2304.coursework.network.models.data.ZulipReaction
+import com.turik2304.coursework.network.models.data.*
 import com.turik2304.coursework.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
 import com.turik2304.coursework.room.DatabaseClient
-import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.HashSet
 
 object ZulipRepository : Repository {
 
     val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
-    fun getAllUsers(): Single<List<UserUI>> {
+    override fun getAllUsers(): Single<List<UserUI>> {
         return RetroClient.zulipApi.getAllUsers()
             .subscribeOn(Schedulers.io())
             .map { response ->
@@ -33,7 +30,7 @@ object ZulipRepository : Repository {
             }
     }
 
-    fun updateUserPresence(user: UserUI): Single<StatusEnum> {
+    override fun updateUserPresence(user: UserUI): Single<StatusEnum> {
         return RetroClient.zulipApi.getUserPresence(user.email)
             .subscribeOn(Schedulers.io())
             .map { response ->
@@ -128,6 +125,7 @@ object ZulipRepository : Repository {
         return RetroClient.zulipApi.getMessages(uidOfLastLoadedMessage, numBefore, 0, narrow)
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
+
             .map { messagesResponse ->
                 messagesResponse.messages
             }
@@ -164,20 +162,129 @@ object ZulipRepository : Repository {
             }
     }
 
-    fun getMessageEvent(
+    override fun getMessageEvent(
         queueId: String,
         lastEventId: String,
         nameOfTopic: String,
-        nameOfStream: String
+        nameOfStream: String,
+        currentList: List<ViewTyped>,
+        queueOfRawUidsOfMessages: HashSet<Int>
     ): Observable<Pair<String, List<ViewTyped>>> {
         return RetroClient.zulipApi.getMessageEvents(queueId, lastEventId)
             .map { response ->
-                val newLastEventId = response.events.last().id
-                val zulipMessages = response.events.map { it.message }
-                val viewTypedMessages = parseMessages(zulipMessages, nameOfTopic, nameOfStream)
-                db?.messageDao()?.insertAllAndCheckCapacity(nameOfStream, nameOfTopic, viewTypedMessages)
-                return@map newLastEventId to viewTypedMessages
+                if (response.messageEvents.isNotEmpty()) {
+                    val newLastEventId = response.messageEvents.last().id
+                    val zulipMessages = response.messageEvents.map { it.message }
+                    val viewTypedMessages = parseMessages(zulipMessages, nameOfTopic, nameOfStream)
+                    val newList = currentList.filter { it.uid !in queueOfRawUidsOfMessages }
+                    val actualList = newList + viewTypedMessages
+                    db?.messageDao()
+                        ?.insertAllAndCheckCapacity(nameOfStream, nameOfTopic, viewTypedMessages)
+                    return@map newLastEventId to actualList
+                } else {
+                    return@map lastEventId to emptyList<ViewTyped>()
+                }
             }
+    }
+
+    override fun getReactionEvent(
+        queueId: String,
+        lastEventId: String,
+        currentList: List<ViewTyped>,
+    ): Observable<Pair<String, List<ViewTyped>>> {
+        return RetroClient.zulipApi.getReactionEvents(queueId, lastEventId)
+            .map { response ->
+                if (response.reactionEvents.isNotEmpty()) {
+                    val newLastEventId = response.reactionEvents.last().id
+                    val reactionEvents = response.reactionEvents
+                    val updatedList = updateReactions(currentList, reactionEvents)
+                    return@map newLastEventId to updatedList
+                } else return@map lastEventId to emptyList<ViewTyped>()
+            }
+    }
+
+    override fun updateReactions(
+        currentList: List<ViewTyped>,
+        reactionEvents: List<ReactionEvent>
+    ): List<ViewTyped> {
+        var updatedList: List<ViewTyped> = currentList
+        reactionEvents.forEach { reactionEvent ->
+            updatedList = updatedList.map { viewTyped ->
+                if (viewTyped.uid == reactionEvent.messageId) {
+                    return@map when (viewTyped) {
+                        is InMessageUI -> viewTyped.copy(
+                            reactions = handleReactions(
+                                viewTyped.reactions,
+                                reactionEvent
+                            )
+                        )
+                        is OutMessageUI -> viewTyped.copy(
+                            reactions = handleReactions(
+                                viewTyped.reactions,
+                                reactionEvent
+                            )
+                        )
+                        else -> viewTyped
+                    }
+                } else return@map viewTyped
+            }
+        }
+        return updatedList
+    }
+
+    private fun handleReactions(
+        reactions: List<Reaction>,
+        reactionEvent: ReactionEvent
+    ): List<Reaction> {
+        val targetReaction = Reaction(
+            emojiCode = Integer.parseInt(reactionEvent.emojiCode, 16),
+            counter = 1,
+            usersWhoClicked = mutableListOf(reactionEvent.userId)
+        )
+        var reactionFounded = false
+        val updatedReactions = reactions.map { currentReaction ->
+            if (currentReaction.emojiCode == targetReaction.emojiCode) {
+                when (reactionEvent.operation) {
+                    OperationEnum.ADD -> {
+                        reactionFounded = true
+                        if (targetReaction.usersWhoClicked.single() !in currentReaction.usersWhoClicked) {
+                            val emojiCode = currentReaction.emojiCode
+                            val counter = currentReaction.counter + 1
+                            val usersWhoClicked =
+                                (currentReaction.usersWhoClicked + targetReaction.usersWhoClicked).toMutableList()
+                            return@map currentReaction.copy(
+                                emojiCode = emojiCode,
+                                counter = counter,
+                                usersWhoClicked = usersWhoClicked
+                            )
+                        } else return@map currentReaction
+                    }
+                    OperationEnum.REMOVE -> {
+                        reactionFounded = true
+                        if (targetReaction.usersWhoClicked.single() in currentReaction.usersWhoClicked) {
+                            val emojiCode = currentReaction.emojiCode
+                            val counter = currentReaction.counter - 1
+                            val usersWhoClicked =
+                                (currentReaction.usersWhoClicked - targetReaction.usersWhoClicked).toMutableList()
+                            return@map currentReaction.copy(
+                                emojiCode = emojiCode,
+                                counter = counter,
+                                usersWhoClicked = usersWhoClicked
+                            )
+                        } else return@map currentReaction
+                    }
+                }
+            } else return@map currentReaction
+        }
+        return if (reactionFounded) {
+            updatedReactions.filter { it.counter > 0 }
+        } else {
+            return if (reactionEvent.operation == OperationEnum.ADD) {
+                (updatedReactions + listOf(targetReaction))
+            } else updatedReactions
+
+        }
+
     }
 
     private fun parseMessages(

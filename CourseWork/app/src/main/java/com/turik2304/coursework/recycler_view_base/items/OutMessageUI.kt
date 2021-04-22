@@ -12,7 +12,7 @@ data class OutMessageUI(
         val message: String,
         var reactions: List<Reaction>,
         val dateInSeconds: Int,
-        override val uid: Int,
+        override var uid: Int,
         override val viewType: Int = R.layout.item_outcoming_message
 ) : ViewTyped
 

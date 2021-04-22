@@ -160,7 +160,7 @@ class EmojiView @JvmOverloads constructor(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     {
-                        ChatActivity.updateMessage(uidOfMessage, chatShimmer)
+                        chatShimmer.stopAndHideShimmer()
                     },
                     { onError ->
                         Error.showError(
@@ -179,7 +179,7 @@ class EmojiView @JvmOverloads constructor(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     {
-                        ChatActivity.updateMessage(uidOfMessage, chatShimmer)
+                        chatShimmer.stopAndHideShimmer()
                     },
                     { onError ->
                         Error.showError(
