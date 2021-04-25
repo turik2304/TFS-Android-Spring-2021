@@ -40,27 +40,27 @@ class ChatActivity : AppCompatActivity() {
 
 
         fun updateMessages(
-                context: Context,
-                shimmer: ShimmerFrameLayout,
-                runnable: Runnable? = null
+            context: Context,
+            shimmer: ShimmerFrameLayout,
+            runnable: Runnable? = null
         ) {
             compositeDisposable.add(
-                    ZulipRepository.getMessageUIListFromServer(nameOfTopic, nameOfStream)
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(
-                                    { list ->
-                                        asyncAdapter.items.submitList(list) {
-                                            runnable?.run()
-                                        }
-                                        shimmer.stopAndHideShimmer()
-                                    },
-                                    { onError ->
-                                        Error.showError(
-                                                context,
-                                                onError
-                                        )
-                                        shimmer.stopAndHideShimmer()
-                                    })
+                ZulipRepository.getMessageUIListFromServer(nameOfTopic, nameOfStream)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        { list ->
+                            asyncAdapter.items.submitList(list) {
+                                runnable?.run()
+                            }
+                            shimmer.stopAndHideShimmer()
+                        },
+                        { onError ->
+                            Error.showError(
+                                context,
+                                onError
+                            )
+                            shimmer.stopAndHideShimmer()
+                        })
             )
         }
 
@@ -92,9 +92,9 @@ class ChatActivity : AppCompatActivity() {
         chatListBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
 
         fillTextViewWithEmojisAsSpannableText(
-                this,
-                textView = dialogBinding.emojiListTextView,
-                emojiCodeRange = 0x1F600..0x1F645
+            this,
+            textView = dialogBinding.emojiListTextView,
+            emojiCodeRange = 0x1F600..0x1F645
         )
         val clickListener = { clickedView: View ->
             when (clickedView) {
@@ -120,52 +120,59 @@ class ChatActivity : AppCompatActivity() {
 
         val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
         compositeDisposable.add(
-                RetroClient.zulipApi.registerMessageEvents(narrow)
-                        .subscribeOn(Schedulers.io())
-                        .subscribe { response ->
-                            queueId = response.queueId
-                            var lastEventId = response.lastEventId
-                            val serialDisposable = SerialDisposable()
-                            compositeDisposable.add(serialDisposable)
-                            serialDisposable.set(
-                                    Observable.interval(2, TimeUnit.SECONDS)
-                                            .flatMap { RetroClient.zulipApi.getMessageEvents(response.queueId, lastEventId) }
-                                            .retry()
-                                            .subscribe { resp ->
-                                                if (resp.events.isNotEmpty()) {
-                                                    lastEventId = resp.events.last().id
-                                                    val zulipMessages = resp.events.map { it.message }
-                                                    val newMessages = ZulipRepository.parseMessages(zulipMessages)
-                                                    val currList = asyncAdapter.items.currentList
-                                                    asyncAdapter.items.submitList((currList + newMessages).distinct()) {
-                                                        chatListBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
-                                                    }
-                                                }
-                                            })
-                        })
+            RetroClient.zulipApi.registerMessageEvents(narrow)
+                .subscribeOn(Schedulers.io())
+                .subscribe { response ->
+                    queueId = response.queueId
+                    var lastEventId = response.lastEventId
+                    val serialDisposable = SerialDisposable()
+                    compositeDisposable.add(serialDisposable)
+                    serialDisposable.set(
+                        Observable.interval(2, TimeUnit.SECONDS)
+                            .flatMap {
+                                RetroClient.zulipApi.getMessageEvents(
+                                    response.queueId,
+                                    lastEventId
+                                )
+                            }
+                            .retry()
+                            .subscribe { resp ->
+                                if (resp.events.isNotEmpty()) {
+                                    lastEventId = resp.events.last().id
+                                    val zulipMessages = resp.events.map { it.message }
+                                    val newMessages = ZulipRepository.parseMessages(zulipMessages)
+                                    val currList = asyncAdapter.items.currentList
+                                    asyncAdapter.items.submitList((currList + newMessages).distinct()) {
+                                        chatListBinding.recycleView.smoothScrollToPosition(
+                                            asyncAdapter.itemCount
+                                        )
+                                    }
+                                }
+                            })
+                })
 
         chatListBinding.imageViewSendMessage.setOnClickListener {
             if (chatListBinding.editTextEnterMessage.text.isNotEmpty()) {
                 val message = chatListBinding.editTextEnterMessage.text.toString()
                 chatListBinding.chatShimmer.showShimmer(true)
                 compositeDisposable.add(
-                        RetroClient.zulipApi.sendMessage(
-                                nameOfStream = nameOfStream,
-                                nameOfTopic = nameOfTopic,
-                                message = message
-                        )
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(
-                                        {
-                                            chatListBinding.chatShimmer.stopAndHideShimmer()
-                                        },
-                                        { onError ->
-                                            Error.showError(
-                                                    applicationContext,
-                                                    onError
-                                            )
-                                            chatListBinding.chatShimmer.stopAndHideShimmer()
-                                        })
+                    RetroClient.zulipApi.sendMessage(
+                        nameOfStream = nameOfStream,
+                        nameOfTopic = nameOfTopic,
+                        message = message
+                    )
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                            {
+                                chatListBinding.chatShimmer.stopAndHideShimmer()
+                            },
+                            { onError ->
+                                Error.showError(
+                                    applicationContext,
+                                    onError
+                                )
+                                chatListBinding.chatShimmer.stopAndHideShimmer()
+                            })
                 )
                 chatListBinding.editTextEnterMessage.text.clear()
             }
@@ -173,18 +180,18 @@ class ChatActivity : AppCompatActivity() {
 
         chatListBinding.editTextEnterMessage.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int,
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int,
             ) {
             }
 
             override fun onTextChanged(
-                    message: CharSequence,
-                    start: Int,
-                    before: Int,
-                    count: Int
+                message: CharSequence,
+                start: Int,
+                before: Int,
+                count: Int
             ) {
                 when (message.length) {
                     0 -> chatListBinding.imageViewSendMessage.setImageResource(R.drawable.ic_add_files)
@@ -205,8 +212,8 @@ class ChatActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         RetroClient.zulipApi.unregisterMessageEvents(queueId)
-                .subscribeOn(Schedulers.io())
-                .subscribe()
+            .subscribeOn(Schedulers.io())
+            .subscribe()
         asyncAdapter.items.submitList(null)
         asyncAdapter.holderFactory = null
         chatListBinding.recycleView.adapter = null
@@ -214,9 +221,9 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun fillTextViewWithEmojisAsSpannableText(
-            context: Context,
-            textView: TextView,
-            emojiCodeRange: IntRange
+        context: Context,
+        textView: TextView,
+        emojiCodeRange: IntRange
     ) {
         val stringBuilder = SpannableStringBuilder()
         for (emojiCode in emojiCodeRange) {
@@ -225,10 +232,10 @@ class ChatActivity : AppCompatActivity() {
             stringBuilder.append(SpannableString(emojiString))
             val curInd = stringBuilder.length
             stringBuilder.setSpan(
-                    MyClickableSpan(context, prevInd, curInd),
-                    prevInd,
-                    curInd,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                MyClickableSpan(context, prevInd, curInd),
+                prevInd,
+                curInd,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         }
         textView.text = stringBuilder.toSpannable()
@@ -236,11 +243,11 @@ class ChatActivity : AppCompatActivity() {
     }
 
     inner class MyClickableSpan(
-            private val context: Context,
-            private val start: Int,
-            private val end: Int
+        private val context: Context,
+        private val start: Int,
+        private val end: Int
     ) :
-            ClickableSpan() {
+        ClickableSpan() {
         override fun onClick(widget: View) {
             val emojiCodeString = (widget as TextView).text.subSequence(start, end).toString()
             val emojiCode = emojiCodeString.codePointAt(0)
@@ -249,18 +256,18 @@ class ChatActivity : AppCompatActivity() {
             val zulipEmojiCode = nameAndZulipEmojiCode.second
             chatListBinding.chatShimmer.showShimmer(true)
             compositeDisposable.add(
-                    RetroClient.zulipApi.sendReaction(uidOfClickedMessage, name, zulipEmojiCode)
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(
-                                    {
-                                        updateMessages(context, chatListBinding.chatShimmer)
-                                    },
-                                    { onError ->
-                                        Error.showError(
-                                                applicationContext,
-                                                onError
-                                        )
-                                    })
+                RetroClient.zulipApi.sendReaction(uidOfClickedMessage, name, zulipEmojiCode)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        {
+                            updateMessages(context, chatListBinding.chatShimmer)
+                        },
+                        { onError ->
+                            Error.showError(
+                                applicationContext,
+                                onError
+                            )
+                        })
             )
             dialog.dismiss()
         }

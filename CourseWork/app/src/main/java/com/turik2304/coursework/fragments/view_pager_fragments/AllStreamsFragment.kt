@@ -60,27 +60,28 @@ class AllStreamsFragment : Fragment() {
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewAllStreams.adapter = asyncAdapter
         compositeDisposable.add(
-        ZulipRepository.getStreamUIListFromServer(true)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { streamList ->
-                    innerViewTypedList = streamList
-                    asyncAdapter.items.submitList(streamList)
-                    Search.initSearch(
-                        editText,
-                        innerViewTypedList,
-                        asyncAdapter,
-                        recyclerViewAllStreams
-                    )
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                },
-                { onError ->
-                    Error.showError(
-                        context,
-                        onError
-                    )
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                }))
+            ZulipRepository.getStreamUIListFromServer(true)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { streamList ->
+                        innerViewTypedList = streamList
+                        asyncAdapter.items.submitList(streamList)
+                        Search.initSearch(
+                            editText,
+                            innerViewTypedList,
+                            asyncAdapter,
+                            recyclerViewAllStreams
+                        )
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                    },
+                    { onError ->
+                        Error.showError(
+                            context,
+                            onError
+                        )
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                    })
+        )
     }
 
     override fun onDestroy() {

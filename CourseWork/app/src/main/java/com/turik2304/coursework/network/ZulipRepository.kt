@@ -19,41 +19,41 @@ object ZulipRepository : Repository {
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<MutableList<ViewTyped>> {
         if (needAllStreams) {
             return RetroClient.zulipApi.getAllStreams()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.computation())
-                    .map { allStreamsResponse ->
-                        return@map allStreamsResponse.allStreams.addSeparators()
-                    }
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.computation())
+                .map { allStreamsResponse ->
+                    return@map allStreamsResponse.allStreams.addSeparators()
+                }
         } else {
             return RetroClient.zulipApi.getSubscribedStreams()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.computation())
-                    .map { subscribedStreamsResponse ->
-                        return@map subscribedStreamsResponse.subscribedStreams.addSeparators()
-                    }
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.computation())
+                .map { subscribedStreamsResponse ->
+                    return@map subscribedStreamsResponse.subscribedStreams.addSeparators()
+                }
         }
     }
 
     override fun getTopicsUIListByStreamUid(streamUid: Int): Single<MutableList<ViewTyped>> {
         return RetroClient.zulipApi.getTopics(streamUid)
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.computation())
-                .map { topicsResponse ->
-                    return@map topicsResponse.topics.addSeparators()
-                }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { topicsResponse ->
+                return@map topicsResponse.topics.addSeparators()
+            }
     }
 
     override fun getOwnProfile(): Single<GetOwnProfileResponse> {
         val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
         val getOwnPresence =
-                RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
+            RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
         return Single.zip(getOwnProfile, getOwnPresence,
-                { ownProfileResponse: GetOwnProfileResponse, ownPresence: GetUserPresenceResponse ->
-                    ownProfileResponse.statusEnum =
-                            ownPresence.presence.aggregated.statusEnum
-                    return@zip ownProfileResponse
-                })
-                .subscribeOn(Schedulers.io())
+            { ownProfileResponse: GetOwnProfileResponse, ownPresence: GetUserPresenceResponse ->
+                ownProfileResponse.statusEnum =
+                    ownPresence.presence.aggregated.statusEnum
+                return@zip ownProfileResponse
+            })
+            .subscribeOn(Schedulers.io())
     }
 
     private fun List<ViewTyped>.addSeparators(): MutableList<ViewTyped> {
@@ -67,33 +67,33 @@ object ZulipRepository : Repository {
     }
 
     override fun getMessageUIListFromServer(
-            nameOfTopic: String,
-            nameOfStream: String
+        nameOfTopic: String,
+        nameOfStream: String
     ): Single<List<ViewTyped>> {
         val narrow = NarrowConstructor.getNarrow(nameOfTopic, nameOfStream)
         return RetroClient.zulipApi.getMessages("newest", 100, 0, narrow)
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.computation())
-                .map { messagesResponse ->
-                    messagesResponse.messages
-                }
-                .map { messageList ->
-                    messageList
-                            .sortedBy { it.dateInSeconds }
-                            .groupBy { message ->
-                                getFormattedDate(message.dateInSeconds)
-                            }
-                            .flatMap { (date, messages) ->
-                                listOf(
-                                        DateSeparatorUI(
-                                                date,
-                                                date.hashCode()
-                                        )
-                                ) + parseMessages(
-                                        messages
-                                )
-                            }
-                }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { messagesResponse ->
+                messagesResponse.messages
+            }
+            .map { messageList ->
+                messageList
+                    .sortedBy { it.dateInSeconds }
+                    .groupBy { message ->
+                        getFormattedDate(message.dateInSeconds)
+                    }
+                    .flatMap { (date, messages) ->
+                        listOf(
+                            DateSeparatorUI(
+                                date,
+                                date.hashCode()
+                            )
+                        ) + parseMessages(
+                            messages
+                        )
+                    }
+            }
     }
 
     override fun parseMessages(remoteMessages: List<ZulipMessage>): List<ViewTyped> {
@@ -101,26 +101,26 @@ object ZulipRepository : Repository {
         remoteMessages.forEach { messageToken ->
             if (messageToken.userId == MyUserId.MY_USER_ID) {
                 messageUIList.add(
-                        OutMessageUI(
-                                userName = messageToken.userName,
-                                userId = messageToken.userId,
-                                message = messageToken.message,
-                                reactions = parseReactions(messageToken.reactions),
-                                dateInSeconds = messageToken.dateInSeconds,
-                                uid = messageToken.uid,
-                        )
+                    OutMessageUI(
+                        userName = messageToken.userName,
+                        userId = messageToken.userId,
+                        message = messageToken.message,
+                        reactions = parseReactions(messageToken.reactions),
+                        dateInSeconds = messageToken.dateInSeconds,
+                        uid = messageToken.uid,
+                    )
                 )
             } else {
                 messageUIList.add(
-                        InMessageUI(
-                                userName = messageToken.userName,
-                                userId = messageToken.userId,
-                                message = messageToken.message,
-                                reactions = parseReactions(messageToken.reactions),
-                                dateInSeconds = messageToken.dateInSeconds,
-                                avatarUrl = messageToken.avatarUrl,
-                                uid = messageToken.uid,
-                        )
+                    InMessageUI(
+                        userName = messageToken.userName,
+                        userId = messageToken.userId,
+                        message = messageToken.message,
+                        reactions = parseReactions(messageToken.reactions),
+                        dateInSeconds = messageToken.dateInSeconds,
+                        avatarUrl = messageToken.avatarUrl,
+                        uid = messageToken.uid,
+                    )
                 )
             }
         }

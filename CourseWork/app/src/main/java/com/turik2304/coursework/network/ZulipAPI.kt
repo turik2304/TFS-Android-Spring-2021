@@ -62,19 +62,19 @@ interface ZulipAPI {
 
     @POST("register")
     fun registerMessageEvents(
-            @Query("narrow") narrow: String,
-            @Query("event_types") eventTypes: String = "[\"message\"]"
+        @Query("narrow") narrow: String,
+        @Query("event_types") eventTypes: String = "[\"message\"]"
     ): Single<RegisterMessageEventsResponse>
 
     @DELETE("events")
     fun unregisterMessageEvents(
-            @Query("queue_id") queueId: String
+        @Query("queue_id") queueId: String
     ): Completable
 
     @GET("events")
     fun getMessageEvents(
-            @Query("queue_id") queueId: String,
-            @Query("last_event_id") lastEventId: String
+        @Query("queue_id") queueId: String,
+        @Query("last_event_id") lastEventId: String
     ): Observable<GetMessageEventResponse>
 }
 

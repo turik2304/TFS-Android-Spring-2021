@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Event(
     @SerialName("message")
-        val message: ZulipMessage,
+    val message: ZulipMessage,
     @SerialName("id")
-        val id: String
+    val id: String
 )

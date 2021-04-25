@@ -81,7 +81,8 @@ class PeopleFragment : Fragment() {
                                 RetroClient.zulipApi.getUserPresence(user.email)
                                     .subscribeOn(Schedulers.io())
                                     .subscribe({ presenceResponse ->
-                                        user.presence = presenceResponse.presence.aggregated.statusEnum
+                                        user.presence =
+                                            presenceResponse.presence.aggregated.statusEnum
                                     },
                                         { onError ->
                                             Error.showError(
@@ -103,7 +104,11 @@ class PeopleFragment : Fragment() {
         )
     }
 
-    private fun startProfileDetailsFragment(userName: String, status: StatusEnum, avatarUrl: String) {
+    private fun startProfileDetailsFragment(
+        userName: String,
+        status: StatusEnum,
+        avatarUrl: String
+    ) {
         parentFragmentManager.beginTransaction()
             .add(
                 R.id.fragmentContainer,

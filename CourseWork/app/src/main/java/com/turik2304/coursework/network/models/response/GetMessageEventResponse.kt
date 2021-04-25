@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class GetMessageEventResponse(
-        @SerialName("events")
-        val events: List<Event>
+    @SerialName("events")
+    val events: List<Event>
 )
 

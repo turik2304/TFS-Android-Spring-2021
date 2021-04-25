@@ -37,8 +37,8 @@ class UserHolder(
         email.text = item.email
         status.setColoredImageStatus(item.presence)
         Glide.with(avatar)
-                .load(item.avatarUrl)
-                .into(avatar)
+            .load(item.avatarUrl)
+            .into(avatar)
     }
 
 }
