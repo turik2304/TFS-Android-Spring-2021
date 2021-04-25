@@ -5,11 +5,11 @@ import com.turik2304.coursework.network.models.data.Reaction
 import com.turik2304.coursework.network.models.data.ZulipMessage
 import com.turik2304.coursework.network.models.data.ZulipReaction
 import com.turik2304.coursework.network.models.response.GetOwnProfileResponse
+import com.turik2304.coursework.network.models.response.GetUserPresenceResponse
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
 import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,11 +45,13 @@ object ZulipRepository : Repository {
 
     override fun getOwnProfile(): Single<GetOwnProfileResponse> {
         val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
-        val getOwnPresence = RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
+        val getOwnPresence =
+                RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
         return Single.zip(getOwnProfile, getOwnPresence,
-                BiFunction { ownProfileResponse, ownPresence ->
-                    ownProfileResponse.statusEnum = ownPresence.presence.aggregated.statusEnum
-                    return@BiFunction ownProfileResponse
+                { ownProfileResponse: GetOwnProfileResponse, ownPresence: GetUserPresenceResponse ->
+                    ownProfileResponse.statusEnum =
+                            ownPresence.presence.aggregated.statusEnum
+                    return@zip ownProfileResponse
                 })
                 .subscribeOn(Schedulers.io())
     }
@@ -82,7 +84,12 @@ object ZulipRepository : Repository {
                                 getFormattedDate(message.dateInSeconds)
                             }
                             .flatMap { (date, messages) ->
-                                listOf(DateSeparatorUI(date, date.hashCode())) + parseMessages(
+                                listOf(
+                                        DateSeparatorUI(
+                                                date,
+                                                date.hashCode()
+                                        )
+                                ) + parseMessages(
                                         messages
                                 )
                             }
