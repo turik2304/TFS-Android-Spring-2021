@@ -10,12 +10,12 @@ object DatabaseClient {
     fun getInstance(context: Context): Database? {
         if (instance == null) {
             instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    Database::class.java,
-                    "AppDatabase"
+                context.applicationContext,
+                Database::class.java,
+                "AppDatabase"
             )
-                    .fallbackToDestructiveMigration()
-                    .build()
+                .fallbackToDestructiveMigration()
+                .build()
         }
         return instance
     }

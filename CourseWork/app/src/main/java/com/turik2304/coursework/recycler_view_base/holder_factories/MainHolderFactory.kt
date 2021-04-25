@@ -8,7 +8,7 @@ import com.turik2304.coursework.recycler_view_base.holders.StreamHolder
 import com.turik2304.coursework.recycler_view_base.holders.TopicHolder
 import com.turik2304.coursework.recycler_view_base.holders.UserHolder
 
-class MainHolderFactory(private val getContentClick: (View) -> Unit): HolderFactory() {
+class MainHolderFactory(private val getContentClick: (View) -> Unit) : HolderFactory() {
 
     override fun createViewHolder(view: View, viewType: Int): BaseViewHolder<*>? {
         return when (viewType) {

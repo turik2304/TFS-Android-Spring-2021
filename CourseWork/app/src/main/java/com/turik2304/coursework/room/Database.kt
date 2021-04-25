@@ -7,11 +7,13 @@ import com.turik2304.coursework.network.models.data.Reaction
 import com.turik2304.coursework.recycler_view_base.items.*
 
 
-@Database(entities = [
-    UserUI::class,
-    StreamUI::class,
-    InMessageUI::class,
-], version = 1)
+@Database(
+    entities = [
+        UserUI::class,
+        StreamUI::class,
+        InMessageUI::class,
+    ], version = 1
+)
 @TypeConverters(Converters::class)
 abstract class Database : RoomDatabase() {
 

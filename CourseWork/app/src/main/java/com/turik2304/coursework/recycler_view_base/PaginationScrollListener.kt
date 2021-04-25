@@ -3,7 +3,8 @@ package com.turik2304.coursework.recycler_view_base
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-abstract class PaginationScrollListener(var layoutManager: LinearLayoutManager) : RecyclerView.OnScrollListener() {
+abstract class PaginationScrollListener(var layoutManager: LinearLayoutManager) :
+    RecyclerView.OnScrollListener() {
 
     abstract fun isLastPage(): Boolean
 
