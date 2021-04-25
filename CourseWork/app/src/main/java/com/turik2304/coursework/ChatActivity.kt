@@ -73,6 +73,9 @@ class ChatActivity : AppCompatActivity() {
 
     private lateinit var dialog: BottomSheetDialog
     private lateinit var queueId: String
+    private lateinit var lastEventId: String
+    private val longpollingDisposable = CompositeDisposable()
+    private var isFirstLoading = true
     private var uidOfClickedMessage: Int = -1
 
 
@@ -117,39 +120,6 @@ class ChatActivity : AppCompatActivity() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatListBinding.recycleView.adapter = asyncAdapter
         updateMessages(this, chatListBinding.chatShimmer)
-
-        val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
-        compositeDisposable.add(
-            RetroClient.zulipApi.registerMessageEvents(narrow)
-                .subscribeOn(Schedulers.io())
-                .subscribe { response ->
-                    queueId = response.queueId
-                    var lastEventId = response.lastEventId
-                    val serialDisposable = SerialDisposable()
-                    compositeDisposable.add(serialDisposable)
-                    serialDisposable.set(
-                        Observable.interval(2, TimeUnit.SECONDS)
-                            .flatMap {
-                                RetroClient.zulipApi.getMessageEvents(
-                                    response.queueId,
-                                    lastEventId
-                                )
-                            }
-                            .retry()
-                            .subscribe { resp ->
-                                if (resp.events.isNotEmpty()) {
-                                    lastEventId = resp.events.last().id
-                                    val zulipMessages = resp.events.map { it.message }
-                                    val newMessages = ZulipRepository.parseMessages(zulipMessages)
-                                    val currList = asyncAdapter.items.currentList
-                                    asyncAdapter.items.submitList((currList + newMessages).distinct()) {
-                                        chatListBinding.recycleView.smoothScrollToPosition(
-                                            asyncAdapter.itemCount
-                                        )
-                                    }
-                                }
-                            })
-                })
 
         chatListBinding.imageViewSendMessage.setOnClickListener {
             if (chatListBinding.editTextEnterMessage.text.isNotEmpty()) {
@@ -207,6 +177,25 @@ class ChatActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         chatListBinding.chatShimmer.startShimmer()
+        val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
+        if (isFirstLoading) {
+            longpollingDisposable.add(
+                RetroClient.zulipApi.registerMessageEvents(narrow)
+                    .subscribeOn(Schedulers.io())
+                    .subscribe { response ->
+                        queueId = response.queueId
+                        lastEventId = response.lastEventId
+                        initLongpolling()
+                        isFirstLoading = false
+                    })
+        } else {
+            initLongpolling()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        longpollingDisposable.clear()
     }
 
     override fun onDestroy() {
@@ -218,6 +207,33 @@ class ChatActivity : AppCompatActivity() {
         asyncAdapter.holderFactory = null
         chatListBinding.recycleView.adapter = null
         compositeDisposable.clear()
+    }
+
+    private fun initLongpolling() {
+        val serialDisposable = SerialDisposable()
+        longpollingDisposable.add(serialDisposable)
+        serialDisposable.set(
+            Observable.interval(2, TimeUnit.SECONDS)
+                .flatMap {
+                    RetroClient.zulipApi.getMessageEvents(
+                        queueId,
+                        lastEventId
+                    )
+                }
+                .retry()
+                .subscribe { resp ->
+                    if (resp.events.isNotEmpty()) {
+                        lastEventId = resp.events.last().id
+                        val zulipMessages = resp.events.map { it.message }
+                        val newMessages = ZulipRepository.parseMessages(zulipMessages)
+                        val currList = asyncAdapter.items.currentList
+                        asyncAdapter.items.submitList((currList + newMessages).distinct()) {
+                            chatListBinding.recycleView.smoothScrollToPosition(
+                                asyncAdapter.itemCount
+                            )
+                        }
+                    }
+                })
     }
 
     private fun fillTextViewWithEmojisAsSpannableText(
