@@ -12,13 +12,13 @@ import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.Search
 import com.turik2304.coursework.network.ZulipRepository
+import com.turik2304.coursework.network.ZulipRepository.db
 import com.turik2304.coursework.network.models.data.StatusEnum
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.UserUI
-import com.turik2304.coursework.room.DatabaseClient
 import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
@@ -58,7 +58,6 @@ class PeopleFragment : Fragment() {
         val editText = view.findViewById<EditText>(R.id.edSearchUsers)
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
-        val db = DatabaseClient.getInstance(requireContext())
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
         compositeDisposable.add(
