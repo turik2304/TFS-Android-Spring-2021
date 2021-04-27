@@ -60,7 +60,7 @@ class AllStreamsFragment : Fragment() {
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewAllStreams.adapter = asyncAdapter
         compositeDisposable.add(
-            ZulipRepository.getStreamUIListFromServer(true)
+            ZulipRepository.getStreams(true)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { streamList ->

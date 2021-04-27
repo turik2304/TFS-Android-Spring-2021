@@ -18,7 +18,6 @@ import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
 import com.turik2304.coursework.network.ZulipRepository
-import com.turik2304.coursework.network.ZulipRepository.db
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -26,9 +25,7 @@ import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFa
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
 
 
 class SubscribedFragment : Fragment() {
@@ -119,50 +116,22 @@ class SubscribedFragment : Fragment() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
-        Completable.fromCallable {
-            asyncAdapter.items.submitList(
-                db?.streamDao()?.getStreams(needSubscribed = true)
-            )
-        }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                if (asyncAdapter.itemCount != 0)
-                    listOfStreams = asyncAdapter.items.currentList as List<StreamUI>
-                tabLayoutShimmer?.stopAndHideShimmer()
-            },
-                { onError ->
-                    Error.showError(
-                        context,
-                        onError
-                    )
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                })
 
         compositeDisposable.add(
-            ZulipRepository.getStreamUIListFromServer(needAllStreams = false)
+            ZulipRepository.getStreams(needAllStreams = false)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { streamList ->
-                        streamList.forEachIndexed { index, streamUI ->
-                            ZulipRepository.updateTopicsOfStream(streamUI)
-                                .subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe { _ ->
-                                    if (index == streamList.size - 1) {
-                                        asyncAdapter.items.submitList(streamList)
-                                        tabLayoutShimmer?.stopAndHideShimmer()
-                                        listOfStreams = streamList
-                                        innerViewTypedList = streamList
-                                        Search.initSearch(
-                                            editText,
-                                            innerViewTypedList,
-                                            asyncAdapter,
-                                            recyclerViewSubscribedStreams
-                                        )
-                                    }
-                                }
-                        }
+                        asyncAdapter.items.submitList(streamList)
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                        listOfStreams = streamList
+                        innerViewTypedList = streamList
+                        Search.initSearch(
+                            editText,
+                            innerViewTypedList,
+                            asyncAdapter,
+                            recyclerViewSubscribedStreams
+                        )
                     },
                     { onError ->
                         Error.showError(

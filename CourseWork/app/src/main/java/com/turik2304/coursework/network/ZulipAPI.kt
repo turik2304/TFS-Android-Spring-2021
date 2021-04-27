@@ -21,13 +21,13 @@ interface ZulipAPI {
     fun getOwnProfile(): Single<GetOwnProfileResponse>
 
     @GET("users/me/subscriptions")
-    fun getSubscribedStreams(): Single<GetSubscribedStreamsResponse>
+    fun getSubscribedStreams(): Observable<GetSubscribedStreamsResponse>
 
     @GET("streams")
-    fun getAllStreams(): Single<GetAllStreamsResponse>
+    fun getAllStreams(): Observable<GetAllStreamsResponse>
 
     @GET("users/me/{stream_id}/topics")
-    fun getTopics(@Path("stream_id") streamId: Int): Single<GetTopicsResponse>
+    fun getTopics(@Path("stream_id") streamId: Int): Observable<GetTopicsResponse>
 
     @GET("messages")
     fun getMessages(

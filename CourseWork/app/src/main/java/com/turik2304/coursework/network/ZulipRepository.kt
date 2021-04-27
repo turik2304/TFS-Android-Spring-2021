@@ -15,7 +15,6 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.collections.HashSet
 
 object ZulipRepository : Repository {
@@ -58,39 +57,54 @@ object ZulipRepository : Repository {
         }
     }
 
-    override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>> {
+    override fun getStreams(needAllStreams: Boolean): Observable<List<StreamUI>> {
+        val streamsFromDB = Observable.fromCallable {
+            (db?.streamDao()?.getStreams(needAllStreams) ?: emptyList())
+        }
+            .subscribeOn(Schedulers.io())
+        val streamsFromNetwork: Observable<List<StreamUI>>
         if (needAllStreams) {
-            return RetroClient.zulipApi.getAllStreams()
+            streamsFromNetwork = RetroClient.zulipApi.getAllStreams()
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.computation())
-                .map { allStreamsResponse ->
-                    //streams will be inserted after the topics are loaded
-                    db?.streamDao()?.deleteStreams(deleteSubscriptions = false)
-                    return@map allStreamsResponse.allStreams
+                .flatMap { allStreamsResponse ->
+                    getTopicsOfStreams(allStreamsResponse.allStreams)
+                }
+                .doOnNext { updatedStreams ->
+                    db?.streamDao()?.deleteAndCreate(deleteAllStreams = true, updatedStreams)
                 }
         } else {
-            return RetroClient.zulipApi.getSubscribedStreams()
+            streamsFromNetwork = RetroClient.zulipApi.getSubscribedStreams()
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.computation())
-                .map map1@{ subscribedStreamsResponse ->
-                    return@map1 subscribedStreamsResponse.subscribedStreams.map { stream ->
-                        stream.isSubscribed = true
-                        db?.streamDao()?.deleteStreams(deleteSubscriptions = true)
-                        return@map stream
-                    }
+                .flatMap { subscribedStreamsResponse ->
+                    val subscribedStreams =
+                        subscribedStreamsResponse.subscribedStreams.map { stream ->
+                            stream.isSubscribed = true
+                            return@map stream
+                        }
+                    getTopicsOfStreams(subscribedStreams)
+                }
+                .doOnNext { updatedStreams ->
+                    db?.streamDao()?.deleteAndCreate(deleteAllStreams = false, updatedStreams)
                 }
         }
+        return streamsFromNetwork
+            .publish { fromNetwork ->
+                Observable.mergeDelayError(fromNetwork, streamsFromDB.takeUntil(fromNetwork))
+            }
     }
 
-    override fun updateTopicsOfStream(stream: StreamUI): Single<List<TopicUI>> {
-        return RetroClient.zulipApi.getTopics(stream.uid)
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.computation())
-            .map { topicsResponse ->
-                stream.topics = topicsResponse.topics
-                db?.streamDao()?.insert(stream)
-                return@map topicsResponse.topics
+    override fun getTopicsOfStreams(streams: List<StreamUI>): Observable<List<StreamUI>> {
+        return Observable.fromIterable(streams)
+            .concatMap { stream ->
+                return@concatMap RetroClient.zulipApi.getTopics(stream.uid)
+                    .map { response ->
+                        stream.topics = response.topics
+                        return@map stream
+                    }
             }
+            .toList()
+            .toObservable()
+
     }
 
     override fun getOwnProfile(): Single<GetOwnProfileResponse> {

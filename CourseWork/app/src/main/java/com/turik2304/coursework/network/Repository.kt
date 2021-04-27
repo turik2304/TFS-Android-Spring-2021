@@ -13,8 +13,8 @@ import io.reactivex.rxjava3.core.Single
 
 interface Repository {
 
-    fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>>
-    fun updateTopicsOfStream(stream: StreamUI): Single<List<TopicUI>>
+    fun getStreams(needAllStreams: Boolean): Observable<List<StreamUI>>
+    fun getTopicsOfStreams(streams: List<StreamUI>): Observable<List<StreamUI>>
     fun getMessageUIListFromServer(
         nameOfTopic: String,
         nameOfStream: String,
