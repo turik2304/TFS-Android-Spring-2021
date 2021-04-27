@@ -1,6 +1,5 @@
 package com.turik2304.coursework.network
 
-import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.MyUserId
 import com.turik2304.coursework.network.models.data.*
@@ -129,10 +128,10 @@ object ZulipRepository : Repository {
         nameOfTopic: String,
         nameOfStream: String,
         uidOfLastLoadedMessage: String,
-        isFirstLoad: Boolean
+        needFirstPage: Boolean
     ): Observable<List<ViewTyped>> {
         val narrow = NarrowConstructor.getNarrow(nameOfTopic, nameOfStream)
-        val messagesFromDB = if (isFirstLoad)
+        val messagesFromDB = if (needFirstPage)
             Observable.fromCallable {
                 db?.messageDao()?.getAll(nameOfStream, nameOfTopic) ?: emptyList()
             }
@@ -158,7 +157,7 @@ object ZulipRepository : Repository {
                     }
             }
             .doOnNext { viewTypedList ->
-                if (isFirstLoad) {
+                if (needFirstPage) {
                     db?.messageDao()
                         ?.deleteAndCreate(nameOfStream, nameOfTopic, viewTypedList)
                 } else {

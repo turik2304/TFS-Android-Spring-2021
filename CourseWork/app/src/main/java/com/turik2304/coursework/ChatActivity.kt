@@ -52,7 +52,7 @@ class ChatActivity : AppCompatActivity() {
         fun updateMessages(
             shimmer: ShimmerFrameLayout,
             uidOfLastLoadedMessage: String,
-            isFirstLoad: Boolean = false,
+            needFirstPage: Boolean = false,
             runnable: Runnable? = null
         ) {
             isLoading = true
@@ -61,7 +61,7 @@ class ChatActivity : AppCompatActivity() {
                     nameOfTopic,
                     nameOfStream,
                     uidOfLastLoadedMessage,
-                    isFirstLoad
+                    needFirstPage
                 )
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
@@ -70,7 +70,7 @@ class ChatActivity : AppCompatActivity() {
                                 val lastUidOfMessageInPage = messages[1].uid.toString()
                                 if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
                                     val updatedList =
-                                        if (isFirstLoad) messages else messages + asyncAdapter.items.currentList
+                                        if (needFirstPage) messages else messages + asyncAdapter.items.currentList
                                     asyncAdapter.updateList(updatedList.distinct(), runnable)
                                     this.uidOfLastLoadedMessage = lastUidOfMessageInPage
                                     isLoading = false
@@ -103,22 +103,28 @@ class ChatActivity : AppCompatActivity() {
         const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
     }
 
-    private lateinit var chatListBinding: ActivityChatBinding
+    private lateinit var chatBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
-
     private lateinit var dialog: BottomSheetDialog
-    private lateinit var lastMessageEventId: String
-    private lateinit var reserveLastMessageEventId: String
 
-    private var messageQueueId: String = ""
-    private var reactionQueueId: String = ""
+    private var messagesQueueId: String = ""
+    private var lastMessageEventId: String = ""
+
+    private var reactionsQueueId: String = ""
+    private var lastReactionEventId: String = ""
+    private val updateReactionsOfMessagesSubject = PublishSubject.create<List<ViewTyped>>()
+
+    private val longpollingDisposable = CompositeDisposable()
     private var uidOfClickedMessage: Int = -1
+    private val setOfRawUidsOfMessages = hashSetOf<Int>()
+
+    private var isFirstLoading = true
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        chatListBinding = ActivityChatBinding.inflate(layoutInflater)
-        setContentView(chatListBinding.root)
+        chatBinding = ActivityChatBinding.inflate(layoutInflater)
+        setContentView(chatBinding.root)
 
         dialog = BottomSheetDialog(this)
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
@@ -126,9 +132,9 @@ class ChatActivity : AppCompatActivity() {
 
         nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM).toString()
         nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC).toString()
-        chatListBinding.tvNameOfStream.text = "#$nameOfStream"
-        chatListBinding.tvNameOfTopic.text = "Topic:  #${nameOfTopic.toLowerCase()}"
-        chatListBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
+        chatBinding.tvNameOfStream.text = "#$nameOfStream"
+        chatBinding.tvNameOfTopic.text = "Topic:  #${nameOfTopic.toLowerCase()}"
+        chatBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
 
         fillTextViewWithEmojisAsSpannableText(
             textView = dialogBinding.emojiListTextView,
@@ -153,17 +159,28 @@ class ChatActivity : AppCompatActivity() {
         val holderFactory = ChatHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
-        chatListBinding.recycleView.adapter = asyncAdapter
+        chatBinding.recycleView.adapter = asyncAdapter
+
         updateMessages(
-            chatListBinding.chatShimmer,
+            chatBinding.chatShimmer,
             uidOfLastLoadedMessage,
-            isFirstLoad = true
+            needFirstPage = true
         ) {
-            chatListBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+            chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
         }
 
-        chatListBinding.recycleView.addOnScrollListener(object :
-            PaginationScrollListener(chatListBinding.recycleView.layoutManager as LinearLayoutManager) {
+        //catches reactions events
+        compositeDisposable.add(
+            updateReactionsOfMessagesSubject
+                .debounce(2, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { result ->
+                    val actualChanges = asyncAdapter.items.currentList - result
+                    asyncAdapter.updateList((result + actualChanges).distinctBy { it.uid })
+                })
+
+        chatBinding.recycleView.addOnScrollListener(object :
+            PaginationScrollListener(chatBinding.recycleView.layoutManager as LinearLayoutManager) {
             override fun isLastPage(): Boolean {
                 return isLastPage
             }
@@ -173,90 +190,14 @@ class ChatActivity : AppCompatActivity() {
             }
 
             override fun loadMoreItems() {
-                updateMessages(chatListBinding.chatShimmer, uidOfLastLoadedMessage)
+                updateMessages(chatBinding.chatShimmer, uidOfLastLoadedMessage)
             }
         })
 
-        //messageEvents
-        val setOfRawUidsOfMessages = hashSetOf<Int>()
-        val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
-        compositeDisposable.add(
-            RetroClient.zulipApi.registerMessageEvents(narrow)
-                .onErrorComplete()
-                .subscribeOn(Schedulers.io())
-                .subscribe { response ->
-                    messageQueueId = response.queueId
-                    lastMessageEventId = response.lastEventId
-                    reserveLastMessageEventId = response.lastEventId
-                    val serialDisposable = SerialDisposable()
-                    compositeDisposable.add(serialDisposable)
-                    serialDisposable.set(
-                        Observable.interval(2, TimeUnit.SECONDS)
-                            .flatMap {
-                                ZulipRepository.getMessageEvent(
-                                    messageQueueId,
-                                    lastMessageEventId,
-                                    nameOfTopic,
-                                    nameOfStream,
-                                    asyncAdapter.items.currentList,
-                                    setOfRawUidsOfMessages
-                                )
-                            }
-                            .retry()
-                            .subscribe { eventIdAndNewMessages ->
-                                if (eventIdAndNewMessages.second.isNotEmpty()) {
-                                    lastMessageEventId = eventIdAndNewMessages.first
-                                    asyncAdapter.updateList(eventIdAndNewMessages.second) {
-                                        chatListBinding.recycleView.smoothScrollToPosition(
-                                            asyncAdapter.itemCount
-                                        )
-                                    }
-                                }
-                            })
-                })
-
-        //reactionEvents
-        val updatedReactionsOfMessagesSubject = PublishSubject.create<List<ViewTyped>>()
-        compositeDisposable.add(
-            updatedReactionsOfMessagesSubject
-                .debounce(2, TimeUnit.SECONDS)
-                .observeOn(Schedulers.computation())
-                .subscribe { result ->
-                    val actualChanges = asyncAdapter.items.currentList - result
-                    asyncAdapter.updateList((result + actualChanges).distinctBy { it.uid })
-                })
-        compositeDisposable.add(
-            RetroClient.zulipApi.registerReactionEvents(narrow)
-                .onErrorComplete()
-                .subscribeOn(Schedulers.io())
-                .subscribe { response ->
-                    reactionQueueId = response.queueId
-                    var lastEventId = response.lastEventId
-                    val serialDisposable = SerialDisposable()
-                    compositeDisposable.add(serialDisposable)
-                    serialDisposable.set(
-                        Observable.interval(2, TimeUnit.SECONDS)
-                            .flatMap {
-                                ZulipRepository.getReactionEvent(
-                                    reactionQueueId,
-                                    lastEventId,
-                                    currentList
-                                )
-                            }
-                            .retry()
-                            .subscribe { eventIdToUpdatedList ->
-                                if (eventIdToUpdatedList.second.isNotEmpty()) {
-                                    lastEventId = eventIdToUpdatedList.first
-                                    currentList = eventIdToUpdatedList.second.toMutableList()
-                                    updatedReactionsOfMessagesSubject.onNext(eventIdToUpdatedList.second)
-                                }
-                            })
-                })
-
-        chatListBinding.imageViewSendMessage.setOnClickListener {
-            if (chatListBinding.editTextEnterMessage.text.isNotEmpty()) {
-                val message = chatListBinding.editTextEnterMessage.text.toString()
-                chatListBinding.chatShimmer.showShimmer(true)
+        chatBinding.imageViewSendMessage.setOnClickListener {
+            if (chatBinding.editTextEnterMessage.text.isNotEmpty()) {
+                val message = chatBinding.editTextEnterMessage.text.toString()
+                chatBinding.chatShimmer.showShimmer(true)
                 val rawMessage = OutMessageUI(
                     nameOfStream = nameOfStream,
                     nameOfTopic = nameOfTopic,
@@ -270,7 +211,7 @@ class ChatActivity : AppCompatActivity() {
                 setOfRawUidsOfMessages.add(rawMessage.uid)
                 val newList = asyncAdapter.items.currentList + listOf(rawMessage)
                 asyncAdapter.updateList(newList) {
-                    chatListBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+                    chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
                 }
                 compositeDisposable.add(
                     RetroClient.zulipApi.sendMessage(
@@ -282,21 +223,21 @@ class ChatActivity : AppCompatActivity() {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                             {
-                                chatListBinding.chatShimmer.stopAndHideShimmer()
+                                chatBinding.chatShimmer.stopAndHideShimmer()
                             },
                             { onError ->
                                 Error.showError(
                                     applicationContext,
                                     onError
                                 )
-                                chatListBinding.chatShimmer.stopAndHideShimmer()
+                                chatBinding.chatShimmer.stopAndHideShimmer()
                             })
                 )
-                chatListBinding.editTextEnterMessage.text.clear()
+                chatBinding.editTextEnterMessage.text.clear()
             }
         }
 
-        chatListBinding.editTextEnterMessage.addTextChangedListener(object : TextWatcher {
+        chatBinding.editTextEnterMessage.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(
                 s: CharSequence?,
                 start: Int,
@@ -312,8 +253,8 @@ class ChatActivity : AppCompatActivity() {
                 count: Int
             ) {
                 when (message.length) {
-                    0 -> chatListBinding.imageViewSendMessage.setImageResource(R.drawable.ic_add_files)
-                    1 -> chatListBinding.imageViewSendMessage.setImageResource(R.drawable.ic_send_message)
+                    0 -> chatBinding.imageViewSendMessage.setImageResource(R.drawable.ic_add_files)
+                    1 -> chatBinding.imageViewSendMessage.setImageResource(R.drawable.ic_send_message)
                 }
             }
 
@@ -324,26 +265,107 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        chatListBinding.chatShimmer.startShimmer()
+        chatBinding.chatShimmer.startShimmer()
+        val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
+        if (isFirstLoading) {
+            longpollingDisposable.add(
+                RetroClient.zulipApi.registerMessageEvents(narrow)
+                    .onErrorComplete()
+                    .subscribeOn(Schedulers.io())
+                    .subscribe { registerMessagesEventsResponse ->
+                        messagesQueueId = registerMessagesEventsResponse.queueId
+                        lastMessageEventId = registerMessagesEventsResponse.lastEventId
+                        initMessagesLongpolling()
+                        longpollingDisposable.add(
+                            RetroClient.zulipApi.registerReactionEvents(narrow)
+                                .onErrorComplete()
+                                .subscribe { registerReactionsEventsResponse ->
+                                    reactionsQueueId = registerReactionsEventsResponse.queueId
+                                    lastReactionEventId =
+                                        registerReactionsEventsResponse.lastEventId
+                                    initReactionsLongpolling()
+                                    isFirstLoading = false
+                                })
+                    })
+        } else {
+            initMessagesLongpolling()
+            initReactionsLongpolling()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        longpollingDisposable.clear()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        RetroClient.zulipApi.unregisterEvents(messageQueueId)
+        RetroClient.zulipApi.unregisterEvents(messagesQueueId)
             .onErrorComplete()
             .subscribeOn(Schedulers.io())
             .subscribe {
-                RetroClient.zulipApi.unregisterEvents(reactionQueueId)
+                RetroClient.zulipApi.unregisterEvents(reactionsQueueId)
                     .onErrorComplete()
                     .subscribe()
             }
         asyncAdapter.updateList(null)
         asyncAdapter.holderFactory = null
-        chatListBinding.recycleView.adapter = null
+        chatBinding.recycleView.adapter = null
         compositeDisposable.clear()
         isLastPage = false
         isLoading = false
         uidOfLastLoadedMessage = "newest"
+    }
+
+    private fun initMessagesLongpolling() {
+        val serialDisposable = SerialDisposable()
+        longpollingDisposable.add(serialDisposable)
+        serialDisposable.set(
+            Observable.interval(2, TimeUnit.SECONDS)
+                .flatMap {
+                    ZulipRepository.getMessageEvent(
+                        messagesQueueId,
+                        lastMessageEventId,
+                        nameOfTopic,
+                        nameOfStream,
+                        asyncAdapter.items.currentList,
+                        setOfRawUidsOfMessages
+                    )
+                }
+                .retry()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { eventIdAndNewMessages ->
+                    if (eventIdAndNewMessages.second.isNotEmpty()) {
+                        lastMessageEventId = eventIdAndNewMessages.first
+                        asyncAdapter.updateList(eventIdAndNewMessages.second) {
+                            chatBinding.recycleView.smoothScrollToPosition(
+                                asyncAdapter.itemCount
+                            )
+                        }
+                    }
+                })
+    }
+
+    private fun initReactionsLongpolling() {
+        val serialDisposable = SerialDisposable()
+        longpollingDisposable.add(serialDisposable)
+        serialDisposable.set(
+            Observable.interval(2, TimeUnit.SECONDS)
+                .flatMap {
+                    ZulipRepository.getReactionEvent(
+                        reactionsQueueId,
+                        lastReactionEventId,
+                        currentList
+                    )
+                }
+                .retry()
+                .subscribe { eventIdToUpdatedList ->
+                    if (eventIdToUpdatedList.second.isNotEmpty()) {
+                        lastReactionEventId = eventIdToUpdatedList.first
+                        currentList = eventIdToUpdatedList.second.toMutableList()
+                        updateReactionsOfMessagesSubject.onNext(eventIdToUpdatedList.second)
+                    }
+                })
     }
 
     private fun fillTextViewWithEmojisAsSpannableText(
@@ -390,16 +412,16 @@ class ChatActivity : AppCompatActivity() {
             val updatedList =
                 ZulipRepository.updateReactions(asyncAdapter.items.currentList, reactionEvent)
             asyncAdapter.updateList(updatedList)
-            chatListBinding.chatShimmer.showShimmer(true)
+            chatBinding.chatShimmer.showShimmer(true)
             compositeDisposable.add(
                 RetroClient.zulipApi.sendReaction(uidOfClickedMessage, name, zulipEmojiCode)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         {
-                            chatListBinding.chatShimmer.stopAndHideShimmer()
+                            chatBinding.chatShimmer.stopAndHideShimmer()
                         },
                         { onError ->
-                            chatListBinding.chatShimmer.stopAndHideShimmer()
+                            chatBinding.chatShimmer.stopAndHideShimmer()
                             Error.showError(
                                 applicationContext,
                                 onError
