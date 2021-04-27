@@ -16,7 +16,6 @@ import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
 import com.turik2304.coursework.network.RetroClient
 import com.turik2304.coursework.network.ZulipRepository
-import com.turik2304.coursework.network.ZulipRepository.db
 import com.turik2304.coursework.network.models.data.OperationEnum
 import com.turik2304.coursework.network.models.data.ReactionEvent
 import com.turik2304.coursework.network.utils.NarrowConstructor
@@ -28,9 +27,7 @@ import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFa
 import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.disposables.SerialDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
@@ -56,37 +53,30 @@ class ChatActivity : AppCompatActivity() {
             shimmer: ShimmerFrameLayout,
             uidOfLastLoadedMessage: String,
             isFirstLoad: Boolean = false,
-            needOneMessage: Boolean = false,
             runnable: Runnable? = null
         ) {
             isLoading = true
             compositeDisposable.add(
-                ZulipRepository.getMessageUIListFromServer(
+                ZulipRepository.getMessages(
                     nameOfTopic,
                     nameOfStream,
                     uidOfLastLoadedMessage,
-                    needOneMessage,
                     isFirstLoad
                 )
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
-                        { list ->
-                            if (needOneMessage) {
-                                asyncAdapter.updateList(
-                                    asyncAdapter.items.currentList + list,
-                                    runnable
-                                )
-                            } else {
-                                val lastUidOfMessageInPage = list[1].uid.toString()
+                        { messages ->
+                            if (messages.isNotEmpty()) {
+                                val lastUidOfMessageInPage = messages[1].uid.toString()
                                 if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
                                     val updatedList =
-                                        if (isFirstLoad) list else list + asyncAdapter.items.currentList
+                                        if (isFirstLoad) messages else messages + asyncAdapter.items.currentList
                                     asyncAdapter.updateList(updatedList.distinct(), runnable)
                                     this.uidOfLastLoadedMessage = lastUidOfMessageInPage
                                     isLoading = false
                                 } else isLastPage = true
+                                shimmer.stopAndHideShimmer()
                             }
-                            shimmer.stopAndHideShimmer()
                         },
                         { onError ->
                             Error.showError(
@@ -117,11 +107,11 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var dialogBinding: BottomSheetBinding
 
     private lateinit var dialog: BottomSheetDialog
-    private lateinit var messageQueueId: String
     private lateinit var lastMessageEventId: String
     private lateinit var reserveLastMessageEventId: String
-    private lateinit var reactionQueueId: String
 
+    private var messageQueueId: String = ""
+    private var reactionQueueId: String = ""
     private var uidOfClickedMessage: Int = -1
 
 
@@ -164,22 +154,13 @@ class ChatActivity : AppCompatActivity() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatListBinding.recycleView.adapter = asyncAdapter
-        compositeDisposable.add(
-            Single.fromCallable { db?.messageDao()?.getAll(nameOfStream, nameOfTopic) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { messages ->
-                    asyncAdapter.updateList(messages)
-                    if (asyncAdapter.itemCount != 0)
-                        chatListBinding.chatShimmer.stopAndHideShimmer()
-                    updateMessages(
-                        chatListBinding.chatShimmer,
-                        uidOfLastLoadedMessage,
-                        isFirstLoad = true
-                    ) {
-                        chatListBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
-                    }
-                })
+        updateMessages(
+            chatListBinding.chatShimmer,
+            uidOfLastLoadedMessage,
+            isFirstLoad = true
+        ) {
+            chatListBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+        }
 
         chatListBinding.recycleView.addOnScrollListener(object :
             PaginationScrollListener(chatListBinding.recycleView.layoutManager as LinearLayoutManager) {
@@ -194,13 +175,14 @@ class ChatActivity : AppCompatActivity() {
             override fun loadMoreItems() {
                 updateMessages(chatListBinding.chatShimmer, uidOfLastLoadedMessage)
             }
-
         })
+
         //messageEvents
         val setOfRawUidsOfMessages = hashSetOf<Int>()
         val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
         compositeDisposable.add(
             RetroClient.zulipApi.registerMessageEvents(narrow)
+                .onErrorComplete()
                 .subscribeOn(Schedulers.io())
                 .subscribe { response ->
                     messageQueueId = response.queueId
@@ -232,6 +214,7 @@ class ChatActivity : AppCompatActivity() {
                                 }
                             })
                 })
+
         //reactionEvents
         val updatedReactionsOfMessagesSubject = PublishSubject.create<List<ViewTyped>>()
         compositeDisposable.add(
@@ -244,6 +227,7 @@ class ChatActivity : AppCompatActivity() {
                 })
         compositeDisposable.add(
             RetroClient.zulipApi.registerReactionEvents(narrow)
+                .onErrorComplete()
                 .subscribeOn(Schedulers.io())
                 .subscribe { response ->
                     reactionQueueId = response.queueId
@@ -346,9 +330,11 @@ class ChatActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         RetroClient.zulipApi.unregisterEvents(messageQueueId)
+            .onErrorComplete()
             .subscribeOn(Schedulers.io())
             .subscribe {
                 RetroClient.zulipApi.unregisterEvents(reactionQueueId)
+                    .onErrorComplete()
                     .subscribe()
             }
         asyncAdapter.updateList(null)

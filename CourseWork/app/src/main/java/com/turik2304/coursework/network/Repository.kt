@@ -15,20 +15,12 @@ interface Repository {
 
     fun getStreams(needAllStreams: Boolean): Observable<List<StreamUI>>
     fun getTopicsOfStreams(streams: List<StreamUI>): Observable<List<StreamUI>>
-    fun getMessageUIListFromServer(
+    fun getMessages(
         nameOfTopic: String,
         nameOfStream: String,
         uidOfLastLoadedMessage: String,
-        needOneMessage: Boolean,
         isFirstLoad: Boolean = false
-    ): Single<List<ViewTyped>>
-
-    fun updateMessageUIListAfterSendingMessage(
-        nameOfTopic: String,
-        nameOfStream: String,
-        uidOfSentMessage: String,
-        currentList: MutableList<ViewTyped>
-    ): Single<List<ViewTyped>>
+    ): Observable<List<ViewTyped>>
 
     fun getOwnProfile(): Single<GetOwnProfileResponse>
     fun getFormattedDate(dateOfMessageInSeconds: Int): String

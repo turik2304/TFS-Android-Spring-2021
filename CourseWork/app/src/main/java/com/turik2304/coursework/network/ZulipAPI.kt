@@ -36,7 +36,7 @@ interface ZulipAPI {
         @Query("num_after") numAfter: Int,
         @Query("narrow") narrow: String,
         @Query("apply_markdown") applyMarkdown: Boolean = false,
-    ): Single<GetMessagesResponse>
+    ): Observable<GetMessagesResponse>
 
     @POST("messages")
     fun sendMessage(

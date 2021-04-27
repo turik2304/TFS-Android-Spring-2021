@@ -1,5 +1,6 @@
 package com.turik2304.coursework.network
 
+import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.MyUserId
 import com.turik2304.coursework.network.models.data.*
@@ -18,6 +19,10 @@ import java.util.*
 import kotlin.collections.HashSet
 
 object ZulipRepository : Repository {
+
+    private const val NUMBER_OF_MESSAGES_BEFORE = 20
+    private const val NUMBER_OF_MESSAGES_AFTER = 0
+    private const val MAX_NUMBER_OF_MESSAGES_IN_DB = 50
 
     val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
@@ -38,6 +43,7 @@ object ZulipRepository : Repository {
         return usersFromNetWork
             .publish { fromNetwork ->
                 Observable.mergeDelayError(fromNetwork, usersFromDB.takeUntil(fromNetwork))
+                    .onErrorResumeWith(usersFromDB)
             }
 
     }
@@ -90,6 +96,7 @@ object ZulipRepository : Repository {
         return streamsFromNetwork
             .publish { fromNetwork ->
                 Observable.mergeDelayError(fromNetwork, streamsFromDB.takeUntil(fromNetwork))
+                    .onErrorResumeWith(streamsFromDB)
             }
     }
 
@@ -118,80 +125,58 @@ object ZulipRepository : Repository {
             .subscribeOn(Schedulers.io())
     }
 
-    override fun updateMessageUIListAfterSendingMessage(
-        nameOfTopic: String,
-        nameOfStream: String,
-        uidOfSentMessage: String,
-        currentList: MutableList<ViewTyped>
-    ): Single<List<ViewTyped>> {
-        return getMessageUIListFromServer(nameOfTopic, nameOfStream, uidOfSentMessage, true)
-            .map { response ->
-                val receivedMessage = response.singleOrNull()
-                val updatedList = mutableListOf<ViewTyped>()
-                if (receivedMessage != null) {
-                    var indexOfUpdatedMessage = -1
-                    currentList.forEachIndexed { index, message ->
-                        if (message.uid == receivedMessage.uid) {
-                            indexOfUpdatedMessage = index
-                        }
-                    }
-                    updatedList.addAll(currentList)
-                    updatedList[indexOfUpdatedMessage] = receivedMessage
-                }
-                return@map updatedList
-            }
-    }
-
-    override fun getMessageUIListFromServer(
+    override fun getMessages(
         nameOfTopic: String,
         nameOfStream: String,
         uidOfLastLoadedMessage: String,
-        needOneMessage: Boolean,
         isFirstLoad: Boolean
-    ): Single<List<ViewTyped>> {
+    ): Observable<List<ViewTyped>> {
         val narrow = NarrowConstructor.getNarrow(nameOfTopic, nameOfStream)
-        var numBefore = 20
-        if (needOneMessage) {
-            numBefore = 0
-        }
-        return RetroClient.zulipApi.getMessages(uidOfLastLoadedMessage, numBefore, 0, narrow)
+        val messagesFromDB = if (isFirstLoad)
+            Observable.fromCallable {
+                db?.messageDao()?.getAll(nameOfStream, nameOfTopic) ?: emptyList()
+            }
+                .subscribeOn(Schedulers.io()) else Observable.empty()
+        val messagesFromNetwork = RetroClient.zulipApi.getMessages(
+            uidOfLastLoadedMessage,
+            NUMBER_OF_MESSAGES_BEFORE,
+            NUMBER_OF_MESSAGES_AFTER,
+            narrow
+        )
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
-
             .map { messagesResponse ->
-                messagesResponse.messages
+                return@map messagesResponse.messages
+                    .sortedBy { it.dateInSeconds }
+                    .groupBy { message ->
+                        getFormattedDate(message.dateInSeconds)
+                    }
+                    .flatMap { (date, messages) ->
+                        listOf(DateSeparatorUI(date, date.hashCode())) + parseMessages(
+                            messages, nameOfTopic, nameOfStream
+                        )
+                    }
             }
-            .map { messageList ->
-                if (needOneMessage) {
-                    val singleMessage = parseMessages(messageList, nameOfTopic, nameOfStream)
-                    db?.messageDao()?.update(singleMessage)
-                    return@map singleMessage
+            .doOnNext { viewTypedList ->
+                if (isFirstLoad) {
+                    db?.messageDao()
+                        ?.deleteAndCreate(nameOfStream, nameOfTopic, viewTypedList)
                 } else {
-                    return@map messageList
-                        .sortedBy { it.dateInSeconds }
-                        .groupBy { message ->
-                            getFormattedDate(message.dateInSeconds)
-                        }
-                        .flatMap { (date, messages) ->
-                            listOf(DateSeparatorUI(date, date.hashCode())) + parseMessages(
-                                messages, nameOfTopic, nameOfStream
-                            )
-                        }
-                }
-            }
-            .map { viewTypedList ->
-                if (isFirstLoad) db?.messageDao()
-                    ?.deleteAndCreate(nameOfStream, nameOfTopic, viewTypedList)
-                else {
                     val numberOfMessagesCanBeInserted =
-                        50 - (db?.messageDao()?.getCount(nameOfStream, nameOfTopic)
-                            ?: 50)
+                        MAX_NUMBER_OF_MESSAGES_IN_DB - (db?.messageDao()
+                            ?.getCount(nameOfStream, nameOfTopic)
+                            ?: MAX_NUMBER_OF_MESSAGES_IN_DB)
                     val messagesToDatabase = viewTypedList.filter { it !is DateSeparatorUI }
                         .takeLast(numberOfMessagesCanBeInserted)
                     db?.messageDao()?.insertAll(messagesToDatabase)
                 }
-                return@map viewTypedList
             }
+        return messagesFromNetwork
+            .publish { fromNetwork ->
+                Observable.mergeDelayError(fromNetwork, messagesFromDB.takeUntil(fromNetwork))
+                    .onErrorResumeWith(messagesFromDB)
+            }
+
     }
 
     override fun getMessageEvent(
@@ -217,6 +202,7 @@ object ZulipRepository : Repository {
                     return@map lastEventId to emptyList<ViewTyped>()
                 }
             }
+            .onErrorComplete()
     }
 
     override fun getReactionEvent(
@@ -233,6 +219,7 @@ object ZulipRepository : Repository {
                     return@map newLastEventId to updatedList
                 } else return@map lastEventId to emptyList<ViewTyped>()
             }
+            .onErrorComplete()
     }
 
     override fun updateReactions(
@@ -390,3 +377,4 @@ object ZulipRepository : Repository {
         return listOfReactions.reversed()
     }
 }
+
