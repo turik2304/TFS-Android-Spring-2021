@@ -10,7 +10,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.toSpannable
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
@@ -38,67 +37,6 @@ import kotlin.math.abs
 class ChatActivity : AppCompatActivity() {
 
     companion object {
-
-        lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-        lateinit var nameOfTopic: String
-        lateinit var nameOfStream: String
-        lateinit var currentList: MutableList<ViewTyped>
-
-        val compositeDisposable = CompositeDisposable()
-        var isLastPage = false
-        var isLoading = false
-        var uidOfLastLoadedMessage = "newest"
-
-        fun updateMessages(
-            shimmer: ShimmerFrameLayout,
-            uidOfLastLoadedMessage: String,
-            needFirstPage: Boolean = false,
-            runnable: Runnable? = null
-        ) {
-            isLoading = true
-            compositeDisposable.add(
-                ZulipRepository.getMessages(
-                    nameOfTopic,
-                    nameOfStream,
-                    uidOfLastLoadedMessage,
-                    needFirstPage
-                )
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        { messages ->
-                            if (messages.isNotEmpty()) {
-                                val lastUidOfMessageInPage = messages[1].uid.toString()
-                                if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
-                                    val updatedList =
-                                        if (needFirstPage) messages else messages + asyncAdapter.items.currentList
-                                    asyncAdapter.updateList(updatedList.distinct(), runnable)
-                                    this.uidOfLastLoadedMessage = lastUidOfMessageInPage
-                                    isLoading = false
-                                } else isLastPage = true
-                                shimmer.stopAndHideShimmer()
-                            }
-                        },
-                        { onError ->
-                            Error.showError(
-                                shimmer.context,
-                                onError
-                            )
-                            shimmer.stopAndHideShimmer()
-                        })
-            )
-        }
-
-        fun AsyncAdapter<ViewTyped>.updateList(
-            newList: List<ViewTyped>?,
-            runnable: Runnable? = null
-        ) {
-            this.items.submitList(newList) {
-                runnable?.run()
-                currentList = this.items.currentList
-            }
-
-        }
-
         const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
         const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
     }
@@ -106,20 +44,26 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var chatBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
     private lateinit var dialog: BottomSheetDialog
+    private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
+    private lateinit var nameOfTopic: String
+    private lateinit var nameOfStream: String
+    private lateinit var currentList: MutableList<ViewTyped>
+
+    private val compositeDisposable = CompositeDisposable()
+    private val longpollingDisposable = CompositeDisposable()
 
     private var messagesQueueId: String = ""
     private var lastMessageEventId: String = ""
+    private var isFirstLoading = true
+    private var isLastPage = false
+    private var isLoading = false
+    private var uidOfLastLoadedMessage = "newest"
+    private var uidOfClickedMessage: Int = -1
+    private val setOfRawUidsOfMessages = hashSetOf<Int>()
 
     private var reactionsQueueId: String = ""
     private var lastReactionEventId: String = ""
     private val updateReactionsOfMessagesSubject = PublishSubject.create<List<ViewTyped>>()
-
-    private val longpollingDisposable = CompositeDisposable()
-    private var uidOfClickedMessage: Int = -1
-    private val setOfRawUidsOfMessages = hashSetOf<Int>()
-
-    private var isFirstLoading = true
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -161,8 +105,7 @@ class ChatActivity : AppCompatActivity() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatBinding.recycleView.adapter = asyncAdapter
 
-        updateMessages(
-            chatBinding.chatShimmer,
+        loadMessages(
             uidOfLastLoadedMessage,
             needFirstPage = true
         ) {
@@ -190,7 +133,7 @@ class ChatActivity : AppCompatActivity() {
             }
 
             override fun loadMoreItems() {
-                updateMessages(chatBinding.chatShimmer, uidOfLastLoadedMessage)
+                loadMessages(uidOfLastLoadedMessage)
             }
         })
 
@@ -315,6 +258,55 @@ class ChatActivity : AppCompatActivity() {
         isLastPage = false
         isLoading = false
         uidOfLastLoadedMessage = "newest"
+    }
+
+    private fun AsyncAdapter<ViewTyped>.updateList(
+        newList: List<ViewTyped>?,
+        runnable: Runnable? = null
+    ) {
+        this.items.submitList(newList) {
+            runnable?.run()
+            currentList = this.items.currentList
+        }
+
+    }
+
+    private fun loadMessages(
+        uidOfLastLoadedMessage: String,
+        needFirstPage: Boolean = false,
+        runnable: Runnable? = null
+    ) {
+        isLoading = true
+        compositeDisposable.add(
+            ZulipRepository.getMessages(
+                nameOfTopic,
+                nameOfStream,
+                uidOfLastLoadedMessage,
+                needFirstPage
+            )
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { messages ->
+                        if (messages.isNotEmpty()) {
+                            val lastUidOfMessageInPage = messages[1].uid.toString()
+                            if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
+                                val updatedList =
+                                    if (needFirstPage) messages else messages + asyncAdapter.items.currentList
+                                asyncAdapter.updateList(updatedList.distinct(), runnable)
+                                this.uidOfLastLoadedMessage = lastUidOfMessageInPage
+                                isLoading = false
+                            } else isLastPage = true
+                            chatBinding.chatShimmer.stopAndHideShimmer()
+                        }
+                    },
+                    { onError ->
+                        Error.showError(
+                            applicationContext,
+                            onError
+                        )
+                        chatBinding.chatShimmer.stopAndHideShimmer()
+                    })
+        )
     }
 
     private fun initMessagesLongpolling() {
