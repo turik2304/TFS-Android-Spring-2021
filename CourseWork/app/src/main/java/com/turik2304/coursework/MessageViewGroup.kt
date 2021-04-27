@@ -10,7 +10,10 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.view.*
+import androidx.core.view.marginBottom
+import androidx.core.view.marginLeft
+import androidx.core.view.marginRight
+import androidx.core.view.marginTop
 import com.turik2304.coursework.network.models.data.Reaction
 
 class MessageViewGroup @JvmOverloads constructor(

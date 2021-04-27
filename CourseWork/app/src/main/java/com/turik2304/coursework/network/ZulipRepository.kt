@@ -15,7 +15,6 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.HashSet
 
 object ZulipRepository : Repository {
 

@@ -1,7 +1,10 @@
 package com.turik2304.coursework
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.Px
@@ -11,7 +14,6 @@ import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.network.RetroClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
-import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
 
 

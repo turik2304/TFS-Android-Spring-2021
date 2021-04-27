@@ -1,12 +1,10 @@
 package com.turik2304.coursework.network
 
 import com.turik2304.coursework.network.models.data.ReactionEvent
-import com.turik2304.coursework.network.models.data.StatusEnum
-import com.turik2304.coursework.network.models.response.ResponseType
 import com.turik2304.coursework.network.models.response.GetOwnProfileResponse
+import com.turik2304.coursework.network.models.response.ResponseType
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
-import com.turik2304.coursework.recycler_view_base.items.TopicUI
 import com.turik2304.coursework.recycler_view_base.items.UserUI
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single

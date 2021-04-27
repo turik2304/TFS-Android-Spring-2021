@@ -1,6 +1,6 @@
 package com.turik2304.coursework.recycler_view_base.items
 
-import androidx.room.*
+import androidx.room.Entity
 import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import kotlinx.serialization.SerialName
