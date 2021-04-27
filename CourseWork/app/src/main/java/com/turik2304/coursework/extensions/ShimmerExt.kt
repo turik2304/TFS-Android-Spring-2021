@@ -1,4 +1,4 @@
-package com.turik2304.coursework
+package com.turik2304.coursework.extensions
 
 import com.facebook.shimmer.ShimmerFrameLayout
 

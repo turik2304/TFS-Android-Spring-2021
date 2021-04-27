@@ -7,6 +7,7 @@ import android.view.View
 import androidx.annotation.Px
 import androidx.core.view.setPadding
 import com.facebook.shimmer.ShimmerFrameLayout
+import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.network.RetroClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers

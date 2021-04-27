@@ -9,7 +9,7 @@ import com.turik2304.coursework.R
 import com.turik2304.coursework.fragments.bottom_navigation_fragments.SetStatusUtil.setColoredImageStatus
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.UserUI
-import com.turik2304.coursework.stopAndHideShimmer
+import com.turik2304.coursework.extensions.stopAndHideShimmer
 
 class UserHolder(
     view: View,

@@ -1,8 +1,8 @@
 package com.turik2304.coursework.room
 
 import androidx.room.*
-import com.turik2304.coursework.MessagesExt.toInMessages
-import com.turik2304.coursework.MessagesExt.toViewTypedMessages
+import com.turik2304.coursework.extensions.toInMessages
+import com.turik2304.coursework.extensions.toViewTypedMessages
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.InMessageUI
 
