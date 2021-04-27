@@ -2,6 +2,7 @@ package com.turik2304.coursework.network
 
 import com.turik2304.coursework.network.models.data.ReactionEvent
 import com.turik2304.coursework.network.models.data.StatusEnum
+import com.turik2304.coursework.network.models.response.ResponseType
 import com.turik2304.coursework.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
@@ -51,7 +52,7 @@ interface Repository {
         queueOfRawUidsOfMessages: HashSet<Int>
     ): Observable<Pair<String, List<ViewTyped>>>
 
-    fun updateUserPresence(user: UserUI): Single<StatusEnum>
-    fun getAllUsers(): Single<List<UserUI>>
+    fun updateUserPresence(user: UserUI): Single<UserUI>
+    fun getAllUsers(): Observable<Pair<List<UserUI>, ResponseType>>
 
 }

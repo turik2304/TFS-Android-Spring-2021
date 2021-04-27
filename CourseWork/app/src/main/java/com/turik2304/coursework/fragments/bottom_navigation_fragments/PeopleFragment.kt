@@ -1,6 +1,7 @@
 package com.turik2304.coursework.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +15,7 @@ import com.turik2304.coursework.Search
 import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.network.ZulipRepository.db
 import com.turik2304.coursework.network.models.data.StatusEnum
+import com.turik2304.coursework.network.models.response.ResponseType
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -60,47 +62,55 @@ class PeopleFragment : Fragment() {
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
-        compositeDisposable.add(
-            Single.fromCallable { db?.userDao()?.getAll() }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { userList ->
-                    asyncAdapter.items.submitList(userList) {
-                        if (asyncAdapter.itemCount != 0)
-                            usersToolbarShimmer.stopAndHideShimmer()
-                    }
-                })
+
         compositeDisposable.add(
             ZulipRepository.getAllUsers()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                    { userList ->
-                        userList.forEachIndexed { index, user ->
-                            if (!user.isBot) {
-                                ZulipRepository.updateUserPresence(user)
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe({ _ ->
-                                        if (index == userList.size - 1) {
-                                            asyncAdapter.items.submitList(userList)
-                                            usersToolbarShimmer.stopAndHideShimmer()
-                                            innerViewTypedList = userList
-                                            Search.initSearch(
-                                                editText,
-                                                innerViewTypedList,
-                                                asyncAdapter,
-                                                recyclerViewUsers
-                                            )
-                                        }
-                                    },
-                                        { onError ->
-                                            Error.showError(
-                                                context,
-                                                onError
-                                            )
-                                            usersToolbarShimmer.stopAndHideShimmer()
-                                        })
+                    { userListAndResponseType ->
+                        val userList = userListAndResponseType.first
+                        val responseType = userListAndResponseType.second
+                        when (responseType) {
+                            ResponseType.FROM_DB -> asyncAdapter.items.submitList(userList) {
+                                Search.initSearch(
+                                    editText,
+                                    userList,
+                                    asyncAdapter,
+                                    recyclerViewUsers
+                                )
+                            }
+                            ResponseType.FROM_NETWORK -> {
+                                val userListWithPresences = mutableListOf<UserUI>()
+                                userList.forEach { user ->
+                                    ZulipRepository.updateUserPresence(user)
+                                        .observeOn(AndroidSchedulers.mainThread())
+                                        .subscribe({ updatedUser ->
+                                            userListWithPresences.add(updatedUser)
+                                            if (userListWithPresences.size == userList.size) {
+                                                asyncAdapter.items.submitList(
+                                                    userListWithPresences.sortedBy { it.userName }
+                                                ) {
+                                                    usersToolbarShimmer.stopAndHideShimmer()
+                                                    Search.initSearch(
+                                                        editText,
+                                                        userListWithPresences,
+                                                        asyncAdapter,
+                                                        recyclerViewUsers
+                                                    )
+                                                }
+                                            }
+                                        },
+                                            { onError ->
+                                                Error.showError(
+                                                    context,
+                                                    onError
+                                                )
+                                                usersToolbarShimmer.stopAndHideShimmer()
+                                            })
+                                }
                             }
                         }
+
                     },
                     { onError ->
                         Error.showError(

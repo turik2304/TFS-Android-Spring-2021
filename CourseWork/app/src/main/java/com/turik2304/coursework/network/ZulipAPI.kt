@@ -9,7 +9,7 @@ import retrofit2.http.*
 interface ZulipAPI {
 
     @GET("users")
-    fun getAllUsers(): Single<GetAllUsersResponse>
+    fun getAllUsers(): Observable<GetAllUsersResponse>
 
     @GET("users/{user_id}")
     fun getUser(@Path("user_id") userId: Int): Single<GetUserResponse>

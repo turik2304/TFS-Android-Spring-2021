@@ -4,40 +4,58 @@ import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.MyUserId
 import com.turik2304.coursework.network.models.data.*
 import com.turik2304.coursework.network.models.response.GetOwnProfileResponse
+import com.turik2304.coursework.network.models.response.GetUserPresenceResponse
+import com.turik2304.coursework.network.models.response.ResponseType
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
 import com.turik2304.coursework.room.DatabaseClient
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.collections.HashSet
 
 object ZulipRepository : Repository {
 
     val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
-    override fun getAllUsers(): Single<List<UserUI>> {
-        return RetroClient.zulipApi.getAllUsers()
+    override fun getAllUsers(): Observable<Pair<List<UserUI>, ResponseType>> {
+        val usersFromDB =
+            Observable.fromCallable {
+                (db?.userDao()?.getAll() ?: emptyList()) to ResponseType.FROM_DB
+            }
+                .subscribeOn(Schedulers.io())
+        val usersFromNetWork = RetroClient.zulipApi.getAllUsers()
             .subscribeOn(Schedulers.io())
             .map { response ->
                 //users will be inserted after loading presences
                 db?.userDao()?.deleteAll()
-                return@map response.members.sortedBy { user -> user.userName }
+                val sortedList = response.members.sortedBy { user -> user.userName }
+                return@map sortedList to ResponseType.FROM_NETWORK
             }
+        return usersFromNetWork
+            .publish { fromNetwork ->
+                Observable.mergeDelayError(fromNetwork, usersFromDB.takeUntil(fromNetwork))
+            }
+
     }
 
-    override fun updateUserPresence(user: UserUI): Single<StatusEnum> {
-        return RetroClient.zulipApi.getUserPresence(user.email)
-            .subscribeOn(Schedulers.io())
-            .map { response ->
-                user.presence = response.presence.aggregated.statusEnum
-                db?.userDao()?.insert(user)
-                return@map user.presence
-            }
+    override fun updateUserPresence(user: UserUI): Single<UserUI> {
+        if (user.isBot) {
+            return Single.just(user)
+        } else {
+            return RetroClient.zulipApi.getUserPresence(user.email)
+                .subscribeOn(Schedulers.io())
+                .map { response ->
+                    val actualPresence = response.presence.aggregated.statusEnum
+                    val updatedUser = user.copy(presence = actualPresence)
+                    db?.userDao()?.insert(updatedUser)
+                    return@map updatedUser
+                }
+        }
     }
 
     override fun getStreamUIListFromServer(needAllStreams: Boolean): Single<List<StreamUI>> {
@@ -79,9 +97,9 @@ object ZulipRepository : Repository {
         val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
         val getOwnPresence = RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
         return Single.zip(getOwnProfile, getOwnPresence,
-            BiFunction { ownProfileResponse, ownPresence ->
+            { ownProfileResponse: GetOwnProfileResponse, ownPresence: GetUserPresenceResponse ->
                 ownProfileResponse.statusEnum = ownPresence.presence.aggregated.statusEnum
-                return@BiFunction ownProfileResponse
+                return@zip ownProfileResponse
             })
             .subscribeOn(Schedulers.io())
     }
