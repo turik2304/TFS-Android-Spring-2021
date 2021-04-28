@@ -78,7 +78,7 @@ class FlexboxLayout @JvmOverloads constructor(
         }
 
         setMeasuredDimension(
-            resolveSize(widthOfLayout, widthMeasureSpec),
+            resolveSize(widthOfLayout - gap, widthMeasureSpec),
             resolveSize(
                 if (heightOfLayout == 0) maxHeightOfChild else heightOfLayout,
                 heightMeasureSpec

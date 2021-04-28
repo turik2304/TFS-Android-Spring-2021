@@ -7,14 +7,14 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
-import androidx.annotation.Px
 import androidx.core.view.setPadding
 import com.facebook.shimmer.ShimmerFrameLayout
+import com.turik2304.coursework.extensions.dpToPx
+import com.turik2304.coursework.extensions.spToPx
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.network.RetroClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlin.math.roundToInt
 
 
 class EmojiView @JvmOverloads constructor(
@@ -86,13 +86,13 @@ class EmojiView @JvmOverloads constructor(
     private val boundariesRect = RectF()
     private var coordinateXOfContent: Float = 0F
     private var coordinateYOfContent: Float = 0F
-    private val padding: Int = dpToPx(6f).toInt()
-    private val radius: Float = dpToPx(10f)
+    private val padding: Int = 6f.dpToPx().toInt()
+    private val radius: Float = 10f.dpToPx()
 
     init {
         isClickable = true
         context.obtainStyledAttributes(attrs, R.styleable.EmojiView).apply {
-            textSize = spToPx(14f)
+            textSize = 14f.spToPx()
             emojiCode = getInteger(R.styleable.EmojiView_emojiCode, DEFAULT_EMOJI_CODE)
             selectCounter = getInteger(R.styleable.EmojiView_selectCounter, selectCounter)
             recycle()
@@ -193,16 +193,6 @@ class EmojiView @JvmOverloads constructor(
                     })
         }
         return super.performClick()
-    }
-
-    @Px
-    private fun spToPx(sp: Float): Int {
-        return (sp * resources.displayMetrics.scaledDensity).roundToInt()
-    }
-
-    @Px
-    private fun dpToPx(dp: Float): Float {
-        return (dp * resources.displayMetrics.density)
     }
 
     private fun updateViewContent() {
