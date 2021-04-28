@@ -137,16 +137,12 @@ class MessageViewGroup @JvmOverloads constructor(
                 heightMeasureSpec
             )
         )
-        if (isMyMessage) {
-            widthOfLayout = measuredWidth - backgroundMargin
-            offset = (MeasureSpec.getSize(widthMeasureSpec) - measuredWidth).toFloat()
-        }
-    }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         val widthOfContent: Float
         val rightOfBackground: Float
         if (isMyMessage) {
+            widthOfLayout = measuredWidth - backgroundMargin
+            offset = (MeasureSpec.getSize(widthMeasureSpec) - measuredWidth).toFloat()
             widthOfContent = message.measuredWidth.toFloat()
             rightOfBackground = widthOfLayout.toFloat() + backgroundMargin
         } else {
@@ -170,7 +166,6 @@ class MessageViewGroup @JvmOverloads constructor(
                 Shader.TileMode.MIRROR
             )
     }
-
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         this.x = offset
@@ -244,6 +239,7 @@ class MessageViewGroup @JvmOverloads constructor(
         )
     }
 }
+
 
 
 
