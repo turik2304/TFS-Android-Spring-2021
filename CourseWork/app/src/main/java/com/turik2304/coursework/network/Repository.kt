@@ -17,7 +17,7 @@ interface Repository {
         nameOfTopic: String,
         nameOfStream: String,
         uidOfLastLoadedMessage: String,
-        isFirstLoad: Boolean = false
+        needFirstPage: Boolean = false
     ): Observable<List<ViewTyped>>
 
     fun getOwnProfile(): Single<GetOwnProfileResponse>
