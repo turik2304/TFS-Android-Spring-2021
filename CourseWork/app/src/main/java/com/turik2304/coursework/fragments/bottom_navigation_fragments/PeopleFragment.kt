@@ -8,27 +8,33 @@ import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
+import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
-import com.turik2304.coursework.Search
-import com.turik2304.coursework.extensions.addTo
+import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.network.models.data.StatusEnum
-import com.turik2304.coursework.network.models.response.ResponseType
+import com.turik2304.coursework.presentation.UsersStore
+import com.turik2304.coursework.presentation.base.Action
+import com.turik2304.coursework.presentation.base.MviView
+import com.turik2304.coursework.presentation.base.UiState
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.UserUI
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
-class PeopleFragment : Fragment() {
+class PeopleFragment : Fragment(),
+    MviView<Action, UiState> {
 
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
+    private lateinit var usersToolbarShimmer: ShimmerFrameLayout
+
+    override val actions: PublishRelay<Action> = PublishRelay.create()
     private val compositeDisposable = CompositeDisposable()
+    private val usersStore = UsersStore()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,8 +47,7 @@ class PeopleFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val usersToolbarShimmer = view.findViewById<ShimmerFrameLayout>(R.id.usersShimmer)
-        usersToolbarShimmer.startShimmer()
+        usersToolbarShimmer = view.findViewById(R.id.usersShimmer)
         val recyclerViewUsers = view.findViewById<RecyclerView>(R.id.recycleViewUsers)
 
         val clickListener = { clickedView: View ->
@@ -54,68 +59,16 @@ class PeopleFragment : Fragment() {
             loadProfileDetails(clickedUserUI)
             userShimmer.stopAndHideShimmer()
         }
+
         val editText = view.findViewById<EditText>(R.id.edSearchUsers)
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
 
-        ZulipRepository.getAllUsers()
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { userListAndResponseType ->
-                    val userList = userListAndResponseType.first
-                    val responseType = userListAndResponseType.second
-                    when (responseType) {
-                        ResponseType.FROM_DB -> asyncAdapter.items.submitList(userList) {
-                            Search.initSearch(
-                                editText,
-                                userList,
-                                asyncAdapter,
-                                recyclerViewUsers
-                            )
-                        }
-                        ResponseType.FROM_NETWORK -> {
-                            val userListWithPresences = mutableListOf<UserUI>()
-                            userList.forEach { user ->
-                                ZulipRepository.updateUserPresence(user)
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe({ updatedUser ->
-                                        userListWithPresences.add(updatedUser)
-                                        if (userListWithPresences.size == userList.size) {
-                                            asyncAdapter.items.submitList(
-                                                userListWithPresences.sortedBy { it.userName }
-                                            ) {
-                                                usersToolbarShimmer.stopAndHideShimmer()
-                                                Search.initSearch(
-                                                    editText,
-                                                    userListWithPresences,
-                                                    asyncAdapter,
-                                                    recyclerViewUsers
-                                                )
-                                            }
-                                        }
-                                    },
-                                        { onError ->
-                                            Error.showError(
-                                                context,
-                                                onError
-                                            )
-                                            usersToolbarShimmer.stopAndHideShimmer()
-                                        })
-                            }
-                        }
-                    }
-
-                },
-                { onError ->
-                    Error.showError(
-                        context,
-                        onError
-                    )
-                    usersToolbarShimmer.stopAndHideShimmer()
-                })
-            .addTo(compositeDisposable)
+        usersStore.wire()
+        compositeDisposable += usersStore.bind(this)
+        actions.accept(Action.LoadItems)
     }
 
     private fun startProfileDetailsFragment(
@@ -149,5 +102,21 @@ class PeopleFragment : Fragment() {
         super.onDestroyView()
         compositeDisposable.clear()
     }
+
+    override fun render(state: UiState) {
+        if (state.isLoading) {
+            usersToolbarShimmer.showShimmer(true)
+        } else {
+            usersToolbarShimmer.stopAndHideShimmer()
+        }
+        if (state.error != null) {
+            usersToolbarShimmer.stopAndHideShimmer()
+            Error.showError(context, state.error)
+        }
+        if (state.data != null) {
+            asyncAdapter.items.submitList(state.data as List<ViewTyped>)
+        }
+    }
 }
+
 

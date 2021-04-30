@@ -15,7 +15,7 @@ import com.turik2304.coursework.ChatActivity
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.Search
-import com.turik2304.coursework.extensions.addTo
+import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
@@ -64,28 +64,28 @@ class AllStreamsFragment : Fragment() {
 
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewAllStreams.adapter = asyncAdapter
-        ZulipRepository.getStreams(true)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { streamList ->
-                    innerViewTypedList = streamList
-                    asyncAdapter.items.submitList(streamList)
-                    Search.initSearch(
-                        editText,
-                        innerViewTypedList,
-                        asyncAdapter,
-                        recyclerViewAllStreams
-                    )
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                },
-                { onError ->
-                    Error.showError(
-                        context,
-                        onError
-                    )
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                })
-            .addTo(compositeDisposable)
+        compositeDisposable +=
+            ZulipRepository.getStreams(true)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { streamList ->
+                        innerViewTypedList = streamList
+                        asyncAdapter.items.submitList(streamList)
+                        Search.initSearch(
+                            editText,
+                            innerViewTypedList,
+                            asyncAdapter,
+                            recyclerViewAllStreams
+                        )
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                    },
+                    { onError ->
+                        Error.showError(
+                            context,
+                            onError
+                        )
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                    })
     }
 
     override fun onDestroy() {

@@ -1,4 +1,7 @@
 package com.turik2304.coursework.presentation.base
 
-class UiState {
-}
+data class UiState(
+    val isLoading: Boolean = false,
+    val data: Any? = null,
+    val error: Throwable? = null,
+)

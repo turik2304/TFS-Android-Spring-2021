@@ -1,8 +1,8 @@
 package com.turik2304.coursework.presentation.base
 
-import io.reactivex.rxjava3.core.Observable
+import com.jakewharton.rxrelay3.PublishRelay
 
 interface MviView<A, S> {
-    val actions: Observable<A>
+    val actions: PublishRelay<A>
     fun render(state: S)
 }

@@ -17,7 +17,7 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
-import com.turik2304.coursework.extensions.addTo
+import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
@@ -119,29 +119,29 @@ class SubscribedFragment : Fragment() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewSubscribedStreams.adapter = asyncAdapter
 
-        ZulipRepository.getStreams(needAllStreams = false)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { streamList ->
-                    asyncAdapter.items.submitList(streamList)
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                    listOfStreams = streamList
-                    innerViewTypedList = streamList
-                    Search.initSearch(
-                        editText,
-                        innerViewTypedList,
-                        asyncAdapter,
-                        recyclerViewSubscribedStreams
-                    )
-                },
-                { onError ->
-                    Error.showError(
-                        context,
-                        onError
-                    )
-                    tabLayoutShimmer?.stopAndHideShimmer()
-                })
-            .addTo(compositeDisposable)
+        compositeDisposable +=
+            ZulipRepository.getStreams(needAllStreams = false)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { streamList ->
+                        asyncAdapter.items.submitList(streamList)
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                        listOfStreams = streamList
+                        innerViewTypedList = streamList
+                        Search.initSearch(
+                            editText,
+                            innerViewTypedList,
+                            asyncAdapter,
+                            recyclerViewSubscribedStreams
+                        )
+                    },
+                    { onError ->
+                        Error.showError(
+                            context,
+                            onError
+                        )
+                        tabLayoutShimmer?.stopAndHideShimmer()
+                    })
     }
 
     companion object {

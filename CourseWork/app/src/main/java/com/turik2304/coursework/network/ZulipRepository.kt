@@ -5,7 +5,6 @@ import com.turik2304.coursework.MyUserId
 import com.turik2304.coursework.network.models.data.*
 import com.turik2304.coursework.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.network.models.response.GetUserPresenceResponse
-import com.turik2304.coursework.network.models.response.ResponseType
 import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.items.*
@@ -24,41 +23,40 @@ object ZulipRepository : Repository {
 
     val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
-    override fun getAllUsers(): Observable<Pair<List<UserUI>, ResponseType>> {
+    override fun getAllUsers(): Observable<List<UserUI>> {
         val usersFromDB =
             Observable.fromCallable {
-                (db?.userDao()?.getAll() ?: emptyList()) to ResponseType.FROM_DB
+                (db?.userDao()?.getAll() ?: emptyList())
             }
                 .subscribeOn(Schedulers.io())
         val usersFromNetWork = RetroClient.zulipApi.getAllUsers()
             .subscribeOn(Schedulers.io())
-            .map { response ->
-                //users will be inserted after loading presences
-                db?.userDao()?.deleteAll()
-                val sortedList = response.members.sortedBy { user -> user.userName }
-                return@map sortedList to ResponseType.FROM_NETWORK
+            .flatMap { response ->
+                val sortedUserList = response.members.sortedBy { user -> user.userName }
+                Observable.fromIterable(sortedUserList)
+                    .concatMap { user ->
+                        return@concatMap if (user.isBot) {
+                            Observable.just(user)
+                        } else {
+                            RetroClient.zulipApi.getUserPresence(user.email)
+                                .map m@{ response ->
+                                    user.presence = response.presence.aggregated.statusEnum
+                                    return@m user
+                                }
+                                .toObservable()
+                        }
+                    }
+                    .toList()
+                    .toObservable()
+                    .doOnNext { updatedUserList ->
+                        db?.userDao()?.deleteAndCreate(updatedUserList)
+                    }
             }
         return usersFromNetWork
             .publish { fromNetwork ->
                 Observable.mergeDelayError(fromNetwork, usersFromDB.takeUntil(fromNetwork))
                     .onErrorResumeWith(usersFromDB)
             }
-
-    }
-
-    override fun updateUserPresence(user: UserUI): Single<UserUI> {
-        if (user.isBot) {
-            return Single.just(user)
-        } else {
-            return RetroClient.zulipApi.getUserPresence(user.email)
-                .subscribeOn(Schedulers.io())
-                .map { response ->
-                    val actualPresence = response.presence.aggregated.statusEnum
-                    val updatedUser = user.copy(presence = actualPresence)
-                    db?.userDao()?.insert(updatedUser)
-                    return@map updatedUser
-                }
-        }
     }
 
     override fun getStreams(needAllStreams: Boolean): Observable<List<StreamUI>> {

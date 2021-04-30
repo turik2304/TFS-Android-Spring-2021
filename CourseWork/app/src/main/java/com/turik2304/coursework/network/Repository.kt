@@ -42,7 +42,6 @@ interface Repository {
         queueOfRawUidsOfMessages: HashSet<Int>
     ): Observable<Pair<String, List<ViewTyped>>>
 
-    fun updateUserPresence(user: UserUI): Single<UserUI>
-    fun getAllUsers(): Observable<Pair<List<UserUI>, ResponseType>>
+    fun getAllUsers(): Observable<List<UserUI>>
 
 }
