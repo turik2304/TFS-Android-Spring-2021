@@ -11,6 +11,7 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
+import com.turik2304.coursework.Search
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.network.models.data.StatusEnum
@@ -28,9 +29,10 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 class PeopleFragment : Fragment(),
     MviView<Action, UiState> {
 
-    private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
     private lateinit var usersToolbarShimmer: ShimmerFrameLayout
+    private lateinit var searchUsersEditText: EditText
+    private lateinit var usersRecyclerView: RecyclerView
 
     override val actions: PublishRelay<Action> = PublishRelay.create()
     private val compositeDisposable = CompositeDisposable()
@@ -48,23 +50,23 @@ class PeopleFragment : Fragment(),
         super.onViewCreated(view, savedInstanceState)
 
         usersToolbarShimmer = view.findViewById(R.id.usersShimmer)
-        val recyclerViewUsers = view.findViewById<RecyclerView>(R.id.recycleViewUsers)
+        searchUsersEditText = view.findViewById(R.id.edSearchUsers)
+        usersRecyclerView = view.findViewById(R.id.recycleViewUsers)
 
         val clickListener = { clickedView: View ->
             val userShimmer = clickedView as ShimmerFrameLayout
             userShimmer.showShimmer(true)
             val positionOfClickedView =
-                recyclerViewUsers.getChildAdapterPosition(clickedView)
+                usersRecyclerView.getChildAdapterPosition(clickedView)
             val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
             loadProfileDetails(clickedUserUI)
             userShimmer.stopAndHideShimmer()
         }
 
-        val editText = view.findViewById<EditText>(R.id.edSearchUsers)
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
-        recyclerViewUsers.adapter = asyncAdapter
+        usersRecyclerView.adapter = asyncAdapter
 
         usersStore.wire()
         compositeDisposable += usersStore.bind(this)
@@ -114,7 +116,12 @@ class PeopleFragment : Fragment(),
             Error.showError(context, state.error)
         }
         if (state.data != null) {
-            asyncAdapter.items.submitList(state.data as List<ViewTyped>)
+            val userList = state.data as List<ViewTyped>
+            asyncAdapter.items.submitList(userList)
+            Search.initSearch(
+                editText = searchUsersEditText,
+                recyclerView = usersRecyclerView
+            )
         }
     }
 }

@@ -130,8 +130,6 @@ class SubscribedFragment : Fragment() {
                         innerViewTypedList = streamList
                         Search.initSearch(
                             editText,
-                            innerViewTypedList,
-                            asyncAdapter,
                             recyclerViewSubscribedStreams
                         )
                     },

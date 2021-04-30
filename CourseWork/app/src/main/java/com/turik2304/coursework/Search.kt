@@ -17,10 +17,10 @@ object Search {
 
     fun initSearch(
         editText: EditText?,
-        viewTypedList: List<ViewTyped>,
-        asyncAdapter: AsyncAdapter<ViewTyped>,
         recyclerView: RecyclerView
     ) {
+        val asyncAdapter = recyclerView.adapter as AsyncAdapter<ViewTyped>
+        val initialList = asyncAdapter.items.currentList
         editText?.addTextChangedListener { text ->
             textObservable = Observable.create { emitter ->
                 emitter.onNext(text.toString())
@@ -29,7 +29,7 @@ object Search {
                 .distinctUntilChanged()
                 .debounce(1, TimeUnit.SECONDS)
                 .subscribe { inputText ->
-                    val filteredViewTypedList = viewTypedList
+                    val filteredViewTypedList = initialList
                         .filter { viewTypedUI ->
                             when (viewTypedUI) {
                                 is StreamUI -> viewTypedUI.name.contains(inputText, true)
@@ -42,7 +42,7 @@ object Search {
                         asyncAdapter.items.submitList(filteredViewTypedList) {
                             recyclerView.smoothScrollToPosition(0)
                         }
-                    } else asyncAdapter.items.submitList(viewTypedList) {
+                    } else asyncAdapter.items.submitList(initialList) {
                         recyclerView.smoothScrollToPosition(0)
                     }
                 }

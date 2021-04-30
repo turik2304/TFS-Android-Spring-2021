@@ -73,8 +73,6 @@ class AllStreamsFragment : Fragment() {
                         asyncAdapter.items.submitList(streamList)
                         Search.initSearch(
                             editText,
-                            innerViewTypedList,
-                            asyncAdapter,
                             recyclerViewAllStreams
                         )
                         tabLayoutShimmer?.stopAndHideShimmer()
