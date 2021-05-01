@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:parentTag="com.turik2304.coursework.MessageViewGroup">
+    tools:parentTag="com.turik2304.coursework.presentation.view.MessageViewGroup">
 
     <ImageView
         android:id="@+id/avatarView"
@@ -34,7 +34,7 @@
         android:text="@string/message"
         android:textSize="16sp" />
 
-    <com.turik2304.coursework.FlexboxLayout
+    <com.turik2304.coursework.presentation.view.FlexboxLayout
         android:id="@+id/flexBoxLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -1,6 +1,6 @@
 package com.turik2304.coursework.presentation.base
 
-import com.turik2304.coursework.recycler_view_base.ViewTyped
+import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 
 sealed class Action {
 

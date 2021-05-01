@@ -1,11 +1,11 @@
 package com.turik2304.coursework.extensions
 
-import com.turik2304.coursework.MyUserId
-import com.turik2304.coursework.network.ZulipRepository
-import com.turik2304.coursework.recycler_view_base.ViewTyped
-import com.turik2304.coursework.recycler_view_base.items.DateSeparatorUI
-import com.turik2304.coursework.recycler_view_base.items.InMessageUI
-import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
+import com.turik2304.coursework.data.MyUserId
+import com.turik2304.coursework.data.repository.ZulipRepository
+import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
+import com.turik2304.coursework.presentation.recycler_view.items.DateSeparatorUI
+import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
+import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 
 fun List<ViewTyped>.toInMessages(): List<InMessageUI> {
     return this.filter { it !is DateSeparatorUI }

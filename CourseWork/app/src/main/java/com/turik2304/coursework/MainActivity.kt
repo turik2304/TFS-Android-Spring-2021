@@ -3,11 +3,10 @@ package com.turik2304.coursework
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.databinding.ActivityMainBinding
-import com.turik2304.coursework.fragments.bottom_navigation_fragments.ChannelsFragment
-import com.turik2304.coursework.fragments.bottom_navigation_fragments.OwnProfileFragment
-import com.turik2304.coursework.fragments.bottom_navigation_fragments.PeopleFragment
+import com.turik2304.coursework.presentation.fragments.bottom_navigation_fragments.ChannelsFragment
+import com.turik2304.coursework.presentation.fragments.bottom_navigation_fragments.OwnProfileFragment
+import com.turik2304.coursework.presentation.fragments.bottom_navigation_fragments.PeopleFragment
 
 class MainActivity : AppCompatActivity() {
 

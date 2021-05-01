@@ -1,6 +1,6 @@
 package com.turik2304.coursework.domain
 
-import com.turik2304.coursework.network.ZulipRepository
+import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.presentation.base.Action
 import com.turik2304.coursework.presentation.base.UiState
 import io.reactivex.rxjava3.core.Observable
