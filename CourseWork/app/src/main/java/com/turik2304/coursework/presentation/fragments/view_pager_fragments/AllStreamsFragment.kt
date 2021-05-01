@@ -18,6 +18,7 @@ import com.turik2304.coursework.presentation.utils.Search
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.data.repository.ZulipRepository
+import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
@@ -65,7 +66,7 @@ class AllStreamsFragment : Fragment() {
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewAllStreams.adapter = asyncAdapter
         compositeDisposable +=
-            ZulipRepository.getStreams(true)
+            ZulipRepository.getStreams(true).toViewTypedItems()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { streamList ->

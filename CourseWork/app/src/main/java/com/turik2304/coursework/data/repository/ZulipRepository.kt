@@ -3,13 +3,14 @@ package com.turik2304.coursework.data.repository
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
+import com.turik2304.coursework.data.network.models.Model
 import com.turik2304.coursework.data.network.models.data.*
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.data.network.models.response.GetUserPresenceResponse
 import com.turik2304.coursework.data.network.utils.NarrowConstructor
+import com.turik2304.coursework.data.room.DatabaseClient
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.*
-import com.turik2304.coursework.data.room.DatabaseClient
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -60,12 +61,45 @@ object ZulipRepository : Repository {
             }
     }
 
-    override fun getStreams(needAllStreams: Boolean): Observable<List<StreamUI>> {
+    fun<T: Model> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>> {
+        return this.observeOn(Schedulers.computation())
+            .map { modelList ->
+                modelList.map { model ->
+                    when (model) {
+                        is Stream -> StreamUI(
+                            name = model.name,
+                            uid = model.id,
+                            topics = model.topics.toViewTyped(),
+                            isSubscribed = model.isSubscribed,
+                        )
+                        else -> StreamUI(
+                            name = "ERROR",
+                            uid = model.id,
+                            topics = emptyList(),
+                            isSubscribed = true,
+                        )
+                    }
+                }
+
+            }
+    }
+
+    private fun List<Topic>.toViewTyped(): List<TopicUI> {
+        return map { topic ->
+            TopicUI(
+                name = topic.name,
+                numberOfMessages = topic.numberOfMessages,
+                uid = topic.id
+            )
+        }
+    }
+
+    override fun getStreams(needAllStreams: Boolean): Observable<List<Stream>> {
         val streamsFromDB = Observable.fromCallable {
             (db?.streamDao()?.getStreams(needAllStreams) ?: emptyList())
         }
             .subscribeOn(Schedulers.io())
-        val streamsFromNetwork: Observable<List<StreamUI>>
+        val streamsFromNetwork: Observable<List<Stream>>
         if (needAllStreams) {
             streamsFromNetwork = RetroClient.zulipApi.getAllStreams()
                 .subscribeOn(Schedulers.io())
@@ -97,10 +131,10 @@ object ZulipRepository : Repository {
             }
     }
 
-    override fun getTopicsOfStreams(streams: List<StreamUI>): Observable<List<StreamUI>> {
+    override fun getTopicsOfStreams(streams: List<Stream>): Observable<List<Stream>> {
         return Observable.fromIterable(streams)
             .concatMap { stream ->
-                return@concatMap RetroClient.zulipApi.getTopics(stream.uid)
+                return@concatMap RetroClient.zulipApi.getTopics(stream.id)
                     .map { response ->
                         stream.topics = response.topics
                         return@map stream

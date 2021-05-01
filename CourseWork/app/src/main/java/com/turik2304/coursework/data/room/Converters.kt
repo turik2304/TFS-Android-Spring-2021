@@ -3,7 +3,7 @@ package com.turik2304.coursework.data.room
 import androidx.room.TypeConverter
 import com.turik2304.coursework.data.network.models.data.Reaction
 import com.turik2304.coursework.data.network.models.data.StatusEnum
-import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
+import com.turik2304.coursework.data.network.models.data.Topic
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -11,10 +11,10 @@ import kotlinx.serialization.json.Json
 class Converters {
 
     @TypeConverter
-    fun fromTopicsList(list: List<TopicUI>) = Json.encodeToString(list)
+    fun fromTopicsList(list: List<Topic>) = Json.encodeToString(list)
 
     @TypeConverter
-    fun toTopicsList(topic: String) = Json.decodeFromString<List<TopicUI>>(topic)
+    fun toTopicsList(topic: String) = Json.decodeFromString<List<Topic>>(topic)
 
     @TypeConverter
     fun fromReactionsList(listOfReactions: List<Reaction>) = Json.encodeToString(listOfReactions)

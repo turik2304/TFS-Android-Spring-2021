@@ -1,17 +1,17 @@
 package com.turik2304.coursework.data.repository
 
 import com.turik2304.coursework.data.network.models.data.ReactionEvent
+import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
-import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
 import com.turik2304.coursework.presentation.recycler_view.items.UserUI
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 
 interface Repository {
 
-    fun getStreams(needAllStreams: Boolean): Observable<List<StreamUI>>
-    fun getTopicsOfStreams(streams: List<StreamUI>): Observable<List<StreamUI>>
+    fun getStreams(needAllStreams: Boolean): Observable<List<Stream>>
+    fun getTopicsOfStreams(streams: List<Stream>): Observable<List<Stream>>
     fun getMessages(
         nameOfTopic: String,
         nameOfStream: String,

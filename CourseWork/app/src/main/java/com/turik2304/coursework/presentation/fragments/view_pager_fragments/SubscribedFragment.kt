@@ -17,9 +17,10 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
+import com.turik2304.coursework.data.repository.ZulipRepository
+import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
@@ -122,13 +123,13 @@ class SubscribedFragment : Fragment() {
         recyclerViewSubscribedStreams.adapter = asyncAdapter
 
         compositeDisposable +=
-            ZulipRepository.getStreams(needAllStreams = false)
+            ZulipRepository.getStreams(needAllStreams = false).toViewTypedItems()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { streamList ->
                         asyncAdapter.items.submitList(streamList)
                         tabLayoutShimmer?.stopAndHideShimmer()
-                        listOfStreams = streamList
+                        listOfStreams = streamList as List<StreamUI>
                         innerViewTypedList = streamList
                         Search.initSearch(
                             editText,

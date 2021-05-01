@@ -1,17 +1,10 @@
 package com.turik2304.coursework.presentation.recycler_view.items
 
-import androidx.room.Entity
 import com.turik2304.coursework.R
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
-@Entity(tableName = "streams", primaryKeys = ["uid", "isSubscribed"])
-@Serializable
 data class StreamUI(
-    @SerialName("name")
     val name: String,
-    @SerialName("stream_id")
     override val uid: Int,
     var topics: List<TopicUI> = emptyList(),
     var isExpanded: Boolean = false,
