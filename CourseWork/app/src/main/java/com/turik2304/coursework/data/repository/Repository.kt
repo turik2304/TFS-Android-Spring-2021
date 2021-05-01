@@ -1,12 +1,12 @@
 package com.turik2304.coursework.data.repository
 
-import com.turik2304.coursework.data.network.models.Model
+import com.turik2304.coursework.data.network.models.RemoteModel
+import com.turik2304.coursework.data.network.models.data.Message
 import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.data.User
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
-import com.turik2304.coursework.presentation.recycler_view.items.UserUI
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 
@@ -19,7 +19,7 @@ interface Repository {
         nameOfStream: String,
         uidOfLastLoadedMessage: String,
         needFirstPage: Boolean = false
-    ): Observable<List<ViewTyped>>
+    ): Observable<List<Message>>
 
     fun getOwnProfile(): Single<GetOwnProfileResponse>
     fun getFormattedDate(dateOfMessageInSeconds: Int): String
@@ -45,5 +45,5 @@ interface Repository {
 
     fun getAllUsers(): Observable<List<User>>
 
-    fun <T : Model> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>>
+    fun <T : RemoteModel> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>>
 }

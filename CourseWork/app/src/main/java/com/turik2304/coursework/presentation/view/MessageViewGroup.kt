@@ -17,7 +17,7 @@ import androidx.core.view.marginTop
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.R
 import com.turik2304.coursework.extensions.dpToPx
-import com.turik2304.coursework.data.network.models.data.Reaction
+import com.turik2304.coursework.presentation.recycler_view.items.ReactionUI
 
 class MessageViewGroup @JvmOverloads constructor(
     context: Context,
@@ -61,7 +61,7 @@ class MessageViewGroup @JvmOverloads constructor(
         setWillNotDraw(false)
     }
 
-    fun addReactions(reactions: List<Reaction>) {
+    fun addReactions(reactions: List<ReactionUI>) {
         flexboxLayout.removeViews(0, flexboxLayout.childCount - 1)
         if (reactions.isNotEmpty()) {
             reactions.forEach { reaction ->

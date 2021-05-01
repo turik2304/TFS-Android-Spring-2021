@@ -1,6 +1,7 @@
 package com.turik2304.coursework.data.room
 
 import androidx.room.*
+import com.turik2304.coursework.data.network.models.data.Message
 import com.turik2304.coursework.extensions.toInMessages
 import com.turik2304.coursework.extensions.toViewTypedMessages
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
@@ -10,13 +11,13 @@ import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
 interface MessageDao {
 
     @Query("SELECT * FROM messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic")
-    fun getRaw(nameOfStream: String, nameOfTopic: String): List<InMessageUI>
+    fun getAll(nameOfStream: String, nameOfTopic: String): List<Message>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertConverted(inMessages: List<InMessageUI>)
+    fun insertAll(messages: List<Message>)
 
     @Update
-    fun updateConverted(inMessages: List<InMessageUI>)
+    fun update(messages: List<Message>)
 
     @Query("SELECT COUNT(*) FROM messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic")
     fun getCount(nameOfStream: String, nameOfTopic: String): Int
@@ -28,35 +29,35 @@ interface MessageDao {
     fun deleteAndCreate(
         nameOfStream: String,
         nameOfTopic: String,
-        viewTypedMessages: List<ViewTyped>
+        messages: List<Message>
     ) {
         deleteAll(nameOfStream, nameOfTopic)
-        insertAll(viewTypedMessages)
+        insertAll(messages)
     }
 
-    @Query("DELETE FROM messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic AND uid NOT IN (SELECT uid from messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic ORDER BY uid DESC LIMIT 50)")
+    @Query("DELETE FROM messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic AND id NOT IN (SELECT id from messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic ORDER BY id DESC LIMIT 50)")
     fun checkCapacity(nameOfStream: String, nameOfTopic: String)
 
-    fun update(viewTypedMessages: List<ViewTyped>) {
-        updateConverted(viewTypedMessages.toInMessages())
-    }
+//    fun update(viewTypedMessages: List<ViewTyped>) {
+//        updateConverted(viewTypedMessages.toInMessages())
+//    }
 
-    fun insertAll(viewTypedMessages: List<ViewTyped>) {
-        insertConverted(viewTypedMessages.toInMessages())
-    }
+//    fun insertAll(viewTypedMessages: List<ViewTyped>) {
+//        insertConverted(viewTypedMessages.toInMessages())
+//    }
 
     @Transaction
     fun insertAllAndCheckCapacity(
         nameOfStream: String,
         nameOfTopic: String,
-        viewTypedMessages: List<ViewTyped>
+        messages: List<Message>
     ) {
-        insertConverted(viewTypedMessages.toInMessages())
+        insertAll(messages)
         checkCapacity(nameOfStream, nameOfTopic)
     }
 
-    fun getAll(nameOfStream: String, nameOfTopic: String): List<ViewTyped> {
-        return getRaw(nameOfStream, nameOfTopic).toViewTypedMessages()
-    }
+//    fun getAll(nameOfStream: String, nameOfTopic: String): List<ViewTyped> {
+//        return getRaw(nameOfStream, nameOfTopic).toViewTypedMessages()
+//    }
 
 }

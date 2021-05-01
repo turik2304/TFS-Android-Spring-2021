@@ -2,6 +2,7 @@ package com.turik2304.coursework.data.room
 
 import androidx.room.TypeConverter
 import com.turik2304.coursework.data.network.models.data.Reaction
+import com.turik2304.coursework.presentation.recycler_view.items.ReactionUI
 import com.turik2304.coursework.data.network.models.data.StatusEnum
 import com.turik2304.coursework.data.network.models.data.Topic
 import kotlinx.serialization.decodeFromString

@@ -7,5 +7,4 @@ data class DateSeparatorUI(
     val date: String,
     override val uid: Int,
     override val viewType: Int = R.layout.item_date_separator,
-) : ViewTyped {
-}
+) : ViewTyped

@@ -12,8 +12,8 @@ fun List<ViewTyped>.toInMessages(): List<InMessageUI> {
         .map { message ->
             if (message is OutMessageUI) {
                 return@map InMessageUI(
-                    nameOfStream = message.nameOfStream,
-                    nameOfTopic = message.nameOfTopic,
+//                    nameOfStream = message.nameOfStream,
+//                    nameOfTopic = message.nameOfTopic,
                     userName = message.userName,
                     userId = message.userId,
                     message = message.message,
@@ -41,8 +41,8 @@ private fun parseIncomingMessages(inMessages: List<InMessageUI>): List<ViewTyped
     return inMessages.map { inMessage ->
         if (inMessage.userId == MyUserId.MY_USER_ID) {
             return@map OutMessageUI(
-                nameOfStream = inMessage.nameOfStream,
-                nameOfTopic = inMessage.nameOfTopic,
+//                nameOfStream = inMessage.nameOfStream,
+//                nameOfTopic = inMessage.nameOfTopic,
                 userName = inMessage.userName,
                 userId = inMessage.userId,
                 message = inMessage.message,

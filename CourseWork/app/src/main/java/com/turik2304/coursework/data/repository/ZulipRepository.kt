@@ -1,9 +1,10 @@
 package com.turik2304.coursework.data.repository
 
+import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
-import com.turik2304.coursework.data.network.models.Model
+import com.turik2304.coursework.data.network.models.RemoteModel
 import com.turik2304.coursework.data.network.models.data.*
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.data.network.models.response.GetUserPresenceResponse
@@ -25,25 +26,38 @@ object ZulipRepository : Repository {
 
     private val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
-    override fun <T : Model> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>> {
+    override fun <T : RemoteModel> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>> {
         return this.observeOn(Schedulers.computation())
             .map { modelList ->
-                modelList.mapNotNull { model ->
-                    when (model) {
-                        is Stream -> StreamUI(
-                            name = model.name,
-                            uid = model.id,
-                            topics = model.topics.toViewTyped(),
-                            isSubscribed = model.isSubscribed,
-                        )
-                        is User -> UserUI(
-                            userName = model.userName,
-                            email = model.email,
-                            avatarUrl = model.avatarUrl,
-                            uid = model.id,
-                            presence = model.presence,
-                        )
-                        else -> null
+                if (modelList.firstOrNull() is Message) {
+                    return@map (modelList as List<Message>)
+                        .sortedBy { it.dateInSeconds }
+                        .groupBy { message ->
+                            getFormattedDate(message.dateInSeconds)
+                        }
+                        .flatMap { (date, messages) ->
+                            listOf(DateSeparatorUI(date, date.hashCode())) + parseMessages(
+                                messages
+                            )
+                        }
+                } else {
+                    modelList.mapNotNull { model ->
+                        when (model) {
+                            is Stream -> StreamUI(
+                                name = model.name,
+                                uid = model.id,
+                                topics = model.topics.toViewTyped(),
+                                isSubscribed = model.isSubscribed,
+                            )
+                            is User -> UserUI(
+                                userName = model.userName,
+                                email = model.email,
+                                avatarUrl = model.avatarUrl,
+                                uid = model.id,
+                                presence = model.presence,
+                            )
+                            else -> null
+                        }
                     }
                 }
             }
@@ -162,7 +176,7 @@ object ZulipRepository : Repository {
         nameOfStream: String,
         uidOfLastLoadedMessage: String,
         needFirstPage: Boolean
-    ): Observable<List<ViewTyped>> {
+    ): Observable<List<Message>> {
         val narrow = NarrowConstructor.getNarrow(nameOfTopic, nameOfStream)
         val messagesFromDB = if (needFirstPage)
             Observable.fromCallable {
@@ -178,30 +192,24 @@ object ZulipRepository : Repository {
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.computation())
             .map { messagesResponse ->
-                return@map messagesResponse.messages
-                    .sortedBy { it.dateInSeconds }
-                    .groupBy { message ->
-                        getFormattedDate(message.dateInSeconds)
-                    }
-                    .flatMap { (date, messages) ->
-                        listOf(DateSeparatorUI(date, date.hashCode())) + parseMessages(
-                            messages, nameOfTopic, nameOfStream
-                        )
-                    }
-            }
-            .doOnNext { viewTypedList ->
+                val messages = messagesResponse.messages.map { message ->
+                    message.nameOfStream = nameOfStream
+                    message.nameOfTopic = nameOfTopic
+                    message
+                }
                 if (needFirstPage) {
                     db?.messageDao()
-                        ?.deleteAndCreate(nameOfStream, nameOfTopic, viewTypedList)
+                        ?.deleteAndCreate(nameOfStream, nameOfTopic, messages)
                 } else {
                     val numberOfMessagesCanBeInserted =
                         MAX_NUMBER_OF_MESSAGES_IN_DB - (db?.messageDao()
                             ?.getCount(nameOfStream, nameOfTopic)
                             ?: MAX_NUMBER_OF_MESSAGES_IN_DB)
-                    val messagesToDatabase = viewTypedList.filter { it !is DateSeparatorUI }
+                    val messagesToDatabase = messages
                         .takeLast(numberOfMessagesCanBeInserted)
                     db?.messageDao()?.insertAll(messagesToDatabase)
                 }
+                return@map messages
             }
         return messagesFromNetwork
             .publish { fromNetwork ->
@@ -224,11 +232,11 @@ object ZulipRepository : Repository {
                 if (response.messageEvents.isNotEmpty()) {
                     val newLastEventId = response.messageEvents.last().id
                     val zulipMessages = response.messageEvents.map { it.message }
-                    val viewTypedMessages = parseMessages(zulipMessages, nameOfTopic, nameOfStream)
+                    val viewTypedMessages = parseMessages(zulipMessages)
                     val newList = currentList.filter { it.uid !in queueOfRawUidsOfMessages }
                     val actualList = newList + viewTypedMessages
                     db?.messageDao()
-                        ?.insertAllAndCheckCapacity(nameOfStream, nameOfTopic, viewTypedMessages)
+                        ?.insertAllAndCheckCapacity(nameOfStream, nameOfTopic, zulipMessages)
                     return@map newLastEventId to actualList
                 } else {
                     return@map lastEventId to emptyList<ViewTyped>()
@@ -284,10 +292,10 @@ object ZulipRepository : Repository {
     }
 
     private fun handleReactions(
-        reactions: List<Reaction>,
+        reactions: List<ReactionUI>,
         reactionEvent: ReactionEvent
-    ): List<Reaction> {
-        val targetReaction = Reaction(
+    ): List<ReactionUI> {
+        val targetReaction = ReactionUI(
             emojiCode = Integer.parseInt(reactionEvent.emojiCode, 16),
             counter = 1,
             usersWhoClicked = mutableListOf(reactionEvent.userId)
@@ -339,37 +347,31 @@ object ZulipRepository : Repository {
     }
 
     private fun parseMessages(
-        remoteMessages: List<ZulipMessage>,
-        nameOfTopic: String,
-        nameOfStream: String
+        remoteMessages: List<Message>,
     ): List<ViewTyped> {
         val messageUIList = mutableListOf<ViewTyped>()
         remoteMessages.forEach { messageToken ->
             if (messageToken.userId == MyUserId.MY_USER_ID) {
                 messageUIList.add(
                     OutMessageUI(
-                        nameOfStream = nameOfStream,
-                        nameOfTopic = nameOfTopic,
                         userName = messageToken.userName,
                         userId = messageToken.userId,
                         message = messageToken.message,
                         reactions = parseReactions(messageToken.reactions),
                         dateInSeconds = messageToken.dateInSeconds,
-                        uid = messageToken.uid,
+                        uid = messageToken.id,
                     )
                 )
             } else {
                 messageUIList.add(
                     InMessageUI(
-                        nameOfStream = nameOfStream,
-                        nameOfTopic = nameOfTopic,
                         userName = messageToken.userName,
                         userId = messageToken.userId,
                         message = messageToken.message,
                         reactions = parseReactions(messageToken.reactions),
                         dateInSeconds = messageToken.dateInSeconds,
                         avatarUrl = messageToken.avatarUrl,
-                        uid = messageToken.uid,
+                        uid = messageToken.id,
                     )
                 )
             }
@@ -385,9 +387,9 @@ object ZulipRepository : Repository {
     }
 
     private fun parseReactions(
-        zulipReactions: List<ZulipReaction>,
-    ): List<Reaction> {
-        val listOfReactions = mutableListOf<Reaction>()
+        zulipReactions: List<Reaction>,
+    ): List<ReactionUI> {
+        val listOfReactions = mutableListOf<ReactionUI>()
         zulipReactions.forEach { zulipReaction ->
             var isTheSameReaction = false
             var indexOfSameReaction = -1
@@ -403,7 +405,7 @@ object ZulipRepository : Repository {
                 listOfReactions[indexOfSameReaction].counter++
                 listOfReactions[indexOfSameReaction].usersWhoClicked.add(userId)
             } else {
-                listOfReactions.add(Reaction(emojiCode, 1, mutableListOf(userId)))
+                listOfReactions.add(ReactionUI(emojiCode, 1, mutableListOf(userId)))
             }
         }
         return listOfReactions.reversed()

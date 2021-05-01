@@ -23,6 +23,7 @@ import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.data.network.models.data.OperationEnum
 import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.network.utils.NarrowConstructor
+import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.PaginationScrollListener
@@ -151,8 +152,8 @@ class ChatActivity : AppCompatActivity() {
                 val message = chatBinding.editTextEnterMessage.text.toString()
                 chatBinding.chatShimmer.showShimmer(true)
                 val rawMessage = OutMessageUI(
-                    nameOfStream = nameOfStream,
-                    nameOfTopic = nameOfTopic,
+//                    nameOfStream = nameOfStream,
+//                    nameOfTopic = nameOfTopic,
                     userName = "",
                     userId = MyUserId.MY_USER_ID,
                     message = message,
@@ -291,7 +292,7 @@ class ChatActivity : AppCompatActivity() {
                 nameOfStream,
                 uidOfLastLoadedMessage,
                 needFirstPage
-            )
+            ).toViewTypedItems()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { messages ->

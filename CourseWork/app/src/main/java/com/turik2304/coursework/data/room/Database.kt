@@ -3,15 +3,15 @@ package com.turik2304.coursework.data.room
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.turik2304.coursework.data.network.models.data.Message
 import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.data.User
-import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
 
 @Database(
     entities = [
         User::class,
         Stream::class,
-        InMessageUI::class,
+        Message::class,
     ], version = 1
 )
 @TypeConverters(Converters::class)

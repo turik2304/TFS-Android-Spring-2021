@@ -2,8 +2,7 @@ package com.turik2304.coursework.data.network.models.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.turik2304.coursework.data.network.models.Model
-import com.turik2304.coursework.data.network.models.data.StatusEnum
+import com.turik2304.coursework.data.network.models.RemoteModel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -22,4 +21,4 @@ class User(
     @SerialName("is_bot")
     var isBot: Boolean = false,
     var presence: StatusEnum = StatusEnum.OFFLINE,
-) : Model
+) : RemoteModel

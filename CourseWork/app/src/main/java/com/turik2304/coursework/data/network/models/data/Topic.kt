@@ -1,7 +1,7 @@
 package com.turik2304.coursework.data.network.models.data
 
 import androidx.room.PrimaryKey
-import com.turik2304.coursework.data.network.models.Model
+import com.turik2304.coursework.data.network.models.RemoteModel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -13,4 +13,4 @@ class Topic(
     @PrimaryKey
     @SerialName("max_id")
     override val id: Int,
-) : Model
+) : RemoteModel
