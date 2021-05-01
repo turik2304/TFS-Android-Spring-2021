@@ -23,9 +23,43 @@ object ZulipRepository : Repository {
     private const val NUMBER_OF_MESSAGES_AFTER = 0
     private const val MAX_NUMBER_OF_MESSAGES_IN_DB = 50
 
-    val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
+    private val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
-    override fun getAllUsers(): Observable<List<UserUI>> {
+    override fun <T : Model> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>> {
+        return this.observeOn(Schedulers.computation())
+            .map { modelList ->
+                modelList.mapNotNull { model ->
+                    when (model) {
+                        is Stream -> StreamUI(
+                            name = model.name,
+                            uid = model.id,
+                            topics = model.topics.toViewTyped(),
+                            isSubscribed = model.isSubscribed,
+                        )
+                        is User -> UserUI(
+                            userName = model.userName,
+                            email = model.email,
+                            avatarUrl = model.avatarUrl,
+                            uid = model.id,
+                            presence = model.presence,
+                        )
+                        else -> null
+                    }
+                }
+            }
+    }
+
+    private fun List<Topic>.toViewTyped(): List<TopicUI> {
+        return map { topic ->
+            TopicUI(
+                name = topic.name,
+                numberOfMessages = topic.numberOfMessages,
+                uid = topic.id
+            )
+        }
+    }
+
+    override fun getAllUsers(): Observable<List<User>> {
         val usersFromDB =
             Observable.fromCallable {
                 (db?.userDao()?.getAll() ?: emptyList())
@@ -59,39 +93,6 @@ object ZulipRepository : Repository {
                 Observable.mergeDelayError(fromNetwork, usersFromDB.takeUntil(fromNetwork))
                     .onErrorResumeWith(usersFromDB)
             }
-    }
-
-    fun<T: Model> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>> {
-        return this.observeOn(Schedulers.computation())
-            .map { modelList ->
-                modelList.map { model ->
-                    when (model) {
-                        is Stream -> StreamUI(
-                            name = model.name,
-                            uid = model.id,
-                            topics = model.topics.toViewTyped(),
-                            isSubscribed = model.isSubscribed,
-                        )
-                        else -> StreamUI(
-                            name = "ERROR",
-                            uid = model.id,
-                            topics = emptyList(),
-                            isSubscribed = true,
-                        )
-                    }
-                }
-
-            }
-    }
-
-    private fun List<Topic>.toViewTyped(): List<TopicUI> {
-        return map { topic ->
-            TopicUI(
-                name = topic.name,
-                numberOfMessages = topic.numberOfMessages,
-                uid = topic.id
-            )
-        }
     }
 
     override fun getStreams(needAllStreams: Boolean): Observable<List<Stream>> {

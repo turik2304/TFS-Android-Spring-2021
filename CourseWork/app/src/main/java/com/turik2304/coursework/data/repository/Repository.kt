@@ -1,7 +1,9 @@
 package com.turik2304.coursework.data.repository
 
+import com.turik2304.coursework.data.network.models.Model
 import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.network.models.data.Stream
+import com.turik2304.coursework.data.network.models.data.User
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.UserUI
@@ -41,6 +43,7 @@ interface Repository {
         queueOfRawUidsOfMessages: HashSet<Int>
     ): Observable<Pair<String, List<ViewTyped>>>
 
-    fun getAllUsers(): Observable<List<UserUI>>
+    fun getAllUsers(): Observable<List<User>>
 
+    fun <T : Model> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>>
 }

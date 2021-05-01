@@ -27,11 +27,6 @@ class UserHolder(
     }
 
     override fun bind(item: UserUI) {
-        if (item.profileDetailsLoadingStarted) {
-            (itemView as ShimmerFrameLayout).showShimmer(true)
-        } else {
-            (itemView as ShimmerFrameLayout).stopAndHideShimmer()
-        }
         userName.text = item.userName
         email.text = item.email
         status.setColoredImageStatus(item.presence)
