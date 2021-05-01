@@ -1,9 +1,9 @@
 package com.turik2304.coursework.presentation.recycler_view.holders
 
 import android.view.View
-import com.turik2304.coursework.presentation.view.MessageViewGroup
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
 import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
+import com.turik2304.coursework.presentation.view.MessageViewGroup
 
 class OutMessageViewHolder(
     view: View,

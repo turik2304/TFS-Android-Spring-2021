@@ -2,9 +2,9 @@ package com.turik2304.coursework.presentation.recycler_view.holders
 
 import android.view.View
 import com.bumptech.glide.Glide
-import com.turik2304.coursework.presentation.view.MessageViewGroup
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
 import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
+import com.turik2304.coursework.presentation.view.MessageViewGroup
 
 class InMessageViewHolder(
     view: View,

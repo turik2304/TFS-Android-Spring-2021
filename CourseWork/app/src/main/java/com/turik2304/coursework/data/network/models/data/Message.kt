@@ -25,4 +25,4 @@ class Message(
     override val id: Int,
     @SerialName("avatar_url")
     val avatarUrl: String
-): RemoteModel
+) : RemoteModel

@@ -1,6 +1,5 @@
 package com.turik2304.coursework.data.repository
 
-import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient

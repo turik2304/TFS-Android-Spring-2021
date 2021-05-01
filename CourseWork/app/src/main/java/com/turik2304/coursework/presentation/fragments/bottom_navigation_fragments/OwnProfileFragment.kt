@@ -9,11 +9,11 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.facebook.shimmer.ShimmerFrameLayout
-import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.R
-import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredTextStatus
 import com.turik2304.coursework.data.repository.ZulipRepository
+import com.turik2304.coursework.extensions.stopAndHideShimmer
+import com.turik2304.coursework.presentation.utils.Error
+import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredTextStatus
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
 

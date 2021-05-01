@@ -12,17 +12,17 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.ChatActivity
-import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.R
-import com.turik2304.coursework.presentation.utils.Search
-import com.turik2304.coursework.extensions.plusAssign
-import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
+import com.turik2304.coursework.extensions.plusAssign
+import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
+import com.turik2304.coursework.presentation.utils.Error
+import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 

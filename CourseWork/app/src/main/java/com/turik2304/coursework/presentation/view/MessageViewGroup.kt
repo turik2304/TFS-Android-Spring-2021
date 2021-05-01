@@ -14,8 +14,8 @@ import androidx.core.view.marginBottom
 import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.core.view.marginTop
-import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.R
+import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.extensions.dpToPx
 import com.turik2304.coursework.presentation.recycler_view.items.ReactionUI
 

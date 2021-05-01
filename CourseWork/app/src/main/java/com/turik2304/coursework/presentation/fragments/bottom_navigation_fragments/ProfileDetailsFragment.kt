@@ -10,8 +10,8 @@ import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.turik2304.coursework.MainActivity
 import com.turik2304.coursework.R
-import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredTextStatus
 import com.turik2304.coursework.data.network.models.data.StatusEnum
+import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredTextStatus
 
 class ProfileDetailsFragment : Fragment() {
 

@@ -2,10 +2,6 @@ package com.turik2304.coursework.data.room
 
 import androidx.room.*
 import com.turik2304.coursework.data.network.models.data.Message
-import com.turik2304.coursework.extensions.toInMessages
-import com.turik2304.coursework.extensions.toViewTypedMessages
-import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
-import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
 
 @Dao
 interface MessageDao {

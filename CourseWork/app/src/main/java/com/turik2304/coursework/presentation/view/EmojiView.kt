@@ -9,14 +9,14 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.core.view.setPadding
 import com.facebook.shimmer.ShimmerFrameLayout
-import com.turik2304.coursework.data.EmojiEnum
-import com.turik2304.coursework.presentation.utils.Error
-import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.R
+import com.turik2304.coursework.data.EmojiEnum
+import com.turik2304.coursework.data.MyUserId
+import com.turik2304.coursework.data.network.RetroClient
 import com.turik2304.coursework.extensions.dpToPx
 import com.turik2304.coursework.extensions.spToPx
 import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.data.network.RetroClient
+import com.turik2304.coursework.presentation.utils.Error
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
 

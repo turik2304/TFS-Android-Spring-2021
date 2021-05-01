@@ -6,8 +6,8 @@ sealed class Action {
 
     object LoadItems : Action()
 
-    data class ItemsLoaded(val items: List<ViewTyped>): Action()
+    data class ItemsLoaded(val items: List<ViewTyped>) : Action()
 
-    data class ErrorLoading(val error: Throwable): Action()
+    data class ErrorLoading(val error: Throwable) : Action()
 
 }

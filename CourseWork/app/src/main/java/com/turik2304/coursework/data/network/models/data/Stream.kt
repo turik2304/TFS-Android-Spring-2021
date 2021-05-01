@@ -1,7 +1,6 @@
 package com.turik2304.coursework.data.network.models.data
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 import com.turik2304.coursework.data.network.models.RemoteModel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
