@@ -156,7 +156,6 @@ object ZulipRepository : Repository {
             }
             .toList()
             .toObservable()
-
     }
 
     override fun getOwnProfile(): Observable<GetOwnProfileResponse> {

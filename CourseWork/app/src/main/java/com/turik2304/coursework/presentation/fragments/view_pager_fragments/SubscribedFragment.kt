@@ -9,18 +9,22 @@ import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.*
 import androidx.core.content.res.ResourcesCompat
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.facebook.shimmer.ShimmerFrameLayout
+import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.*
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_STREAM
 import com.turik2304.coursework.ChatActivity.Companion.EXTRA_NAME_OF_TOPIC
-import com.turik2304.coursework.data.repository.ZulipRepository
-import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
+import com.turik2304.coursework.databinding.FragmentChannelsBinding
+import com.turik2304.coursework.databinding.FragmentSubscribedBinding
+import com.turik2304.coursework.domain.StreamsMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
+import com.turik2304.coursework.presentation.GeneralActions
+import com.turik2304.coursework.presentation.GeneralReducer
+import com.turik2304.coursework.presentation.base.MviFragment
+import com.turik2304.coursework.presentation.base.Store
+import com.turik2304.coursework.presentation.base.UiState
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
@@ -29,51 +33,55 @@ import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
 import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 
-class SubscribedFragment : Fragment() {
+class SubscribedFragment : MviFragment<GeneralActions, UiState>() {
 
     private lateinit var listOfStreams: List<StreamUI>
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
+    override val store: Store<GeneralActions, UiState> = Store(
+        reducer = GeneralReducer(),
+        middlewares = listOf(StreamsMiddleware(needAllStreams = false)),
+        initialState = UiState()
+    )
+    override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
+
     private val compositeDisposable = CompositeDisposable()
+
+    private var _binding: FragmentSubscribedBinding? = null
+    private var _parentBinding: FragmentChannelsBinding? = null
+    private val binding get() = _binding!!
+    private val parentBinding get() = _parentBinding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_subscribed, container, false)
+    ): View {
+        _binding = FragmentSubscribedBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _parentBinding = parentFragment?.let { FragmentChannelsBinding.bind(it.requireView()) }
 
-        val editText = parentFragment?.view?.findViewById<EditText>(R.id.edSearchStreams)
-        val tabLayoutShimmer =
-            parentFragment?.view?.findViewById<ShimmerFrameLayout>(R.id.tabLayoutShimmer)
-        tabLayoutShimmer?.startShimmer()
-
-        val recyclerViewSubscribedStreams =
-            view.findViewById<RecyclerView>(R.id.recycleViewSubscribedStreams)
         val divider = DividerItemDecoration(
-            recyclerViewSubscribedStreams.context,
-            (recyclerViewSubscribedStreams.layoutManager as LinearLayoutManager).orientation
+            context,
+            (binding.recycleViewSubscribedStreams.layoutManager as LinearLayoutManager).orientation
         )
         val drawable =
             ResourcesCompat.getDrawable(resources, R.drawable.ic_stream_separator, context?.theme)
-        if (drawable != null) {
-            divider.setDrawable(drawable)
-        }
-        recyclerViewSubscribedStreams.addItemDecoration(divider)
+        drawable?.let { divider.setDrawable(it) }
+        binding.recycleViewSubscribedStreams.addItemDecoration(divider)
 
         val listOfExpandedStreams = mutableListOf<Int>()
         val clickListener = clickListener@{ clickedView: View ->
             val positionOfClickedView =
-                recyclerViewSubscribedStreams.getChildAdapterPosition(clickedView)
+                binding.recycleViewSubscribedStreams.getChildAdapterPosition(clickedView)
             val clickedItem = asyncAdapter.items.currentList[positionOfClickedView]
             if (clickedItem.viewType == R.layout.item_stream) {
                 val expandImageView = clickedView.findViewById<ImageView>(R.id.imExpandStream)
@@ -120,29 +128,11 @@ class SubscribedFragment : Fragment() {
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
-        recyclerViewSubscribedStreams.adapter = asyncAdapter
+        binding.recycleViewSubscribedStreams.adapter = asyncAdapter
 
-        compositeDisposable +=
-            ZulipRepository.getStreams(needAllStreams = false).toViewTypedItems()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { streamList ->
-                        asyncAdapter.items.submitList(streamList)
-                        tabLayoutShimmer?.stopAndHideShimmer()
-                        listOfStreams = streamList as List<StreamUI>
-                        innerViewTypedList = streamList
-                        Search.initSearch(
-                            editText,
-                            recyclerViewSubscribedStreams
-                        )
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        tabLayoutShimmer?.stopAndHideShimmer()
-                    })
+        compositeDisposable += store.wire()
+        compositeDisposable += store.bind(this)
+        actions.accept(GeneralActions.LoadItems)
     }
 
     companion object {
@@ -170,6 +160,27 @@ class SubscribedFragment : Fragment() {
             if (item is StreamUI) {
                 item.isExpanded = false
             }
+        }
+        _binding = null
+        _parentBinding = null
+    }
+
+    override fun render(state: UiState) {
+        if (state.isLoading) {
+            parentBinding.tabLayoutShimmer.showShimmer(true)
+        } else {
+            parentBinding.tabLayoutShimmer.stopAndHideShimmer()
+        }
+        if (state.error != null) {
+            parentBinding.tabLayoutShimmer.stopAndHideShimmer()
+            Error.showError(context, state.error)
+        }
+        if (state.data != null) {
+            val streamList = state.data as List<StreamUI>
+            asyncAdapter.items.submitList(streamList)
+            listOfStreams = streamList
+            innerViewTypedList = streamList
+            Search.initSearch(parentBinding.edSearchStreams, binding.recycleViewSubscribedStreams)
         }
     }
 
