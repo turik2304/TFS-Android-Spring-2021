@@ -5,23 +5,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.core.content.res.ResourcesCompat
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.facebook.shimmer.ShimmerFrameLayout
 import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.ChatActivity
 import com.turik2304.coursework.R
-import com.turik2304.coursework.data.repository.ZulipRepository
-import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
 import com.turik2304.coursework.databinding.FragmentAllStreamsBinding
 import com.turik2304.coursework.databinding.FragmentChannelsBinding
-import com.turik2304.coursework.databinding.FragmentSubscribedBinding
 import com.turik2304.coursework.domain.StreamsMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
@@ -29,7 +22,7 @@ import com.turik2304.coursework.presentation.GeneralActions
 import com.turik2304.coursework.presentation.GeneralReducer
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
-import com.turik2304.coursework.presentation.base.UiState
+import com.turik2304.coursework.presentation.GeneralUiState
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
@@ -37,20 +30,19 @@ import com.turik2304.coursework.presentation.recycler_view.holder_factories.Main
 import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
-class AllStreamsFragment : MviFragment<GeneralActions, UiState>() {
+class AllStreamsFragment : MviFragment<GeneralActions, GeneralUiState>() {
 
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var listOfStreams: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
-    override val store: Store<GeneralActions, UiState> =
+    override val store: Store<GeneralActions, GeneralUiState> =
         Store(
             reducer = GeneralReducer(),
             middlewares = listOf(StreamsMiddleware(needAllStreams = true)),
-            initialState = UiState()
+            initialState = GeneralUiState()
         )
     override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
 
@@ -115,7 +107,7 @@ class AllStreamsFragment : MviFragment<GeneralActions, UiState>() {
         _parentBinding = null
     }
 
-    override fun render(state: UiState) {
+    override fun render(state: GeneralUiState) {
         if (state.isLoading) {
             parentBinding.tabLayoutShimmer.showShimmer(true)
         } else {

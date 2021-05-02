@@ -4,13 +4,14 @@ import android.os.Bundle
 import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.toSpannable
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.data.EmojiEnum
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
@@ -21,9 +22,15 @@ import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
+import com.turik2304.coursework.domain.ChatMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.setTo
 import com.turik2304.coursework.extensions.stopAndHideShimmer
+import com.turik2304.coursework.presentation.ChatActions
+import com.turik2304.coursework.presentation.ChatReducer
+import com.turik2304.coursework.presentation.ChatUiState
+import com.turik2304.coursework.presentation.base.MviActivity
+import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.PaginationScrollListener
@@ -43,7 +50,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
-class ChatActivity : AppCompatActivity() {
+class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     companion object {
         const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
@@ -60,6 +67,13 @@ class ChatActivity : AppCompatActivity() {
 
     private val compositeDisposable = CompositeDisposable()
     private val longpollingDisposable = CompositeDisposable()
+
+    override val store: Store<ChatActions, ChatUiState> = Store(
+        reducer = ChatReducer(),
+        middlewares = listOf(ChatMiddleware()),
+        initialState = ChatUiState()
+    )
+    override val actions: PublishRelay<ChatActions> = PublishRelay.create()
 
     private var messagesQueueId: String = ""
     private var lastMessageEventId: String = ""
@@ -114,12 +128,14 @@ class ChatActivity : AppCompatActivity() {
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         chatBinding.recycleView.adapter = asyncAdapter
 
-        loadMessages(
-            uidOfLastLoadedMessage,
-            needFirstPage = true
-        ) {
-            chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
-        }
+        compositeDisposable += store.wire()
+        compositeDisposable += store.bind(this)
+        actions.accept(ChatActions.LoadItems(
+            needFirstPage = true,
+            nameOfTopic = nameOfTopic,
+            nameOfStream = nameOfStream,
+            uidOfLastLoadedMessage = uidOfLastLoadedMessage
+        ))
 
         //catches reactions events
         compositeDisposable +=
@@ -143,7 +159,13 @@ class ChatActivity : AppCompatActivity() {
             }
 
             override fun loadMoreItems() {
-                loadMessages(uidOfLastLoadedMessage)
+                actions.accept(
+                    ChatActions.LoadItems(
+                        nameOfTopic = nameOfTopic,
+                        nameOfStream = nameOfStream,
+                        uidOfLastLoadedMessage = uidOfLastLoadedMessage
+                    )
+                )
             }
         })
 
@@ -152,8 +174,6 @@ class ChatActivity : AppCompatActivity() {
                 val message = chatBinding.editTextEnterMessage.text.toString()
                 chatBinding.chatShimmer.showShimmer(true)
                 val rawMessage = OutMessageUI(
-//                    nameOfStream = nameOfStream,
-//                    nameOfTopic = nameOfTopic,
                     userName = "",
                     userId = MyUserId.MY_USER_ID,
                     message = message,
@@ -215,9 +235,32 @@ class ChatActivity : AppCompatActivity() {
         })
     }
 
+    override fun render(state: ChatUiState) {
+        isLoading = state.isLoading
+        if (state.isLoading) {
+            chatBinding.chatShimmer.showShimmer(true)
+        } else {
+            chatBinding.chatShimmer.stopAndHideShimmer()
+        }
+        state.error?.let { Error.showError(applicationContext, it) }
+        state.data?.let { messages ->
+            val lastUidOfMessageInPage = messages[1].uid.toString()
+            if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
+                if (state.isFirstPage) {
+                    asyncAdapter.updateList(messages) {
+                        chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+                    }
+                } else {
+                    val actualList = messages + asyncAdapter.items.currentList
+                    asyncAdapter.updateList(actualList.distinct())
+                }
+                this.uidOfLastLoadedMessage = lastUidOfMessageInPage
+            } else isLastPage = true
+        }
+    }
+
     override fun onStart() {
         super.onStart()
-        chatBinding.chatShimmer.startShimmer()
         val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
         if (isFirstLoading) {
             longpollingDisposable +=
@@ -261,12 +304,7 @@ class ChatActivity : AppCompatActivity() {
                     .subscribe()
             }
         asyncAdapter.updateList(null)
-        asyncAdapter.holderFactory = null
-        chatBinding.recycleView.adapter = null
         compositeDisposable.clear()
-        isLastPage = false
-        isLoading = false
-        uidOfLastLoadedMessage = "newest"
     }
 
     private fun AsyncAdapter<ViewTyped>.updateList(
@@ -278,43 +316,6 @@ class ChatActivity : AppCompatActivity() {
             currentList = this.items.currentList
         }
 
-    }
-
-    private fun loadMessages(
-        uidOfLastLoadedMessage: String,
-        needFirstPage: Boolean = false,
-        runnable: Runnable? = null
-    ) {
-        isLoading = true
-        compositeDisposable +=
-            ZulipRepository.getMessages(
-                nameOfTopic,
-                nameOfStream,
-                uidOfLastLoadedMessage,
-                needFirstPage
-            ).toViewTypedItems()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { messages ->
-                        if (messages.isNotEmpty()) {
-                            val lastUidOfMessageInPage = messages[1].uid.toString()
-                            if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
-                                val updatedList =
-                                    if (needFirstPage) messages else messages + asyncAdapter.items.currentList
-                                asyncAdapter.updateList(updatedList.distinct(), runnable)
-                                this.uidOfLastLoadedMessage = lastUidOfMessageInPage
-                                isLoading = false
-                            } else isLastPage = true
-                            chatBinding.chatShimmer.stopAndHideShimmer()
-                        }
-                    },
-                    { onError ->
-                        Error.showError(
-                            applicationContext,
-                            onError
-                        )
-                        chatBinding.chatShimmer.stopAndHideShimmer()
-                    })
     }
 
     private fun initMessagesLongpolling() {

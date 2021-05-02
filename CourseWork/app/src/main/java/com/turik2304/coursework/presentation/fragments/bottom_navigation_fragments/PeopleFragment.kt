@@ -16,7 +16,7 @@ import com.turik2304.coursework.presentation.GeneralActions
 import com.turik2304.coursework.presentation.GeneralReducer
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
-import com.turik2304.coursework.presentation.base.UiState
+import com.turik2304.coursework.presentation.GeneralUiState
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
@@ -26,15 +26,15 @@ import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
-class PeopleFragment : MviFragment<GeneralActions, UiState>() {
+class PeopleFragment : MviFragment<GeneralActions, GeneralUiState>() {
 
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
     override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
-    override val store: Store<GeneralActions, UiState> = Store(
+    override val store: Store<GeneralActions, GeneralUiState> = Store(
         reducer = GeneralReducer(),
         middlewares = listOf(UsersMiddleware()),
-        initialState = UiState()
+        initialState = GeneralUiState()
     )
     private val compositeDisposable = CompositeDisposable()
 
@@ -106,7 +106,7 @@ class PeopleFragment : MviFragment<GeneralActions, UiState>() {
         _binding = null
     }
 
-    override fun render(state: UiState) {
+    override fun render(state: GeneralUiState) {
         if (state.isLoading) {
             binding.usersShimmer.showShimmer(true)
         } else {

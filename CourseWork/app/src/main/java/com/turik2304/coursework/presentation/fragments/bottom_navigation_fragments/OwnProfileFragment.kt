@@ -15,17 +15,17 @@ import com.turik2304.coursework.presentation.GeneralActions
 import com.turik2304.coursework.presentation.GeneralReducer
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
-import com.turik2304.coursework.presentation.base.UiState
+import com.turik2304.coursework.presentation.GeneralUiState
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredTextStatus
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
-class OwnProfileFragment : MviFragment<GeneralActions, UiState>() {
+class OwnProfileFragment : MviFragment<GeneralActions, GeneralUiState>() {
 
-    override val store: Store<GeneralActions, UiState> = Store(
+    override val store: Store<GeneralActions, GeneralUiState> = Store(
         reducer = GeneralReducer(),
         middlewares = listOf(OwnProfileMiddleware()),
-        initialState = UiState()
+        initialState = GeneralUiState()
     )
     override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
 
@@ -56,7 +56,7 @@ class OwnProfileFragment : MviFragment<GeneralActions, UiState>() {
         _binding = null
     }
 
-    override fun render(state: UiState) {
+    override fun render(state: GeneralUiState) {
         if (state.isLoading) {
             binding.ownProfileShimmer.showShimmer(true)
         } else {

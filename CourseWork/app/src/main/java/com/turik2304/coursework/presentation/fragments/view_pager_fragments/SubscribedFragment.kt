@@ -24,7 +24,7 @@ import com.turik2304.coursework.presentation.GeneralActions
 import com.turik2304.coursework.presentation.GeneralReducer
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
-import com.turik2304.coursework.presentation.base.UiState
+import com.turik2304.coursework.presentation.GeneralUiState
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
@@ -36,16 +36,16 @@ import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 
-class SubscribedFragment : MviFragment<GeneralActions, UiState>() {
+class SubscribedFragment : MviFragment<GeneralActions, GeneralUiState>() {
 
     private lateinit var listOfStreams: List<StreamUI>
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
-    override val store: Store<GeneralActions, UiState> = Store(
+    override val store: Store<GeneralActions, GeneralUiState> = Store(
         reducer = GeneralReducer(),
         middlewares = listOf(StreamsMiddleware(needAllStreams = false)),
-        initialState = UiState()
+        initialState = GeneralUiState()
     )
     override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
 
@@ -165,7 +165,7 @@ class SubscribedFragment : MviFragment<GeneralActions, UiState>() {
         _parentBinding = null
     }
 
-    override fun render(state: UiState) {
+    override fun render(state: GeneralUiState) {
         if (state.isLoading) {
             parentBinding.tabLayoutShimmer.showShimmer(true)
         } else {

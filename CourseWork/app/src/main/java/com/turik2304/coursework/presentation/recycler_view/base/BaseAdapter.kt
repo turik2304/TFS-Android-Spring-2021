@@ -4,13 +4,13 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.RecyclerView
 
-abstract class BaseAdapter<T : ViewTyped>(internal var holderFactory: HolderFactory?) :
+abstract class BaseAdapter<T : ViewTyped>(internal var holderFactory: HolderFactory) :
     RecyclerView.Adapter<BaseViewHolder<ViewTyped>>() {
 
     abstract var items: AsyncListDiffer<T>
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<ViewTyped> =
-        holderFactory?.invoke(parent, viewType) ?: BaseViewHolder(parent)
+        holderFactory.invoke(parent, viewType)
 
     override fun getItemViewType(position: Int): Int {
         return items.currentList[position].viewType
