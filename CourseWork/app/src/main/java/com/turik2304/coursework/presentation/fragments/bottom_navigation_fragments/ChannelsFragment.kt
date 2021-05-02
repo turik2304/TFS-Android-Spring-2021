@@ -9,34 +9,39 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.turik2304.coursework.R
+import com.turik2304.coursework.databinding.FragmentChannelsBinding
+import com.turik2304.coursework.databinding.FragmentPeopleBinding
 import com.turik2304.coursework.presentation.fragments.fragment_state_adapter.StreamsPagerAdapter
 import com.turik2304.coursework.presentation.fragments.view_pager_fragments.AllStreamsFragment
 import com.turik2304.coursework.presentation.fragments.view_pager_fragments.SubscribedFragment
 
 class ChannelsFragment : Fragment() {
 
+    private var _binding: FragmentChannelsBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_channels, container, false)
+    ): View {
+        _binding = FragmentChannelsBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val tabLayout = view.findViewById<TabLayout>(R.id.tabLayout)
-        val viewPager = view.findViewById<ViewPager2>(R.id.fragmentViewPager)
-
         val tabs: List<String> = listOf("Subscribed", "All streams")
         val pagerAdapter = StreamsPagerAdapter(childFragmentManager, viewLifecycleOwner.lifecycle)
-        viewPager.adapter = pagerAdapter
+        binding.fragmentViewPager.adapter = pagerAdapter
         pagerAdapter.updatePages(listOf(SubscribedFragment(), AllStreamsFragment()))
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+        TabLayoutMediator(binding.tabLayout, binding.fragmentViewPager) { tab, position ->
             tab.text = tabs[position]
         }.attach()
     }
 
-
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }
