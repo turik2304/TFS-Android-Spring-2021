@@ -4,12 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.R
 import com.turik2304.coursework.data.network.models.data.StatusEnum
+import com.turik2304.coursework.databinding.FragmentPeopleBinding
 import com.turik2304.coursework.domain.UsersMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
@@ -30,9 +29,6 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 class PeopleFragment : MviFragment<GeneralActions, UiState>() {
 
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-    private lateinit var usersToolbarShimmer: ShimmerFrameLayout
-    private lateinit var searchUsersEditText: EditText
-    private lateinit var usersRecyclerView: RecyclerView
 
     override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
     override val store: Store<GeneralActions, UiState> = Store(
@@ -42,26 +38,26 @@ class PeopleFragment : MviFragment<GeneralActions, UiState>() {
     )
     private val compositeDisposable = CompositeDisposable()
 
+    private var _binding: FragmentPeopleBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_people, container, false)
+    ): View {
+        _binding = FragmentPeopleBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        usersToolbarShimmer = view.findViewById(R.id.usersShimmer)
-        searchUsersEditText = view.findViewById(R.id.edSearchUsers)
-        usersRecyclerView = view.findViewById(R.id.recycleViewUsers)
-
         val clickListener = { clickedView: View ->
             val userShimmer = clickedView as ShimmerFrameLayout
             userShimmer.showShimmer(true)
             val positionOfClickedView =
-                usersRecyclerView.getChildAdapterPosition(clickedView)
+                binding.recycleViewUsers.getChildAdapterPosition(clickedView)
             val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
             loadProfileDetails(clickedUserUI)
             userShimmer.stopAndHideShimmer()
@@ -70,7 +66,7 @@ class PeopleFragment : MviFragment<GeneralActions, UiState>() {
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
-        usersRecyclerView.adapter = asyncAdapter
+        binding.recycleViewUsers.adapter = asyncAdapter
 
         compositeDisposable += store.wire()
         compositeDisposable += store.bind(this)
@@ -107,24 +103,25 @@ class PeopleFragment : MviFragment<GeneralActions, UiState>() {
     override fun onDestroyView() {
         super.onDestroyView()
         compositeDisposable.clear()
+        _binding = null
     }
 
     override fun render(state: UiState) {
         if (state.isLoading) {
-            usersToolbarShimmer.showShimmer(true)
+            binding.usersShimmer.showShimmer(true)
         } else {
-            usersToolbarShimmer.stopAndHideShimmer()
+            binding.usersShimmer.stopAndHideShimmer()
         }
         if (state.error != null) {
-            usersToolbarShimmer.stopAndHideShimmer()
+            binding.usersShimmer.stopAndHideShimmer()
             Error.showError(context, state.error)
         }
         if (state.data != null) {
             val userList = state.data as List<ViewTyped>
             asyncAdapter.items.submitList(userList)
             Search.initSearch(
-                editText = searchUsersEditText,
-                recyclerView = usersRecyclerView
+                editText = binding.edSearchUsers,
+                recyclerView = binding.recycleViewUsers
             )
         }
     }
