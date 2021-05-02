@@ -5,17 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.R
 import com.turik2304.coursework.data.network.models.data.StatusEnum
+import com.turik2304.coursework.domain.UsersMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.presentation.UsersStore
-import com.turik2304.coursework.presentation.base.Action
-import com.turik2304.coursework.presentation.base.MviView
+import com.turik2304.coursework.presentation.GeneralActions
+import com.turik2304.coursework.presentation.UsersReducer
+import com.turik2304.coursework.presentation.base.MviFragment
+import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.base.UiState
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
@@ -26,17 +27,20 @@ import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
-class PeopleFragment : Fragment(),
-    MviView<Action, UiState> {
+class PeopleFragment : MviFragment<GeneralActions, UiState>() {
 
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
     private lateinit var usersToolbarShimmer: ShimmerFrameLayout
     private lateinit var searchUsersEditText: EditText
     private lateinit var usersRecyclerView: RecyclerView
 
-    override val actions: PublishRelay<Action> = PublishRelay.create()
+    override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
+    override val store: Store<GeneralActions, UiState> = Store(
+        reducer = UsersReducer(),
+        middlewares = listOf(UsersMiddleware()),
+        initialState = UiState()
+    )
     private val compositeDisposable = CompositeDisposable()
-    private val usersStore = UsersStore()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,9 +72,9 @@ class PeopleFragment : Fragment(),
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         usersRecyclerView.adapter = asyncAdapter
 
-        usersStore.wire()
-        compositeDisposable += usersStore.bind(this)
-        actions.accept(Action.LoadItems)
+        compositeDisposable += store.wire()
+        compositeDisposable += store.bind(this)
+        actions.accept(GeneralActions.LoadItems)
     }
 
     private fun startProfileDetailsFragment(

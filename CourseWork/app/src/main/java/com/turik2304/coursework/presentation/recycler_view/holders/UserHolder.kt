@@ -4,6 +4,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.R
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
 import com.turik2304.coursework.presentation.recycler_view.items.UserUI
@@ -21,6 +22,7 @@ class UserHolder(
 
     init {
         view.setOnClickListener(startChatClick)
+        (view as ShimmerFrameLayout).hideShimmer()
         avatar.clipToOutline = true
     }
 

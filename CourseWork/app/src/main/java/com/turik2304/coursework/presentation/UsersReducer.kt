@@ -1,15 +1,14 @@
 package com.turik2304.coursework.presentation
 
-import com.turik2304.coursework.presentation.base.Action
 import com.turik2304.coursework.presentation.base.Reducer
 import com.turik2304.coursework.presentation.base.UiState
 
-class UsersReducer : Reducer<UiState, Action> {
-    override fun reduce(state: UiState, action: Action): UiState {
+class UsersReducer : Reducer<UiState, GeneralActions> {
+    override fun reduce(state: UiState, action: GeneralActions): UiState {
         return when (action) {
-            is Action.LoadItems -> state.copy(isLoading = true)
-            is Action.ItemsLoaded -> state.copy(isLoading = false, data = action.items)
-            is Action.ErrorLoading -> state.copy(isLoading = false, error = action.error)
+            is GeneralActions.LoadItems -> state.copy(isLoading = true)
+            is GeneralActions.ItemsLoaded -> state.copy(isLoading = false, data = action.items)
+            is GeneralActions.ErrorLoading -> state.copy(isLoading = false, error = action.error)
         }
     }
 
