@@ -4,40 +4,43 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.turik2304.coursework.MainActivity
-import com.turik2304.coursework.R
 import com.turik2304.coursework.data.network.models.data.StatusEnum
+import com.turik2304.coursework.databinding.FragmentProfileDetailsBinding
 import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredTextStatus
 
 class ProfileDetailsFragment : Fragment() {
+
+    private var _binding: FragmentProfileDetailsBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_profile_details, container, false)
+    ): View {
+        _binding = FragmentProfileDetailsBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val userNameTextView = view.findViewById<TextView>(R.id.tvUserNameDetailsProfile)
-        val statusTextView = view.findViewById<TextView>(R.id.tvStatusProfileDetails)
-        val backImageView = view.findViewById<ImageView>(R.id.imBackProfileDetails)
-        val avatar = view.findViewById<ImageView>(R.id.imUserAvatarProfileTab)
 
-        backImageView.setOnClickListener { (context as MainActivity).onBackPressed() }
+        binding.imBackProfileDetails.setOnClickListener { (context as MainActivity).onBackPressed() }
 
-        userNameTextView.text = requireArguments().getString(ARG_USER_NAME, "none")
+        binding.tvUserNameDetailsProfile.text = requireArguments().getString(ARG_USER_NAME, "none")
         val statusEnum = requireArguments().getSerializable(ARG_STATUS) as StatusEnum
-        statusTextView.text = statusEnum.status
-        statusTextView.setColoredTextStatus(statusEnum)
+        binding.tvStatusProfileDetails.text = statusEnum.status
+        binding.tvStatusProfileDetails.setColoredTextStatus(statusEnum)
         val avatarUrl = requireArguments().getString(ARG_AVATAR_URL, "")
-        Glide.with(this).load(avatarUrl).into(avatar)
+        Glide.with(this).load(avatarUrl).into(binding.imUserAvatarProfileTab)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     companion object {
