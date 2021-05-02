@@ -7,14 +7,14 @@ import com.turik2304.coursework.presentation.GeneralActions
 import com.turik2304.coursework.presentation.base.UiState
 import io.reactivex.rxjava3.core.Observable
 
-class UsersMiddleware : Middleware<GeneralActions, UiState> {
+class OwnProfileMiddleware : Middleware<GeneralActions, UiState> {
 
     override val repository: Repository = ZulipRepository
 
     override fun bind(actions: Observable<GeneralActions>, state: Observable<UiState>): Observable<GeneralActions> {
         return actions.ofType(GeneralActions.LoadItems::class.java)
             .flatMap {
-                return@flatMap repository.getAllUsers().toViewTypedItems()
+                return@flatMap repository.getOwnProfile()
                     .map<GeneralActions> { result -> GeneralActions.ItemsLoaded(result) }
                     .onErrorReturn { error -> GeneralActions.ErrorLoading(error) }
             }

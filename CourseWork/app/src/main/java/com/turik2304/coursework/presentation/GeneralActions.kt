@@ -7,8 +7,8 @@ sealed class GeneralActions: Action {
 
     object LoadItems : GeneralActions()
 
-    data class ItemsLoaded(val items: List<ViewTyped>) : GeneralActions()
+    class ItemsLoaded(val items: Any) : GeneralActions()
 
-    data class ErrorLoading(val error: Throwable) : GeneralActions()
+    class ErrorLoading(val error: Throwable) : GeneralActions()
 
 }

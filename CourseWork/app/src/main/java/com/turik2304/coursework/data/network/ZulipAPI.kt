@@ -15,10 +15,10 @@ interface ZulipAPI {
     fun getUser(@Path("user_id") userId: Int): Single<GetUserResponse>
 
     @GET("users/{user_email_or_id}/presence")
-    fun getUserPresence(@Path("user_email_or_id") emailOrId: String): Single<GetUserPresenceResponse>
+    fun getUserPresence(@Path("user_email_or_id") emailOrId: String): Observable<GetUserPresenceResponse>
 
     @GET("users/me")
-    fun getOwnProfile(): Single<GetOwnProfileResponse>
+    fun getOwnProfile(): Observable<GetOwnProfileResponse>
 
     @GET("users/me/subscriptions")
     fun getSubscribedStreams(): Observable<GetSubscribedStreamsResponse>

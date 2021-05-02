@@ -16,6 +16,7 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 object ZulipRepository : Repository {
 
@@ -92,7 +93,6 @@ object ZulipRepository : Repository {
                                     user.presence = response.presence.aggregated.statusEnum
                                     return@m user
                                 }
-                                .toObservable()
                         }
                     }
                     .toList()
@@ -159,10 +159,10 @@ object ZulipRepository : Repository {
 
     }
 
-    override fun getOwnProfile(): Single<GetOwnProfileResponse> {
+    override fun getOwnProfile(): Observable<GetOwnProfileResponse> {
         val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
         val getOwnPresence = RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
-        return Single.zip(getOwnProfile, getOwnPresence,
+        return Observable.zip(getOwnProfile, getOwnPresence,
             { ownProfileResponse: GetOwnProfileResponse, ownPresence: GetUserPresenceResponse ->
                 ownProfileResponse.statusEnum = ownPresence.presence.aggregated.statusEnum
                 return@zip ownProfileResponse

@@ -14,7 +14,7 @@ import com.turik2304.coursework.domain.UsersMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.GeneralActions
-import com.turik2304.coursework.presentation.UsersReducer
+import com.turik2304.coursework.presentation.GeneralReducer
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.base.UiState
@@ -36,7 +36,7 @@ class PeopleFragment : MviFragment<GeneralActions, UiState>() {
 
     override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
     override val store: Store<GeneralActions, UiState> = Store(
-        reducer = UsersReducer(),
+        reducer = GeneralReducer(),
         middlewares = listOf(UsersMiddleware()),
         initialState = UiState()
     )

@@ -21,7 +21,7 @@ interface Repository {
         needFirstPage: Boolean = false
     ): Observable<List<Message>>
 
-    fun getOwnProfile(): Single<GetOwnProfileResponse>
+    fun getOwnProfile(): Observable<GetOwnProfileResponse>
     fun getFormattedDate(dateOfMessageInSeconds: Int): String
     fun updateReactions(
         currentList: List<ViewTyped>,

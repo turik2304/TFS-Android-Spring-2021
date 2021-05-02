@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.facebook.shimmer.ShimmerFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/ownProfileShimmer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    app:shimmer_auto_start="false"
     app:shimmer_base_alpha="1"
     app:shimmer_dropoff="1"
     app:shimmer_highlight_alpha="0.8"
     app:shimmer_width_ratio="0.3">
 
-    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/gray_primary_background">
