@@ -19,9 +19,15 @@ sealed class LoadedData {
         val items: List<ViewTyped>
     ): LoadedData()
 
-    class LongpollingData(
+    class MessageLongpollingData(
         val messagesQueueId: String,
         val lastMessageEventId: String,
+        val polledData: List<ViewTyped>? = null
+    ) : LoadedData()
+
+    class ReactionLongpollingData(
+        val reactionsQueueId: String,
+        val lastReactionEventId: String,
         val polledData: List<ViewTyped>? = null
     ) : LoadedData()
 }

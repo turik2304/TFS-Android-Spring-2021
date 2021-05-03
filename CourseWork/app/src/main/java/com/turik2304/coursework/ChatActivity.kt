@@ -280,7 +280,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                         actualList[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
                 }
             }
-            is LoadedData.LongpollingData -> {
+            is LoadedData.MessageLongpollingData -> {
                 messagesQueueId = state.data.messagesQueueId
                 lastMessageEventId = state.data.lastMessageEventId
                 asyncAdapter.updateList(state.data.polledData) {

@@ -1,12 +1,63 @@
 package com.turik2304.coursework.presentation
 
-import android.util.Log
 import com.turik2304.coursework.presentation.base.Reducer
 
 class ChatReducer : Reducer<ChatUiState, ChatActions> {
     override fun reduce(state: ChatUiState, action: ChatActions): ChatUiState {
         return when (action) {
+            //Message longpolling reducing
+            is ChatActions.RegisterMessageEvents -> ChatUiState(
+                isLoading = state.isLoading
+            )
 
+            is ChatActions.MessageEventsRegistered -> ChatUiState(
+                isLoading = state.isLoading,
+                data = LoadedData.MessageLongpollingData(
+                    messagesQueueId = action.queueId,
+                    lastMessageEventId = action.eventId,
+                )
+            )
+
+            is ChatActions.GetMessageEvents -> ChatUiState(
+                isLoading = state.isLoading
+            )
+
+            is ChatActions.MessageEventReceived -> ChatUiState(
+                data = LoadedData.MessageLongpollingData(
+                    messagesQueueId = action.queueId,
+                    lastMessageEventId = action.eventId,
+                    polledData = action.updatedList
+                )
+            )
+
+            //Reaction longpolling reducing
+            is ChatActions.RegisterReactionEvents -> ChatUiState(
+                isLoading = state.isLoading
+            )
+            is ChatActions.ReactionEventsRegistered -> ChatUiState(
+                isLoading = state.isLoading,
+                data = LoadedData.ReactionLongpollingData(
+                    reactionsQueueId = action.queueId,
+                    lastReactionEventId = action.eventId,
+                )
+            )
+
+            is ChatActions.GetReactionEvents -> ChatUiState(
+                isLoading = state.isLoading
+            )
+
+            is ChatActions.ReactionEventReceived -> ChatUiState(
+                data = LoadedData.ReactionLongpollingData(
+                    reactionsQueueId = action.queueId,
+                    lastReactionEventId = action.eventId,
+                    polledData = action.updatedList
+                )
+            )
+//            is ChatActions.ReceivedEmptyEvent -> ChatUiState(
+//                isLoading = state.isLoading,
+//            )
+
+            //Main reducing
             is ChatActions.LoadItems -> ChatUiState(
                 isLoading = true,
             )
@@ -34,38 +85,9 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
                 isLoading = false,
                 error = action.error
             )
-            //Message longpolling actions
-            is ChatActions.RegisterMessageEvents -> ChatUiState(
-                isLoading = state.isLoading
-            )
-
-            is ChatActions.MessageEventsRegistered -> ChatUiState(
-                isLoading = state.isLoading,
-                data = LoadedData.LongpollingData(
-                    messagesQueueId = action.queueId,
-                    lastMessageEventId = action.eventId,
-                )
-            )
-
-            is ChatActions.MessageEventReceived -> ChatUiState(
-                data = LoadedData.LongpollingData(
-                    messagesQueueId = action.queueId,
-                    lastMessageEventId = action.eventId,
-                    polledData = action.updatedList
-                )
-            )
-
-            is ChatActions.GetMessageEvents -> ChatUiState(
-                isLoading = state.isLoading
-            )
-
-            is ChatActions.ReceivedEmptyEvent -> ChatUiState(
-                isLoading = state.isLoading,
-            )
+            is ChatActions.SendMessage -> TODO()
             is ChatActions.AddReaction -> TODO()
             is ChatActions.RemoveReaction -> TODO()
-            is ChatActions.SendMessage -> TODO()
-
         }
     }
 

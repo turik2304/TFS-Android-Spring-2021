@@ -4,16 +4,7 @@ import com.turik2304.coursework.presentation.base.Action
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 
 sealed class ChatActions : Action {
-
-    data class LoadItems(
-        val needFirstPage: Boolean = false,
-        val nameOfTopic: String,
-        val nameOfStream: String,
-        val uidOfLastLoadedMessage: String
-    ) : ChatActions()
-
-    object SendMessage : ChatActions()
-
+    //Message longpolling actions
     class RegisterMessageEvents(
         val nameOfTopic: String,
         val nameOfStream: String
@@ -39,11 +30,38 @@ sealed class ChatActions : Action {
         val updatedList: List<ViewTyped>
     ) : ChatActions()
 
-    object ReceivedEmptyEvent : ChatActions()
+    //Reaction longpolling actions
+    class RegisterReactionEvents(
+        val nameOfTopic: String,
+        val nameOfStream: String
+    ) : ChatActions()
 
-    object AddReaction : ChatActions()
+    class ReactionEventsRegistered(
+        val eventId: String,
+        val queueId: String
+    ) : ChatActions()
 
-    object RemoveReaction : ChatActions()
+    class GetReactionEvents(
+        val reactionsQueueId: String,
+        val lastReactionEventId: String,
+        val currentList: List<ViewTyped>,
+    ) : ChatActions()
+
+    class ReactionEventReceived(
+        val queueId: String,
+        val eventId: String,
+        val updatedList: List<ViewTyped>
+    ) : ChatActions()
+
+//    object ReceivedEmptyEvent : ChatActions()
+
+    //Main actions
+    data class LoadItems(
+        val needFirstPage: Boolean = false,
+        val nameOfTopic: String,
+        val nameOfStream: String,
+        val uidOfLastLoadedMessage: String
+    ) : ChatActions()
 
     data class ItemsLoaded(val items: List<ViewTyped>, val isFirstPage: Boolean) : ChatActions()
 
@@ -51,4 +69,9 @@ sealed class ChatActions : Action {
 
     class ErrorLoading(val error: Throwable) : ChatActions()
 
+    object SendMessage : ChatActions()
+
+    object AddReaction : ChatActions()
+
+    object RemoveReaction : ChatActions()
 }

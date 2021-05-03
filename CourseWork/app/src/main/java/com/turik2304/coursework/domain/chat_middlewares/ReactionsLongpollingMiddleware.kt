@@ -10,7 +10,7 @@ import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatUiState
 import io.reactivex.rxjava3.core.Observable
 
-class MessagesLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {
+class ReactionsLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {
 
     override val repository: Repository = ZulipRepository
 
@@ -18,19 +18,16 @@ class MessagesLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {
         actions: Observable<ChatActions>,
         state: Observable<ChatUiState>
     ): Observable<ChatActions> {
-        return actions.ofType(ChatActions.GetMessageEvents::class.java)
+        return actions.ofType(ChatActions.GetReactionEvents::class.java)
             .flatMap { action ->
-                return@flatMap repository.getMessageEvent(
-                    queueId = action.messagesQueueId,
-                    lastEventId = action.lastMessageEventId,
-                    nameOfTopic = action.nameOfTopic,
-                    nameOfStream = action.nameOfStream,
+                return@flatMap repository.getReactionEvent(
+                    queueId = action.reactionsQueueId,
+                    lastEventId = action.lastReactionEventId,
                     currentList = action.currentList,
-                    setOfRawUidsOfMessages = action.setOfRawUidsOfMessages
                 )
                     .map<ChatActions> { result ->
                         return@map ChatActions.MessageEventReceived(
-                            queueId = action.messagesQueueId,
+                            queueId = action.reactionsQueueId,
                             eventId = result.eventId(),
                             updatedList = result.items()
                         )
