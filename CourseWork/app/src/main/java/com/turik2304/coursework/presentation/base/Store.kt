@@ -9,7 +9,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 
-class Store<A: Action, S: State>(
+class Store<A : Action, S : State>(
     private val reducer: Reducer<S, A>,
     private val middlewares: List<Middleware<A, S>>,
     private val initialState: S
@@ -39,7 +39,7 @@ class Store<A: Action, S: State>(
     fun bind(view: MviView<A, S>): Disposable {
         val disposable = CompositeDisposable()
         disposable += state.observeOn(AndroidSchedulers.mainThread()).subscribe(view::render)
-        disposable += view.actions.subscribe(actions::accept)
+        disposable += view.actions.distinctUntilChanged().subscribe(actions::accept)
         return disposable
     }
 }

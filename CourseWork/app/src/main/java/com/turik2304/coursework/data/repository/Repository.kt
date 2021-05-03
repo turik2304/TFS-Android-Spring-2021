@@ -6,9 +6,9 @@ import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.data.User
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
+import com.turik2304.coursework.data.network.models.response.RegisterEventsResponse
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.Single
 
 interface Repository {
 
@@ -40,10 +40,19 @@ interface Repository {
         nameOfTopic: String,
         nameOfStream: String,
         currentList: List<ViewTyped>,
-        queueOfRawUidsOfMessages: HashSet<Int>
+        setOfRawUidsOfMessages: HashSet<Int>
     ): Observable<Pair<String, List<ViewTyped>>>
 
     fun getAllUsers(): Observable<List<User>>
 
     fun <T : RemoteModel> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>>
+    fun registerMessageEvents(
+        nameOfTopic: String,
+        nameOfStream: String
+    ): Observable<RegisterEventsResponse>
+
+    fun registerReactionEvents(
+        nameOfTopic: String,
+        nameOfStream: String
+    ): Observable<RegisterEventsResponse>
 }

@@ -1,5 +1,6 @@
 package com.turik2304.coursework.data.repository
 
+import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
@@ -7,12 +8,12 @@ import com.turik2304.coursework.data.network.models.RemoteModel
 import com.turik2304.coursework.data.network.models.data.*
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.data.network.models.response.GetUserPresenceResponse
+import com.turik2304.coursework.data.network.models.response.RegisterEventsResponse
 import com.turik2304.coursework.data.network.utils.NarrowConstructor
 import com.turik2304.coursework.data.room.DatabaseClient
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.*
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
@@ -209,12 +210,24 @@ object ZulipRepository : Repository {
                 }
                 return@map messages
             }
+
         return messagesFromNetwork
             .publish { fromNetwork ->
                 Observable.mergeDelayError(fromNetwork, messagesFromDB.takeUntil(fromNetwork))
                     .onErrorResumeWith(messagesFromDB)
             }
+    }
 
+    override fun registerMessageEvents(nameOfTopic: String, nameOfStream: String): Observable<RegisterEventsResponse> {
+        val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
+        return RetroClient.zulipApi.registerMessageEvents(narrow)
+            .subscribeOn(Schedulers.io())
+    }
+
+    override fun registerReactionEvents(nameOfTopic: String, nameOfStream: String): Observable<RegisterEventsResponse> {
+        val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
+        return RetroClient.zulipApi.registerReactionEvents(narrow)
+            .subscribeOn(Schedulers.io())
     }
 
     override fun getMessageEvent(
@@ -223,15 +236,22 @@ object ZulipRepository : Repository {
         nameOfTopic: String,
         nameOfStream: String,
         currentList: List<ViewTyped>,
-        queueOfRawUidsOfMessages: HashSet<Int>
+        setOfRawUidsOfMessages: HashSet<Int>
     ): Observable<Pair<String, List<ViewTyped>>> {
         return RetroClient.zulipApi.getMessageEvents(queueId, lastEventId)
+            .subscribeOn(Schedulers.io())
             .map { response ->
-                if (response.messageEvents.isNotEmpty()) {
+                if (response.messageEvents.isNotEmpty() && currentList.isNotEmpty()) {
                     val newLastEventId = response.messageEvents.last().id
-                    val zulipMessages = response.messageEvents.map { it.message }
+                    val zulipMessages = response.messageEvents.map { messageEvent ->
+                        val message = messageEvent.message
+                        message.nameOfTopic = nameOfTopic
+                        message.nameOfStream = nameOfStream
+                        message
+                    }
                     val viewTypedMessages = parseMessages(zulipMessages)
-                    val newList = currentList.filter { it.uid !in queueOfRawUidsOfMessages }
+                    //may be filter if client == okhttp && id == MyUserId
+                    val newList = currentList.filter { it.uid !in setOfRawUidsOfMessages }
                     val actualList = newList + viewTypedMessages
                     db?.messageDao()
                         ?.insertAllAndCheckCapacity(nameOfStream, nameOfTopic, zulipMessages)
@@ -240,7 +260,6 @@ object ZulipRepository : Repository {
                     return@map lastEventId to emptyList<ViewTyped>()
                 }
             }
-            .onErrorComplete()
     }
 
     override fun getReactionEvent(
@@ -249,6 +268,7 @@ object ZulipRepository : Repository {
         currentList: List<ViewTyped>,
     ): Observable<Pair<String, List<ViewTyped>>> {
         return RetroClient.zulipApi.getReactionEvents(queueId, lastEventId)
+            .subscribeOn(Schedulers.io())
             .map { response ->
                 if (response.reactionEvents.isNotEmpty()) {
                     val newLastEventId = response.reactionEvents.last().id
@@ -257,7 +277,7 @@ object ZulipRepository : Repository {
                     return@map newLastEventId to updatedList
                 } else return@map lastEventId to emptyList<ViewTyped>()
             }
-            .onErrorComplete()
+//            .onErrorComplete()
     }
 
     override fun updateReactions(

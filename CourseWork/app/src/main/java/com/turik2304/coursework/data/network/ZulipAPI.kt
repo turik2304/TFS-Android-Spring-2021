@@ -64,13 +64,13 @@ interface ZulipAPI {
     fun registerMessageEvents(
         @Query("narrow") narrow: String,
         @Query("event_types") eventTypes: String = "[\"message\"]"
-    ): Single<RegisterEventsResponse>
+    ): Observable<RegisterEventsResponse>
 
     @POST("register")
     fun registerReactionEvents(
         @Query("narrow") narrow: String,
         @Query("event_types") eventTypes: String = "[\"reaction\"]"
-    ): Single<RegisterEventsResponse>
+    ): Observable<RegisterEventsResponse>
 
     @DELETE("events")
     fun unregisterEvents(
