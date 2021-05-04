@@ -5,7 +5,7 @@ import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.domain.Middleware
 import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatUiState
-import com.turik2304.coursework.presentation.LoadedData
+import com.turik2304.coursework.data.network.models.data.LoadedData
 import io.reactivex.rxjava3.core.Observable
 
 class EventsLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {

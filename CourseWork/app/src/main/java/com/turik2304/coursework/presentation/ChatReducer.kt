@@ -1,5 +1,6 @@
 package com.turik2304.coursework.presentation
 
+import com.turik2304.coursework.data.network.models.data.LoadedData
 import com.turik2304.coursework.presentation.base.Reducer
 
 class ChatReducer : Reducer<ChatUiState, ChatActions> {

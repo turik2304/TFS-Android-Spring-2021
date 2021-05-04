@@ -6,7 +6,7 @@ import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.data.User
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
-import com.turik2304.coursework.presentation.LoadedData
+import com.turik2304.coursework.data.network.models.data.LoadedData
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import io.reactivex.rxjava3.core.Observable
 

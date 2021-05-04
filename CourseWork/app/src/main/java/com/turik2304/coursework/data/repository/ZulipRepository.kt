@@ -10,9 +10,9 @@ import com.turik2304.coursework.data.network.models.response.GetUserPresenceResp
 import com.turik2304.coursework.data.network.models.response.RegisterEventsResponse
 import com.turik2304.coursework.data.network.utils.NarrowConstructor
 import com.turik2304.coursework.data.room.DatabaseClient
-import com.turik2304.coursework.presentation.LoadedData
-import com.turik2304.coursework.presentation.LoadedData.MessageLongpollingData
-import com.turik2304.coursework.presentation.LoadedData.ReactionLongpollingData
+import com.turik2304.coursework.data.network.models.data.LoadedData
+import com.turik2304.coursework.data.network.models.data.LoadedData.MessageLongpollingData
+import com.turik2304.coursework.data.network.models.data.LoadedData.ReactionLongpollingData
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.*
 import io.reactivex.rxjava3.core.Observable

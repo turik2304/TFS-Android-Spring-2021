@@ -27,7 +27,7 @@ import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatReducer
 import com.turik2304.coursework.presentation.ChatUiState
-import com.turik2304.coursework.presentation.LoadedData
+import com.turik2304.coursework.data.network.models.data.LoadedData
 import com.turik2304.coursework.presentation.base.MviActivity
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
