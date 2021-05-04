@@ -2,7 +2,7 @@ package com.turik2304.coursework.presentation
 
 import com.turik2304.coursework.presentation.base.Action
 
-sealed class GeneralActions: Action {
+sealed class GeneralActions : Action {
 
     object LoadItems : GeneralActions()
 

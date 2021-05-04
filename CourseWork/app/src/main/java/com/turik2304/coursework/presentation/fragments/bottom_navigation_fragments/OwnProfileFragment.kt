@@ -13,9 +13,9 @@ import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.GeneralActions
 import com.turik2304.coursework.presentation.GeneralReducer
+import com.turik2304.coursework.presentation.GeneralUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
-import com.turik2304.coursework.presentation.GeneralUiState
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredTextStatus
 import io.reactivex.rxjava3.disposables.CompositeDisposable

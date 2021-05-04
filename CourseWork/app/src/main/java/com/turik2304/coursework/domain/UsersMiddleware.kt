@@ -11,7 +11,10 @@ class UsersMiddleware : Middleware<GeneralActions, GeneralUiState> {
 
     override val repository: Repository = ZulipRepository
 
-    override fun bind(actions: Observable<GeneralActions>, state: Observable<GeneralUiState>): Observable<GeneralActions> {
+    override fun bind(
+        actions: Observable<GeneralActions>,
+        state: Observable<GeneralUiState>
+    ): Observable<GeneralActions> {
         return actions.ofType(GeneralActions.LoadItems::class.java)
             .flatMap {
                 return@flatMap repository.getAllUsers().toViewTypedItems()
