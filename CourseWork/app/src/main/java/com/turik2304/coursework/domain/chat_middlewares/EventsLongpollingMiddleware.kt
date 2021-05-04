@@ -18,7 +18,7 @@ class EventsLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {
     ): Observable<ChatActions> {
         return actions.ofType(ChatActions.GetEvents::class.java)
             .flatMap { action ->
-                return@flatMap repository.getEvent(
+                return@flatMap repository.getEvents(
                     nameOfTopic = action.nameOfTopic,
                     nameOfStream = action.nameOfStream,
                     messageQueueId = action.messageQueueId,

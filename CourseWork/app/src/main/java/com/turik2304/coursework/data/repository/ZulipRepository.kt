@@ -3,7 +3,7 @@ package com.turik2304.coursework.data.repository
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
-import com.turik2304.coursework.data.network.models.RemoteModel
+import com.turik2304.coursework.data.network.models.PreViewTyped
 import com.turik2304.coursework.data.network.models.data.*
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.data.network.models.response.GetUserPresenceResponse
@@ -28,7 +28,7 @@ object ZulipRepository : Repository {
 
     private val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
-    override fun <T : RemoteModel> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>> {
+    override fun <T : PreViewTyped> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>> {
         return this.observeOn(Schedulers.computation())
             .map { modelList ->
                 if (modelList.firstOrNull() is Message) {
@@ -303,7 +303,7 @@ object ZulipRepository : Repository {
             }
     }
 
-    override fun getEvent(
+    override fun getEvents(
         nameOfTopic: String,
         nameOfStream: String,
         messageQueueId: String,

@@ -1,5 +1,5 @@
 package com.turik2304.coursework.data.network.models
 
-interface RemoteModel {
+interface PreViewTyped {
     val id: Int
 }

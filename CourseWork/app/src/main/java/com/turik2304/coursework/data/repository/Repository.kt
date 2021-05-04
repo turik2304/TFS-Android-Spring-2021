@@ -1,6 +1,6 @@
 package com.turik2304.coursework.data.repository
 
-import com.turik2304.coursework.data.network.models.RemoteModel
+import com.turik2304.coursework.data.network.models.PreViewTyped
 import com.turik2304.coursework.data.network.models.data.Message
 import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.network.models.data.Stream
@@ -45,9 +45,9 @@ interface Repository {
 
     fun getAllUsers(): Observable<List<User>>
 
-    fun <T : RemoteModel> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>>
+    fun <T : PreViewTyped> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>>
 
-    fun getEvent(
+    fun getEvents(
         nameOfTopic: String,
         nameOfStream: String,
         messageQueueId: String,
