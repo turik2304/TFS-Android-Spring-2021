@@ -19,7 +19,9 @@ import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.domain.chat_middlewares.*
+import com.turik2304.coursework.domain.chat_middlewares.EventsLongpollingMiddleware
+import com.turik2304.coursework.domain.chat_middlewares.LoadMessagesMiddleware
+import com.turik2304.coursework.domain.chat_middlewares.RegisterEventsMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.ChatActions
@@ -38,13 +40,9 @@ import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.view.FlexboxLayout
 import com.turik2304.coursework.presentation.view.MessageViewGroup
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.disposables.SerialDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import io.reactivex.rxjava3.subjects.PublishSubject
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
@@ -53,6 +51,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
         const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
         private const val POSITION_OF_UPPER_MESSAGE_IN_PAGE = 1
+        private const val UID_OF_MESSAGE_AT_FIRST_LOAD = "newest"
     }
 
     private lateinit var chatBinding: ActivityChatBinding
@@ -70,10 +69,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         reducer = ChatReducer(),
         middlewares = listOf(
             LoadMessagesMiddleware(),
-            RegisterMessageEventsMiddleware(),
-            MessagesLongpollingMiddleware(),
-            RegisterReactionEventsMiddleware(),
-            ReactionsLongpollingMiddleware()
+            RegisterEventsMiddleware(),
+            EventsLongpollingMiddleware()
         ),
         initialState = ChatUiState()
     )
@@ -83,7 +80,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private var lastMessageEventId: String = ""
     private var isLastPage = false
     private var isLoading = false
-    private var uidOfLastLoadedMessageFromTop = "newest"
+    private var uidOfUpperMessage: String = UID_OF_MESSAGE_AT_FIRST_LOAD
     private var uidOfClickedMessage: Int = -1
     private val setOfRawUidsOfMessages = hashSetOf<Int>()
 
@@ -137,17 +134,11 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 needFirstPage = true,
                 nameOfTopic = nameOfTopic,
                 nameOfStream = nameOfStream,
-                uidOfLastLoadedMessage = uidOfLastLoadedMessageFromTop
+                uidOfLastLoadedMessage = uidOfUpperMessage
             )
         )
         actions.accept(
-            ChatActions.RegisterMessageEvents(
-                nameOfTopic = nameOfTopic,
-                nameOfStream = nameOfStream
-            )
-        )
-        actions.accept(
-            ChatActions.RegisterReactionEvents(
+            ChatActions.RegisterEvents(
                 nameOfTopic = nameOfTopic,
                 nameOfStream = nameOfStream
             )
@@ -168,7 +159,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     ChatActions.LoadItems(
                         nameOfTopic = nameOfTopic,
                         nameOfStream = nameOfStream,
-                        uidOfLastLoadedMessage = uidOfLastLoadedMessageFromTop
+                        uidOfLastLoadedMessage = uidOfUpperMessage
                     )
                 )
             }
@@ -254,23 +245,56 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         when (state.data) {
             is LoadedData.FirstPageData -> {
                 val messages = state.data.items
-                uidOfLastLoadedMessageFromTop =
+                uidOfUpperMessage =
                     messages[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
                 asyncAdapter.updateList(messages) {
                     chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
                 }
             }
             is LoadedData.NextPageData -> {
+                wiring.clear()
+                wiring += store.wire()
                 val newPage = state.data.items
                 val uidOfUpperMessageInNewPage =
                     newPage[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
-                if (uidOfUpperMessageInNewPage == uidOfLastLoadedMessageFromTop) isLastPage = true
+                if (uidOfUpperMessageInNewPage == uidOfUpperMessage) isLastPage = true
                 else {
                     val actualList = (newPage + asyncAdapter.items.currentList).distinct()
-                    asyncAdapter.updateList(actualList)
-                    uidOfLastLoadedMessageFromTop =
-                        actualList[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
+                    asyncAdapter.updateList(actualList) {
+                        uidOfUpperMessage =
+                            actualList[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
+                        actions.accept(
+                            ChatActions.GetEvents(
+                                nameOfTopic = nameOfTopic,
+                                nameOfStream = nameOfStream,
+                                messageQueueId = messagesQueueId,
+                                messageEventId = lastMessageEventId,
+                                reactionQueueId = reactionsQueueId,
+                                reactionEventId = lastReactionEventId,
+                                currentList = asyncAdapter.items.currentList,
+                                setOfRawUidsOfMessages = setOfRawUidsOfMessages
+                            )
+                        )
+                    }
                 }
+            }
+            is LoadedData.EventRegistrationData -> {
+                messagesQueueId = state.data.messagesQueueId
+                lastMessageEventId = state.data.messageEventId
+                reactionsQueueId = state.data.reactionsQueueId
+                lastReactionEventId = state.data.reactionEventId
+                actions.accept(
+                    ChatActions.GetEvents(
+                        nameOfTopic = nameOfTopic,
+                        nameOfStream = nameOfStream,
+                        messageQueueId = messagesQueueId,
+                        messageEventId = lastMessageEventId,
+                        reactionQueueId = reactionsQueueId,
+                        reactionEventId = lastReactionEventId,
+                        currentList = asyncAdapter.items.currentList,
+                        setOfRawUidsOfMessages = setOfRawUidsOfMessages
+                    )
+                )
             }
             is LoadedData.MessageLongpollingData -> {
                 messagesQueueId = state.data.messagesQueueId
@@ -279,23 +303,16 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     chatBinding.recycleView.smoothScrollToPosition(
                         asyncAdapter.itemCount
                     )
-                    wiring.clear()
-                    wiring += store.wire()
                     actions.accept(
-                        ChatActions.GetMessageEvents(
-                            messagesQueueId = messagesQueueId,
-                            lastMessageEventId = lastMessageEventId,
+                        ChatActions.GetEvents(
                             nameOfTopic = nameOfTopic,
                             nameOfStream = nameOfStream,
+                            messageQueueId = messagesQueueId,
+                            messageEventId = lastMessageEventId,
+                            reactionQueueId = reactionsQueueId,
+                            reactionEventId = lastReactionEventId,
                             currentList = asyncAdapter.items.currentList,
                             setOfRawUidsOfMessages = setOfRawUidsOfMessages
-                        )
-                    )
-                    actions.accept(
-                        ChatActions.GetReactionEvents(
-                            reactionsQueueId = reactionsQueueId,
-                            lastReactionEventId = lastReactionEventId,
-                            currentList = asyncAdapter.items.currentList,
                         )
                     )
                 }
@@ -304,28 +321,20 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 reactionsQueueId = state.data.reactionsQueueId
                 lastReactionEventId = state.data.lastReactionEventId
                 asyncAdapter.updateList(state.data.polledData) {
-                    wiring.clear()
-                    wiring += store.wire()
                     actions.accept(
-                        ChatActions.GetReactionEvents(
-                            reactionsQueueId = reactionsQueueId,
-                            lastReactionEventId = lastReactionEventId,
-                            currentList = asyncAdapter.items.currentList,
-                        )
-                    )
-                    actions.accept(
-                        ChatActions.GetMessageEvents(
-                            messagesQueueId = messagesQueueId,
-                            lastMessageEventId = lastMessageEventId,
+                        ChatActions.GetEvents(
                             nameOfTopic = nameOfTopic,
                             nameOfStream = nameOfStream,
+                            messageQueueId = messagesQueueId,
+                            messageEventId = lastMessageEventId,
+                            reactionQueueId = reactionsQueueId,
+                            reactionEventId = lastReactionEventId,
                             currentList = asyncAdapter.items.currentList,
                             setOfRawUidsOfMessages = setOfRawUidsOfMessages
                         )
                     )
                 }
             }
-
         }
     }
 
@@ -334,20 +343,15 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         if (wiring.size() == 0) {
             wiring += store.wire()
             actions.accept(
-                ChatActions.GetMessageEvents(
-                    messagesQueueId = messagesQueueId,
-                    lastMessageEventId = lastMessageEventId,
+                ChatActions.GetEvents(
                     nameOfTopic = nameOfTopic,
                     nameOfStream = nameOfStream,
+                    messageQueueId = messagesQueueId,
+                    messageEventId = lastMessageEventId,
+                    reactionQueueId = reactionsQueueId,
+                    reactionEventId = lastReactionEventId,
                     currentList = asyncAdapter.items.currentList,
                     setOfRawUidsOfMessages = setOfRawUidsOfMessages
-                )
-            )
-            actions.accept(
-                ChatActions.GetReactionEvents(
-                    reactionsQueueId = reactionsQueueId,
-                    lastReactionEventId = lastReactionEventId,
-                    currentList = asyncAdapter.items.currentList,
                 )
             )
         }

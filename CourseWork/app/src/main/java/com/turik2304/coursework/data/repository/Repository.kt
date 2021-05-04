@@ -6,7 +6,7 @@ import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.data.User
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
-import com.turik2304.coursework.data.network.models.response.RegisterEventsResponse
+import com.turik2304.coursework.presentation.LoadedData
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import io.reactivex.rxjava3.core.Observable
 
@@ -32,7 +32,7 @@ interface Repository {
         queueId: String,
         lastEventId: String,
         currentList: List<ViewTyped>
-    ): Observable<Pair<String, List<ViewTyped>>>
+    ): Observable<LoadedData.ReactionLongpollingData>
 
     fun getMessageEvent(
         queueId: String,
@@ -41,18 +41,25 @@ interface Repository {
         nameOfStream: String,
         currentList: List<ViewTyped>,
         setOfRawUidsOfMessages: HashSet<Int>
-    ): Observable<Pair<String, List<ViewTyped>>>
+    ): Observable<LoadedData.MessageLongpollingData>
 
     fun getAllUsers(): Observable<List<User>>
 
     fun <T : RemoteModel> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>>
-    fun registerMessageEvents(
-        nameOfTopic: String,
-        nameOfStream: String
-    ): Observable<RegisterEventsResponse>
 
-    fun registerReactionEvents(
+    fun getEvent(
+        nameOfTopic: String,
+        nameOfStream: String,
+        messageQueueId: String,
+        messageEventId: String,
+        reactionQueueId: String,
+        reactionEventId: String,
+        currentList: List<ViewTyped>,
+        setOfRawUidsOfMessages: java.util.HashSet<Int>
+    ): Observable<LoadedData>
+
+    fun registerEvents(
         nameOfTopic: String,
         nameOfStream: String
-    ): Observable<RegisterEventsResponse>
+    ): Observable<LoadedData.EventRegistrationData>
 }

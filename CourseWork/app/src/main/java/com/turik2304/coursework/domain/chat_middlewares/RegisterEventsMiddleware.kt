@@ -7,7 +7,7 @@ import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatUiState
 import io.reactivex.rxjava3.core.Observable
 
-class RegisterMessageEventsMiddleware : Middleware<ChatActions, ChatUiState> {
+class RegisterEventsMiddleware : Middleware<ChatActions, ChatUiState> {
 
     override val repository: Repository = ZulipRepository
 
@@ -15,19 +15,21 @@ class RegisterMessageEventsMiddleware : Middleware<ChatActions, ChatUiState> {
         actions: Observable<ChatActions>,
         state: Observable<ChatUiState>
     ): Observable<ChatActions> {
-        return actions.ofType(ChatActions.RegisterMessageEvents::class.java)
+        return actions.ofType(ChatActions.RegisterEvents::class.java)
             .flatMap { action ->
-                return@flatMap repository.registerMessageEvents(
+                return@flatMap repository.registerEvents(
                     nameOfTopic = action.nameOfTopic,
                     nameOfStream = action.nameOfStream
                 )
                     .map<ChatActions> { result ->
-                        ChatActions.MessageEventsRegistered(
-                            eventId = result.lastEventId,
-                            queueId = result.queueId
+                        ChatActions.EventsRegistered(
+                            messageQueueId = result.messagesQueueId,
+                            messageEventId = result.messageEventId,
+                            reactionQueueId = result.reactionsQueueId,
+                            reactionEventId = result.reactionEventId
                         )
                     }
-                    .onErrorReturn { error -> ChatActions.ErrorLoading(error) }
+                    .retry()
             }
     }
 }

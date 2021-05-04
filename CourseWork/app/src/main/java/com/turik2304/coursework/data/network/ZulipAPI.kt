@@ -88,7 +88,6 @@ interface ZulipAPI {
         @Query("queue_id") queueId: String,
         @Query("last_event_id") lastEventId: String
     ): Observable<GetReactionEventResponse>
-
 }
 
 

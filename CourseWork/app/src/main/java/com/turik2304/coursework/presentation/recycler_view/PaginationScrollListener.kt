@@ -13,7 +13,7 @@ abstract class PaginationScrollListener(var layoutManager: LinearLayoutManager) 
     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
         super.onScrolled(recyclerView, dx, dy)
         val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-        if (!isLoading() && !isLastPage() && firstVisibleItemPosition <= 5) {
+        if (!isLoading() && !isLastPage() && dy != 0 && firstVisibleItemPosition <= 5) {
             loadMoreItems()
         }
     }

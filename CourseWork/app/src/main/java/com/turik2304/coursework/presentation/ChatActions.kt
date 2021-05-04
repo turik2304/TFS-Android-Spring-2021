@@ -4,22 +4,26 @@ import com.turik2304.coursework.presentation.base.Action
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 
 sealed class ChatActions : Action {
-    //Message longpolling actions
-    class RegisterMessageEvents(
+    //Longpolling actions
+    class RegisterEvents(
         val nameOfTopic: String,
         val nameOfStream: String
     ) : ChatActions()
 
-    class MessageEventsRegistered(
-        val eventId: String,
-        val queueId: String
+    class EventsRegistered(
+        val messageQueueId: String,
+        val messageEventId: String,
+        val reactionQueueId: String,
+        val reactionEventId: String
     ) : ChatActions()
 
-    class GetMessageEvents(
-        val messagesQueueId: String,
-        val lastMessageEventId: String,
+    class GetEvents(
         val nameOfTopic: String,
         val nameOfStream: String,
+        val messageQueueId: String,
+        val messageEventId: String,
+        val reactionQueueId: String,
+        val reactionEventId: String,
         val currentList: List<ViewTyped>,
         val setOfRawUidsOfMessages: HashSet<Int>
     ) : ChatActions()
@@ -30,30 +34,11 @@ sealed class ChatActions : Action {
         val updatedList: List<ViewTyped>
     ) : ChatActions()
 
-    //Reaction longpolling actions
-    class RegisterReactionEvents(
-        val nameOfTopic: String,
-        val nameOfStream: String
-    ) : ChatActions()
-
-    class ReactionEventsRegistered(
-        val eventId: String,
-        val queueId: String
-    ) : ChatActions()
-
-    class GetReactionEvents(
-        val reactionsQueueId: String,
-        val lastReactionEventId: String,
-        val currentList: List<ViewTyped>,
-    ) : ChatActions()
-
     class ReactionEventReceived(
         val queueId: String,
         val eventId: String,
         val updatedList: List<ViewTyped>
     ) : ChatActions()
-
-//    object ReceivedEmptyEvent : ChatActions()
 
     //Main actions
     data class LoadItems(

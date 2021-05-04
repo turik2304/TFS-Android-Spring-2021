@@ -5,23 +5,22 @@ import com.turik2304.coursework.presentation.base.Reducer
 class ChatReducer : Reducer<ChatUiState, ChatActions> {
     override fun reduce(state: ChatUiState, action: ChatActions): ChatUiState {
         return when (action) {
-            //Message longpolling reducing
-            is ChatActions.RegisterMessageEvents -> ChatUiState(
+            //Longpolling reducing
+            is ChatActions.RegisterEvents -> ChatUiState(
                 isLoading = state.isLoading
             )
-
-            is ChatActions.MessageEventsRegistered -> ChatUiState(
+            is ChatActions.EventsRegistered -> ChatUiState(
                 isLoading = state.isLoading,
-                data = LoadedData.MessageLongpollingData(
-                    messagesQueueId = action.queueId,
-                    lastMessageEventId = action.eventId,
+                data = LoadedData.EventRegistrationData(
+                    messagesQueueId = action.messageQueueId,
+                    messageEventId = action.messageEventId,
+                    reactionsQueueId = action.reactionQueueId,
+                    reactionEventId = action.reactionEventId
                 )
             )
-
-            is ChatActions.GetMessageEvents -> ChatUiState(
+            is ChatActions.GetEvents -> ChatUiState(
                 isLoading = state.isLoading
             )
-
             is ChatActions.MessageEventReceived -> ChatUiState(
                 data = LoadedData.MessageLongpollingData(
                     messagesQueueId = action.queueId,
@@ -29,23 +28,6 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
                     polledData = action.updatedList
                 )
             )
-
-            //Reaction longpolling reducing
-            is ChatActions.RegisterReactionEvents -> ChatUiState(
-                isLoading = state.isLoading
-            )
-            is ChatActions.ReactionEventsRegistered -> ChatUiState(
-                isLoading = state.isLoading,
-                data = LoadedData.ReactionLongpollingData(
-                    reactionsQueueId = action.queueId,
-                    lastReactionEventId = action.eventId,
-                )
-            )
-
-            is ChatActions.GetReactionEvents -> ChatUiState(
-                isLoading = state.isLoading
-            )
-
             is ChatActions.ReactionEventReceived -> ChatUiState(
                 data = LoadedData.ReactionLongpollingData(
                     reactionsQueueId = action.queueId,
@@ -53,15 +35,10 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
                     polledData = action.updatedList
                 )
             )
-//            is ChatActions.ReceivedEmptyEvent -> ChatUiState(
-//                isLoading = state.isLoading,
-//            )
-
             //Main reducing
             is ChatActions.LoadItems -> ChatUiState(
                 isLoading = true,
             )
-
             is ChatActions.ItemsLoaded ->
                 if (action.isFirstPage) {
                     ChatUiState(
@@ -80,7 +57,6 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
             is ChatActions.LoadedEmptyList -> ChatUiState(
                 isLoading = false
             )
-
             is ChatActions.ErrorLoading -> ChatUiState(
                 isLoading = false,
                 error = action.error
