@@ -129,20 +129,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
         wiring += store.wire()
         viewBinding += store.bind(this)
-        actions.accept(
-            ChatActions.LoadItems(
-                needFirstPage = true,
-                nameOfTopic = nameOfTopic,
-                nameOfStream = nameOfStream,
-                uidOfLastLoadedMessage = uidOfUpperMessage
-            )
-        )
-        actions.accept(
-            ChatActions.RegisterEvents(
-                nameOfTopic = nameOfTopic,
-                nameOfStream = nameOfStream
-            )
-        )
+        initInitialState()
 
         chatBinding.recycleView.addOnScrollListener(object :
             PaginationScrollListener(chatBinding.recycleView.layoutManager as LinearLayoutManager) {
@@ -232,7 +219,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     }
 
     override fun render(state: ChatUiState) {
-
         isLoading = state.isLoading
         if (state.isLoading) {
             chatBinding.chatShimmer.showShimmer(true)
@@ -263,18 +249,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     asyncAdapter.updateList(actualList) {
                         uidOfUpperMessage =
                             actualList[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
-                        actions.accept(
-                            ChatActions.GetEvents(
-                                nameOfTopic = nameOfTopic,
-                                nameOfStream = nameOfStream,
-                                messageQueueId = messagesQueueId,
-                                messageEventId = lastMessageEventId,
-                                reactionQueueId = reactionsQueueId,
-                                reactionEventId = lastReactionEventId,
-                                currentList = asyncAdapter.items.currentList,
-                                setOfRawUidsOfMessages = setOfRawUidsOfMessages
-                            )
-                        )
+                        sendActionToPollEvents()
                     }
                 }
             }
@@ -283,18 +258,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 lastMessageEventId = state.data.messageEventId
                 reactionsQueueId = state.data.reactionsQueueId
                 lastReactionEventId = state.data.reactionEventId
-                actions.accept(
-                    ChatActions.GetEvents(
-                        nameOfTopic = nameOfTopic,
-                        nameOfStream = nameOfStream,
-                        messageQueueId = messagesQueueId,
-                        messageEventId = lastMessageEventId,
-                        reactionQueueId = reactionsQueueId,
-                        reactionEventId = lastReactionEventId,
-                        currentList = asyncAdapter.items.currentList,
-                        setOfRawUidsOfMessages = setOfRawUidsOfMessages
-                    )
-                )
+                sendActionToPollEvents()
             }
             is LoadedData.MessageLongpollingData -> {
                 messagesQueueId = state.data.messagesQueueId
@@ -303,36 +267,14 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     chatBinding.recycleView.smoothScrollToPosition(
                         asyncAdapter.itemCount
                     )
-                    actions.accept(
-                        ChatActions.GetEvents(
-                            nameOfTopic = nameOfTopic,
-                            nameOfStream = nameOfStream,
-                            messageQueueId = messagesQueueId,
-                            messageEventId = lastMessageEventId,
-                            reactionQueueId = reactionsQueueId,
-                            reactionEventId = lastReactionEventId,
-                            currentList = asyncAdapter.items.currentList,
-                            setOfRawUidsOfMessages = setOfRawUidsOfMessages
-                        )
-                    )
+                    sendActionToPollEvents()
                 }
             }
             is LoadedData.ReactionLongpollingData -> {
                 reactionsQueueId = state.data.reactionsQueueId
                 lastReactionEventId = state.data.lastReactionEventId
                 asyncAdapter.updateList(state.data.polledData) {
-                    actions.accept(
-                        ChatActions.GetEvents(
-                            nameOfTopic = nameOfTopic,
-                            nameOfStream = nameOfStream,
-                            messageQueueId = messagesQueueId,
-                            messageEventId = lastMessageEventId,
-                            reactionQueueId = reactionsQueueId,
-                            reactionEventId = lastReactionEventId,
-                            currentList = asyncAdapter.items.currentList,
-                            setOfRawUidsOfMessages = setOfRawUidsOfMessages
-                        )
-                    )
+                    sendActionToPollEvents()
                 }
             }
         }
@@ -340,21 +282,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     override fun onStart() {
         super.onStart()
-        if (wiring.size() == 0) {
-            wiring += store.wire()
-            actions.accept(
-                ChatActions.GetEvents(
-                    nameOfTopic = nameOfTopic,
-                    nameOfStream = nameOfStream,
-                    messageQueueId = messagesQueueId,
-                    messageEventId = lastMessageEventId,
-                    reactionQueueId = reactionsQueueId,
-                    reactionEventId = lastReactionEventId,
-                    currentList = asyncAdapter.items.currentList,
-                    setOfRawUidsOfMessages = setOfRawUidsOfMessages
-                )
-            )
-        }
+        checkWiring()
     }
 
     override fun onStop() {
@@ -365,6 +293,45 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     override fun onDestroy() {
         super.onDestroy()
         viewBinding.clear()
+    }
+
+    private fun checkWiring() {
+        if (wiring.size() == 0) {
+            wiring += store.wire()
+            sendActionToPollEvents()
+        }
+    }
+
+    private fun initInitialState() {
+        actions.accept(
+            ChatActions.LoadItems(
+                needFirstPage = true,
+                nameOfTopic = nameOfTopic,
+                nameOfStream = nameOfStream,
+                uidOfLastLoadedMessage = uidOfUpperMessage
+            )
+        )
+        actions.accept(
+            ChatActions.RegisterEvents(
+                nameOfTopic = nameOfTopic,
+                nameOfStream = nameOfStream
+            )
+        )
+    }
+
+    private fun sendActionToPollEvents() {
+        actions.accept(
+            ChatActions.GetEvents(
+                nameOfTopic = nameOfTopic,
+                nameOfStream = nameOfStream,
+                messageQueueId = messagesQueueId,
+                messageEventId = lastMessageEventId,
+                reactionQueueId = reactionsQueueId,
+                reactionEventId = lastReactionEventId,
+                currentList = asyncAdapter.items.currentList,
+                setOfRawUidsOfMessages = setOfRawUidsOfMessages
+            )
+        )
     }
 
     private fun AsyncAdapter<ViewTyped>.updateList(
