@@ -26,7 +26,7 @@ class ReactionsLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {
                     currentList = action.currentList,
                 )
                     .map<ChatActions> { result ->
-                        return@map ChatActions.MessageEventReceived(
+                        return@map ChatActions.ReactionEventReceived(
                             queueId = action.reactionsQueueId,
                             eventId = result.eventId(),
                             updatedList = result.items()

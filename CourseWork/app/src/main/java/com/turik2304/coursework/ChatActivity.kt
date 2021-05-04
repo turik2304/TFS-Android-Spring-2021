@@ -19,9 +19,7 @@ import com.turik2304.coursework.data.network.models.data.ReactionEvent
 import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.domain.chat_middlewares.LoadMessagesMiddleware
-import com.turik2304.coursework.domain.chat_middlewares.MessagesLongpollingMiddleware
-import com.turik2304.coursework.domain.chat_middlewares.RegisterMessageEventsMiddleware
+import com.turik2304.coursework.domain.chat_middlewares.*
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.ChatActions
@@ -67,14 +65,15 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     private val wiring = CompositeDisposable()
     private val viewBinding = CompositeDisposable()
-    private val longpollingDisposable = CompositeDisposable()
 
     override val store: Store<ChatActions, ChatUiState> = Store(
         reducer = ChatReducer(),
         middlewares = listOf(
             LoadMessagesMiddleware(),
             RegisterMessageEventsMiddleware(),
-            MessagesLongpollingMiddleware()
+            MessagesLongpollingMiddleware(),
+            RegisterReactionEventsMiddleware(),
+            ReactionsLongpollingMiddleware()
         ),
         initialState = ChatUiState()
     )
@@ -82,8 +81,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     private var messagesQueueId: String = ""
     private var lastMessageEventId: String = ""
-    private var isFirstLoading = true
-    private var activityStopped = false
     private var isLastPage = false
     private var isLoading = false
     private var uidOfLastLoadedMessageFromTop = "newest"
@@ -92,7 +89,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     private var reactionsQueueId: String = ""
     private var lastReactionEventId: String = ""
-    private val updateReactionsOfMessagesSubject = PublishSubject.create<List<ViewTyped>>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -150,16 +146,12 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 nameOfStream = nameOfStream
             )
         )
-
-        //catches reactions events
-        wiring +=
-            updateReactionsOfMessagesSubject
-                .debounce(2, TimeUnit.SECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { result ->
-                    val actualChanges = asyncAdapter.items.currentList - result
-                    asyncAdapter.updateList((result + actualChanges).distinctBy { it.uid })
-                }
+        actions.accept(
+            ChatActions.RegisterReactionEvents(
+                nameOfTopic = nameOfTopic,
+                nameOfStream = nameOfStream
+            )
+        )
 
         chatBinding.recycleView.addOnScrollListener(object :
             PaginationScrollListener(chatBinding.recycleView.layoutManager as LinearLayoutManager) {
@@ -287,6 +279,40 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     chatBinding.recycleView.smoothScrollToPosition(
                         asyncAdapter.itemCount
                     )
+                    wiring.clear()
+                    wiring += store.wire()
+                    actions.accept(
+                        ChatActions.GetMessageEvents(
+                            messagesQueueId = messagesQueueId,
+                            lastMessageEventId = lastMessageEventId,
+                            nameOfTopic = nameOfTopic,
+                            nameOfStream = nameOfStream,
+                            currentList = asyncAdapter.items.currentList,
+                            setOfRawUidsOfMessages = setOfRawUidsOfMessages
+                        )
+                    )
+                    actions.accept(
+                        ChatActions.GetReactionEvents(
+                            reactionsQueueId = reactionsQueueId,
+                            lastReactionEventId = lastReactionEventId,
+                            currentList = asyncAdapter.items.currentList,
+                        )
+                    )
+                }
+            }
+            is LoadedData.ReactionLongpollingData -> {
+                reactionsQueueId = state.data.reactionsQueueId
+                lastReactionEventId = state.data.lastReactionEventId
+                asyncAdapter.updateList(state.data.polledData) {
+                    wiring.clear()
+                    wiring += store.wire()
+                    actions.accept(
+                        ChatActions.GetReactionEvents(
+                            reactionsQueueId = reactionsQueueId,
+                            lastReactionEventId = lastReactionEventId,
+                            currentList = asyncAdapter.items.currentList,
+                        )
+                    )
                     actions.accept(
                         ChatActions.GetMessageEvents(
                             messagesQueueId = messagesQueueId,
@@ -299,6 +325,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     )
                 }
             }
+
         }
     }
 
@@ -316,47 +343,14 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     setOfRawUidsOfMessages = setOfRawUidsOfMessages
                 )
             )
+            actions.accept(
+                ChatActions.GetReactionEvents(
+                    reactionsQueueId = reactionsQueueId,
+                    lastReactionEventId = lastReactionEventId,
+                    currentList = asyncAdapter.items.currentList,
+                )
+            )
         }
-//        val serialDisposable = SerialDisposable()
-//        longpollingDisposable += serialDisposable
-//        serialDisposable += Observable.interval(2, TimeUnit.SECONDS)
-//            .map {
-//                actions.accept(
-//                    ChatActions.GetMessageEvents(
-//                        messagesQueueId = messagesQueueId,
-//                        lastMessageEventId = lastMessageEventId,
-//                        nameOfTopic = nameOfTopic,
-//                        nameOfStream = nameOfStream,
-//                        asyncAdapter.items.currentList,
-//                        setOfRawUidsOfMessages = setOfRawUidsOfMessages
-//                    )
-//                )
-//            }
-//            .subscribe()
-//        if (isFirstLoading) {
-//            longpollingDisposable +=
-//                RetroClient.zulipApi.registerMessageEvents(narrow)
-//                    .onErrorComplete()
-//                    .subscribeOn(Schedulers.io())
-//                    .subscribe { registerMessagesEventsResponse ->
-//                        messagesQueueId = registerMessagesEventsResponse.queueId
-//                        lastMessageEventId = registerMessagesEventsResponse.lastEventId
-//                        initMessagesLongpolling()
-//                        longpollingDisposable +=
-//                            RetroClient.zulipApi.registerReactionEvents(narrow)
-//                                .onErrorComplete()
-//                                .subscribe { registerReactionsEventsResponse ->
-//                                    reactionsQueueId = registerReactionsEventsResponse.queueId
-//                                    lastReactionEventId =
-//                                        registerReactionsEventsResponse.lastEventId
-//                                    initReactionsLongpolling()
-//                                    isFirstLoading = false
-//                                }
-//                    }
-//        } else {
-//            initMessagesLongpolling()
-//            initReactionsLongpolling()
-//        }
     }
 
     override fun onStop() {
@@ -366,14 +360,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     override fun onDestroy() {
         super.onDestroy()
-//        RetroClient.zulipApi.unregisterEvents(messagesQueueId)
-//            .onErrorComplete()
-//            .subscribeOn(Schedulers.io())
-//            .subscribe {
-//                RetroClient.zulipApi.unregisterEvents(reactionsQueueId)
-//                    .onErrorComplete()
-//                    .subscribe()
-//            }
         viewBinding.clear()
     }
 
@@ -387,28 +373,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 currentList = this.items.currentList
             }
         } else runnable?.run()
-    }
-
-    private fun initReactionsLongpolling() {
-        val serialDisposable = SerialDisposable()
-        longpollingDisposable.add(serialDisposable)
-        Observable.interval(2, TimeUnit.SECONDS)
-            .flatMap {
-                ZulipRepository.getReactionEvent(
-                    reactionsQueueId,
-                    lastReactionEventId,
-                    currentList
-                )
-            }
-            .retry()
-            .subscribe { eventIdToUpdatedList ->
-                if (eventIdToUpdatedList.second.isNotEmpty()) {
-                    lastReactionEventId = eventIdToUpdatedList.first
-                    currentList = eventIdToUpdatedList.second.toMutableList()
-                    updateReactionsOfMessagesSubject.onNext(eventIdToUpdatedList.second)
-                }
-            }
-//            .setTo(serialDisposable)
     }
 
     private fun fillTextViewWithEmojisAsSpannableText(

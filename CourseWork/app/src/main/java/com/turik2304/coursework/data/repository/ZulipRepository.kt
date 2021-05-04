@@ -270,14 +270,13 @@ object ZulipRepository : Repository {
         return RetroClient.zulipApi.getReactionEvents(queueId, lastEventId)
             .subscribeOn(Schedulers.io())
             .map { response ->
-                if (response.reactionEvents.isNotEmpty()) {
+                if (response.reactionEvents.isNotEmpty() && currentList.isNotEmpty()) {
                     val newLastEventId = response.reactionEvents.last().id
                     val reactionEvents = response.reactionEvents
                     val updatedList = updateReactions(currentList, reactionEvents)
                     return@map newLastEventId to updatedList
                 } else return@map lastEventId to emptyList<ViewTyped>()
             }
-//            .onErrorComplete()
     }
 
     override fun updateReactions(
