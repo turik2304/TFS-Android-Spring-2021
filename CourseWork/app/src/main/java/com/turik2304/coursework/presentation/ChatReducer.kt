@@ -1,6 +1,6 @@
 package com.turik2304.coursework.presentation
 
-import com.turik2304.coursework.data.network.models.data.LoadedData
+import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.presentation.base.Reducer
 
 class ChatReducer : Reducer<ChatUiState, ChatActions> {
@@ -12,7 +12,7 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
             )
             is ChatActions.EventsRegistered -> ChatUiState(
                 isLoading = state.isLoading,
-                data = LoadedData.EventRegistrationData(
+                data = MessageData.EventRegistrationData(
                     messagesQueueId = action.messageQueueId,
                     messageEventId = action.messageEventId,
                     reactionsQueueId = action.reactionQueueId,
@@ -23,14 +23,14 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
                 isLoading = state.isLoading
             )
             is ChatActions.MessageEventReceived -> ChatUiState(
-                data = LoadedData.MessageLongpollingData(
+                data = MessageData.MessageLongpollingData(
                     messagesQueueId = action.queueId,
                     lastMessageEventId = action.eventId,
                     polledData = action.updatedList
                 )
             )
             is ChatActions.ReactionEventReceived -> ChatUiState(
-                data = LoadedData.ReactionLongpollingData(
+                data = MessageData.ReactionLongpollingData(
                     reactionsQueueId = action.queueId,
                     lastReactionEventId = action.eventId,
                     polledData = action.updatedList
@@ -40,18 +40,18 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
             is ChatActions.LoadItems -> ChatUiState(
                 isLoading = true,
             )
-            is ChatActions.ItemsLoaded ->
+            is ChatActions.MessagesLoaded ->
                 if (action.isFirstPage) {
                     ChatUiState(
                         isLoading = false,
                         isFirstPage = true,
-                        data = LoadedData.FirstPageData(action.items)
+                        data = MessageData.FirstPageData(action.messages)
                     )
                 } else {
                     ChatUiState(
                         isLoading = false,
                         isFirstPage = false,
-                        data = LoadedData.NextPageData(action.items)
+                        data = MessageData.NextPageData(action.messages)
                     )
                 }
 
@@ -62,7 +62,13 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
                 isLoading = false,
                 error = action.error
             )
-            is ChatActions.SendMessage -> TODO()
+            is ChatActions.SendMessage -> ChatUiState(
+                isLoading = true
+            )
+            is ChatActions.MessageSent -> ChatUiState(
+                isLoading = false,
+                data = MessageData.SentMessageData(action.messages)
+            )
             is ChatActions.AddReaction -> TODO()
             is ChatActions.RemoveReaction -> TODO()
         }

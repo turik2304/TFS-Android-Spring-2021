@@ -2,7 +2,6 @@ package com.turik2304.coursework.domain.chat_middlewares
 
 import com.turik2304.coursework.data.repository.Repository
 import com.turik2304.coursework.data.repository.ZulipRepository
-import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
 import com.turik2304.coursework.domain.Middleware
 import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatUiState
@@ -23,11 +22,12 @@ class LoadMessagesMiddleware : Middleware<ChatActions, ChatUiState> {
                     action.nameOfStream,
                     action.uidOfLastLoadedMessage,
                     action.needFirstPage
-                ).toViewTypedItems()
+                )
                     .map<ChatActions> { result ->
+                        val messages = repository.converter.convertToViewTypedItems(result)
                         if (result.isNotEmpty()) {
-                            return@map ChatActions.ItemsLoaded(
-                                items = result,
+                            return@map ChatActions.MessagesLoaded(
+                                messages = messages,
                                 isFirstPage = action.needFirstPage
                             )
                         } else return@map ChatActions.LoadedEmptyList

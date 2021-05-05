@@ -3,21 +3,20 @@ package com.turik2304.coursework.data.repository
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
-import com.turik2304.coursework.data.network.models.PreViewTyped
 import com.turik2304.coursework.data.network.models.data.*
+import com.turik2304.coursework.data.network.models.data.MessageData.MessageLongpollingData
+import com.turik2304.coursework.data.network.models.data.MessageData.ReactionLongpollingData
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.data.network.models.response.GetUserPresenceResponse
 import com.turik2304.coursework.data.network.models.response.RegisterEventsResponse
 import com.turik2304.coursework.data.network.utils.NarrowConstructor
+import com.turik2304.coursework.data.network.utils.ViewTypedConverter
+import com.turik2304.coursework.data.network.utils.ViewTypedConverterImpl
 import com.turik2304.coursework.data.room.DatabaseClient
-import com.turik2304.coursework.data.network.models.data.LoadedData
-import com.turik2304.coursework.data.network.models.data.LoadedData.MessageLongpollingData
-import com.turik2304.coursework.data.network.models.data.LoadedData.ReactionLongpollingData
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.*
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import java.text.SimpleDateFormat
 import java.util.*
 
 object ZulipRepository : Repository {
@@ -28,52 +27,7 @@ object ZulipRepository : Repository {
 
     private val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
 
-    override fun <T : PreViewTyped> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>> {
-        return this.observeOn(Schedulers.computation())
-            .map { modelList ->
-                if (modelList.firstOrNull() is Message) {
-                    return@map (modelList as List<Message>)
-                        .sortedBy { it.dateInSeconds }
-                        .groupBy { message ->
-                            getFormattedDate(message.dateInSeconds)
-                        }
-                        .flatMap { (date, messages) ->
-                            listOf(DateSeparatorUI(date, date.hashCode())) + parseMessages(
-                                messages
-                            )
-                        }
-                } else {
-                    modelList.mapNotNull { model ->
-                        when (model) {
-                            is Stream -> StreamUI(
-                                name = model.name,
-                                uid = model.id,
-                                topics = model.topics.toViewTyped(),
-                                isSubscribed = model.isSubscribed,
-                            )
-                            is User -> UserUI(
-                                userName = model.userName,
-                                email = model.email,
-                                avatarUrl = model.avatarUrl,
-                                uid = model.id,
-                                presence = model.presence,
-                            )
-                            else -> null
-                        }
-                    }
-                }
-            }
-    }
-
-    private fun List<Topic>.toViewTyped(): List<TopicUI> {
-        return map { topic ->
-            TopicUI(
-                name = topic.name,
-                numberOfMessages = topic.numberOfMessages,
-                uid = topic.id
-            )
-        }
-    }
+    override val converter: ViewTypedConverter = ViewTypedConverterImpl
 
     override fun getAllUsers(): Observable<List<User>> {
         val usersFromDB =
@@ -171,6 +125,24 @@ object ZulipRepository : Repository {
             .subscribeOn(Schedulers.io())
     }
 
+    override fun sendMessage(
+        nameOfTopic: String,
+        nameOfStream: String,
+        message: String
+    ): Observable<OutMessageUI> {
+        //generates a raw message right now for display,
+        //raw message will be updated when MessageEvent is receive
+        val rawMessage = converter.messageHelper.generateRawMessage(message)
+        val rawMessageSupplier = Observable.just(rawMessage)
+        val sendMessageCall = RetroClient.zulipApi.sendMessage(
+            nameOfTopic = nameOfTopic,
+            nameOfStream = nameOfStream,
+            message = message
+        )
+            .subscribeOn(Schedulers.io())
+        return sendMessageCall.startWith(rawMessageSupplier)
+    }
+
     override fun getMessages(
         nameOfTopic: String,
         nameOfStream: String,
@@ -222,13 +194,14 @@ object ZulipRepository : Repository {
     override fun registerEvents(
         nameOfTopic: String,
         nameOfStream: String
-    ): Observable<LoadedData.EventRegistrationData> {
+    ): Observable<MessageData.EventRegistrationData> {
         val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
         val registerMessageEvents = RetroClient.zulipApi.registerMessageEvents(narrow)
         val registerReactionEvents = RetroClient.zulipApi.registerReactionEvents(narrow)
         return Observable.zip(registerMessageEvents, registerReactionEvents,
             { registerMessageEventsResponse: RegisterEventsResponse, registerReactionEventsResponse: RegisterEventsResponse ->
-                return@zip LoadedData.EventRegistrationData(
+                converter.messageHelper.setOfRawIdsOfMessages.clear()
+                return@zip MessageData.EventRegistrationData(
                     messagesQueueId = registerMessageEventsResponse.queueId,
                     messageEventId = registerMessageEventsResponse.lastEventId,
                     reactionsQueueId = registerReactionEventsResponse.queueId,
@@ -238,13 +211,12 @@ object ZulipRepository : Repository {
             .subscribeOn(Schedulers.io())
     }
 
-    override fun getMessageEvent(
+    override fun updateMessagesByMessageEvent(
         queueId: String,
         lastEventId: String,
         nameOfTopic: String,
         nameOfStream: String,
         currentList: List<ViewTyped>,
-        setOfRawUidsOfMessages: HashSet<Int>
     ): Observable<MessageLongpollingData> {
         return RetroClient.zulipApi.getMessageEvents(queueId, lastEventId)
             .subscribeOn(Schedulers.io())
@@ -257,10 +229,10 @@ object ZulipRepository : Repository {
                         message.nameOfStream = nameOfStream
                         message
                     }
-                    val viewTypedMessages = parseMessages(zulipMessages)
-                    //may be filter if client == okhttp && id == MyUserId
-                    val newList = currentList.filter { it.uid !in setOfRawUidsOfMessages }
-                    val actualList = newList + viewTypedMessages
+                    val newMessages = converter.messageHelper.parseMessages(zulipMessages)
+                    //current list may include raw messages
+                    val filteredMessages = converter.messageHelper.filterRawMessages(currentList)
+                    val actualList = filteredMessages + newMessages
                     db?.messageDao()
                         ?.insertAllAndCheckCapacity(nameOfStream, nameOfTopic, zulipMessages)
                     return@map MessageLongpollingData(
@@ -278,7 +250,7 @@ object ZulipRepository : Repository {
             }
     }
 
-    override fun getReactionEvent(
+    override fun updateMessagesByReactionEvent(
         queueId: String,
         lastEventId: String,
         currentList: List<ViewTyped>,
@@ -289,7 +261,8 @@ object ZulipRepository : Repository {
                 if (response.reactionEvents.isNotEmpty() && currentList.isNotEmpty()) {
                     val newLastEventId = response.reactionEvents.last().id
                     val reactionEvents = response.reactionEvents
-                    val updatedList = updateReactions(currentList, reactionEvents)
+                    val updatedList = converter.messageHelper
+                        .reactionHelper.updateReactions(currentList, reactionEvents)
                     return@map ReactionLongpollingData(
                         reactionsQueueId = queueId,
                         lastReactionEventId = newLastEventId,
@@ -303,7 +276,7 @@ object ZulipRepository : Repository {
             }
     }
 
-    override fun getEvents(
+    override fun updateMessagesByEvents(
         nameOfTopic: String,
         nameOfStream: String,
         messageQueueId: String,
@@ -311,173 +284,22 @@ object ZulipRepository : Repository {
         reactionQueueId: String,
         reactionEventId: String,
         currentList: List<ViewTyped>,
-        setOfRawUidsOfMessages: HashSet<Int>
-    ): Observable<LoadedData> {
-        val messagesEvents = getMessageEvent(
+    ): Observable<MessageData> {
+        val messagesEvents = updateMessagesByMessageEvent(
             queueId = messageQueueId,
             lastEventId = messageEventId,
             nameOfTopic = nameOfTopic,
             nameOfStream = nameOfStream,
             currentList = currentList,
-            setOfRawUidsOfMessages = setOfRawUidsOfMessages
         )
-        val reactionsEvents = getReactionEvent(
+        val reactionsEvents = updateMessagesByReactionEvent(
             queueId = reactionQueueId,
             lastEventId = reactionEventId,
             currentList = currentList
         )
         return Observable.mergeDelayError(messagesEvents, reactionsEvents)
-            .first(LoadedData.EmptyLongpollingData)
+            .first(MessageData.EmptyLongpollingData)
             .toObservable()
-    }
-
-    override fun updateReactions(
-        currentList: List<ViewTyped>,
-        reactionEvents: List<ReactionEvent>
-    ): List<ViewTyped> {
-        var updatedList: List<ViewTyped> = currentList
-        reactionEvents.forEach { reactionEvent ->
-            updatedList = updatedList.map { viewTyped ->
-                if (viewTyped.uid == reactionEvent.messageId) {
-                    return@map when (viewTyped) {
-                        is InMessageUI -> viewTyped.copy(
-                            reactions = handleReactions(
-                                viewTyped.reactions,
-                                reactionEvent
-                            )
-                        )
-                        is OutMessageUI -> viewTyped.copy(
-                            reactions = handleReactions(
-                                viewTyped.reactions,
-                                reactionEvent
-                            )
-                        )
-                        else -> viewTyped
-                    }
-                } else return@map viewTyped
-            }
-        }
-        return updatedList
-    }
-
-    private fun handleReactions(
-        reactions: List<ReactionUI>,
-        reactionEvent: ReactionEvent
-    ): List<ReactionUI> {
-        val targetReaction = ReactionUI(
-            emojiCode = Integer.parseInt(reactionEvent.emojiCode, 16),
-            counter = 1,
-            usersWhoClicked = mutableListOf(reactionEvent.userId)
-        )
-        var reactionFounded = false
-        val updatedReactions = reactions.map { currentReaction ->
-            if (currentReaction.emojiCode == targetReaction.emojiCode) {
-                when (reactionEvent.operation) {
-                    OperationEnum.ADD -> {
-                        reactionFounded = true
-                        if (targetReaction.usersWhoClicked.single() !in currentReaction.usersWhoClicked) {
-                            val emojiCode = currentReaction.emojiCode
-                            val counter = currentReaction.counter + 1
-                            val usersWhoClicked =
-                                (currentReaction.usersWhoClicked + targetReaction.usersWhoClicked).toMutableList()
-                            return@map currentReaction.copy(
-                                emojiCode = emojiCode,
-                                counter = counter,
-                                usersWhoClicked = usersWhoClicked
-                            )
-                        } else return@map currentReaction
-                    }
-                    OperationEnum.REMOVE -> {
-                        reactionFounded = true
-                        if (targetReaction.usersWhoClicked.single() in currentReaction.usersWhoClicked) {
-                            val emojiCode = currentReaction.emojiCode
-                            val counter = currentReaction.counter - 1
-                            val usersWhoClicked =
-                                (currentReaction.usersWhoClicked - targetReaction.usersWhoClicked).toMutableList()
-                            return@map currentReaction.copy(
-                                emojiCode = emojiCode,
-                                counter = counter,
-                                usersWhoClicked = usersWhoClicked
-                            )
-                        } else return@map currentReaction
-                    }
-                }
-            } else return@map currentReaction
-        }
-        return if (reactionFounded) {
-            updatedReactions.filter { it.counter > 0 }
-        } else {
-            return if (reactionEvent.operation == OperationEnum.ADD) {
-                (updatedReactions + listOf(targetReaction))
-            } else updatedReactions
-
-        }
-
-    }
-
-    private fun parseMessages(
-        remoteMessages: List<Message>,
-    ): List<ViewTyped> {
-        val messageUIList = mutableListOf<ViewTyped>()
-        remoteMessages.forEach { messageToken ->
-            if (messageToken.userId == MyUserId.MY_USER_ID) {
-                messageUIList.add(
-                    OutMessageUI(
-                        userName = messageToken.userName,
-                        userId = messageToken.userId,
-                        message = messageToken.message,
-                        reactions = parseReactions(messageToken.reactions),
-                        dateInSeconds = messageToken.dateInSeconds,
-                        uid = messageToken.id,
-                    )
-                )
-            } else {
-                messageUIList.add(
-                    InMessageUI(
-                        userName = messageToken.userName,
-                        userId = messageToken.userId,
-                        message = messageToken.message,
-                        reactions = parseReactions(messageToken.reactions),
-                        dateInSeconds = messageToken.dateInSeconds,
-                        avatarUrl = messageToken.avatarUrl,
-                        uid = messageToken.id,
-                    )
-                )
-            }
-        }
-        return messageUIList
-    }
-
-    override fun getFormattedDate(dateOfMessageInSeconds: Int): String {
-        val formatter = SimpleDateFormat("dd MMMM")
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = dateOfMessageInSeconds * 1000L
-        return formatter.format(calendar.time)
-    }
-
-    private fun parseReactions(
-        zulipReactions: List<Reaction>,
-    ): List<ReactionUI> {
-        val listOfReactions = mutableListOf<ReactionUI>()
-        zulipReactions.forEach { zulipReaction ->
-            var isTheSameReaction = false
-            var indexOfSameReaction = -1
-            val emojiCode = Integer.parseInt(zulipReaction.emojiCode, 16)
-            val userId = zulipReaction.userId
-            listOfReactions.forEachIndexed { index, reaction ->
-                if (reaction.emojiCode == emojiCode) {
-                    isTheSameReaction = true
-                    indexOfSameReaction = index
-                }
-            }
-            if (isTheSameReaction) {
-                listOfReactions[indexOfSameReaction].counter++
-                listOfReactions[indexOfSameReaction].usersWhoClicked.add(userId)
-            } else {
-                listOfReactions.add(ReactionUI(emojiCode, 1, mutableListOf(userId)))
-            }
-        }
-        return listOfReactions.reversed()
     }
 }
 

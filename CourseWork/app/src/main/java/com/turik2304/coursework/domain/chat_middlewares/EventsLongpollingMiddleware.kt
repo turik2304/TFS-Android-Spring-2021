@@ -5,7 +5,7 @@ import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.domain.Middleware
 import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatUiState
-import com.turik2304.coursework.data.network.models.data.LoadedData
+import com.turik2304.coursework.data.network.models.data.MessageData
 import io.reactivex.rxjava3.core.Observable
 
 class EventsLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {
@@ -18,7 +18,7 @@ class EventsLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {
     ): Observable<ChatActions> {
         return actions.ofType(ChatActions.GetEvents::class.java)
             .flatMap { action ->
-                return@flatMap repository.getEvents(
+                return@flatMap repository.updateMessagesByEvents(
                     nameOfTopic = action.nameOfTopic,
                     nameOfStream = action.nameOfStream,
                     messageQueueId = action.messageQueueId,
@@ -26,16 +26,15 @@ class EventsLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {
                     reactionQueueId = action.reactionQueueId,
                     reactionEventId = action.reactionEventId,
                     currentList = action.currentList,
-                    setOfRawUidsOfMessages = action.setOfRawUidsOfMessages
                 )
                     .map<ChatActions> { result ->
                         return@map when (result) {
-                            is LoadedData.MessageLongpollingData -> ChatActions.MessageEventReceived(
+                            is MessageData.MessageLongpollingData -> ChatActions.MessageEventReceived(
                                 queueId = result.messagesQueueId,
                                 eventId = result.lastMessageEventId,
                                 updatedList = result.polledData
                             )
-                            is LoadedData.ReactionLongpollingData -> ChatActions.ReactionEventReceived(
+                            is MessageData.ReactionLongpollingData -> ChatActions.ReactionEventReceived(
                                 queueId = result.reactionsQueueId,
                                 eventId = result.lastReactionEventId,
                                 updatedList = result.polledData

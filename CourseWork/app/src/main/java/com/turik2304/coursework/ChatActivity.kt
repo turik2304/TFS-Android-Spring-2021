@@ -14,20 +14,21 @@ import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.data.EmojiEnum
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
+import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.data.network.models.data.OperationEnum
 import com.turik2304.coursework.data.network.models.data.ReactionEvent
-import com.turik2304.coursework.data.repository.ZulipRepository
+import com.turik2304.coursework.data.network.utils.ReactionHelperImpl
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
 import com.turik2304.coursework.domain.chat_middlewares.EventsLongpollingMiddleware
 import com.turik2304.coursework.domain.chat_middlewares.LoadMessagesMiddleware
 import com.turik2304.coursework.domain.chat_middlewares.RegisterEventsMiddleware
+import com.turik2304.coursework.domain.chat_middlewares.SendMessageMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatReducer
 import com.turik2304.coursework.presentation.ChatUiState
-import com.turik2304.coursework.data.network.models.data.LoadedData
 import com.turik2304.coursework.presentation.base.MviActivity
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
@@ -35,15 +36,11 @@ import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.PaginationScrollListener
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.holder_factories.ChatHolderFactory
-import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.view.FlexboxLayout
 import com.turik2304.coursework.presentation.view.MessageViewGroup
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
-import java.util.*
-import kotlin.math.abs
 
 class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
@@ -60,7 +57,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
     private lateinit var nameOfTopic: String
     private lateinit var nameOfStream: String
-    private lateinit var currentList: MutableList<ViewTyped>
 
     private val wiring = CompositeDisposable()
     private val viewBinding = CompositeDisposable()
@@ -70,7 +66,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         middlewares = listOf(
             LoadMessagesMiddleware(),
             RegisterEventsMiddleware(),
-            EventsLongpollingMiddleware()
+            EventsLongpollingMiddleware(),
+            SendMessageMiddleware()
         ),
         initialState = ChatUiState()
     )
@@ -82,7 +79,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private var isLoading = false
     private var uidOfUpperMessage: String = UID_OF_MESSAGE_AT_FIRST_LOAD
     private var uidOfClickedMessage: Int = -1
-    private val setOfRawUidsOfMessages = hashSetOf<Int>()
 
     private var reactionsQueueId: String = ""
     private var lastReactionEventId: String = ""
@@ -155,39 +151,13 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         chatBinding.imageViewSendMessage.setOnClickListener {
             if (chatBinding.editTextEnterMessage.text.isNotEmpty()) {
                 val message = chatBinding.editTextEnterMessage.text.toString()
-                chatBinding.chatShimmer.showShimmer(true)
-                val rawMessage = OutMessageUI(
-                    userName = "",
-                    userId = MyUserId.MY_USER_ID,
-                    message = message,
-                    reactions = emptyList(),
-                    dateInSeconds = (Calendar.getInstance().timeInMillis / 1000).toInt(),
-                    uid = -abs(asyncAdapter.items.currentList.last().uid) - 1
-                )
-                setOfRawUidsOfMessages.add(rawMessage.uid)
-                val newList = asyncAdapter.items.currentList + listOf(rawMessage)
-                asyncAdapter.updateList(newList) {
-                    chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
-                }
-                wiring +=
-                    RetroClient.zulipApi.sendMessage(
-                        nameOfStream = nameOfStream,
+                actions.accept(
+                    ChatActions.SendMessage(
                         nameOfTopic = nameOfTopic,
+                        nameOfStream = nameOfStream,
                         message = message
                     )
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                            {
-                                chatBinding.chatShimmer.stopAndHideShimmer()
-                            },
-                            { onError ->
-                                Error.showError(
-                                    applicationContext,
-                                    onError
-                                )
-                                chatBinding.chatShimmer.stopAndHideShimmer()
-                            })
+                )
                 chatBinding.editTextEnterMessage.text.clear()
             }
         }
@@ -229,7 +199,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         state.error?.let { Error.showError(applicationContext, it) }
 
         when (state.data) {
-            is LoadedData.FirstPageData -> {
+            is MessageData.FirstPageData -> {
                 val messages = state.data.items
                 uidOfUpperMessage =
                     messages[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
@@ -237,7 +207,13 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
                 }
             }
-            is LoadedData.NextPageData -> {
+            is MessageData.SentMessageData -> {
+                val currentList = asyncAdapter.items.currentList
+                asyncAdapter.updateList(currentList + state.data.messages) {
+                    chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+                }
+            }
+            is MessageData.NextPageData -> {
                 wiring.clear()
                 wiring += store.wire()
                 val newPage = state.data.items
@@ -253,14 +229,14 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     }
                 }
             }
-            is LoadedData.EventRegistrationData -> {
+            is MessageData.EventRegistrationData -> {
                 messagesQueueId = state.data.messagesQueueId
                 lastMessageEventId = state.data.messageEventId
                 reactionsQueueId = state.data.reactionsQueueId
                 lastReactionEventId = state.data.reactionEventId
                 sendActionToPollEvents()
             }
-            is LoadedData.MessageLongpollingData -> {
+            is MessageData.MessageLongpollingData -> {
                 messagesQueueId = state.data.messagesQueueId
                 lastMessageEventId = state.data.lastMessageEventId
                 asyncAdapter.updateList(state.data.polledData) {
@@ -270,7 +246,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     sendActionToPollEvents()
                 }
             }
-            is LoadedData.ReactionLongpollingData -> {
+            is MessageData.ReactionLongpollingData -> {
                 reactionsQueueId = state.data.reactionsQueueId
                 lastReactionEventId = state.data.lastReactionEventId
                 asyncAdapter.updateList(state.data.polledData) {
@@ -329,7 +305,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 reactionQueueId = reactionsQueueId,
                 reactionEventId = lastReactionEventId,
                 currentList = asyncAdapter.items.currentList,
-                setOfRawUidsOfMessages = setOfRawUidsOfMessages
             )
         )
     }
@@ -341,7 +316,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         if (!newList.isNullOrEmpty()) {
             this.items.submitList(newList) {
                 runnable?.run()
-                currentList = this.items.currentList
             }
         } else runnable?.run()
     }
@@ -387,8 +361,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     userId = MyUserId.MY_USER_ID
                 )
             )
-            val updatedList =
-                ZulipRepository.updateReactions(asyncAdapter.items.currentList, reactionEvent)
+            val updatedList = ReactionHelperImpl
+                .updateReactions(asyncAdapter.items.currentList, reactionEvent)
             asyncAdapter.updateList(updatedList)
             chatBinding.chatShimmer.showShimmer(true)
             wiring +=

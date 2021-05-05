@@ -1,16 +1,17 @@
 package com.turik2304.coursework.data.repository
 
-import com.turik2304.coursework.data.network.models.PreViewTyped
 import com.turik2304.coursework.data.network.models.data.Message
-import com.turik2304.coursework.data.network.models.data.ReactionEvent
+import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.data.User
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
-import com.turik2304.coursework.data.network.models.data.LoadedData
+import com.turik2304.coursework.data.network.utils.ViewTypedConverter
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
+import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 import io.reactivex.rxjava3.core.Observable
 
 interface Repository {
+    val converter: ViewTypedConverter
 
     fun getStreams(needAllStreams: Boolean): Observable<List<Stream>>
     fun getTopicsOfStreams(streams: List<Stream>): Observable<List<Stream>>
@@ -22,32 +23,23 @@ interface Repository {
     ): Observable<List<Message>>
 
     fun getOwnProfile(): Observable<GetOwnProfileResponse>
-    fun getFormattedDate(dateOfMessageInSeconds: Int): String
-    fun updateReactions(
-        currentList: List<ViewTyped>,
-        reactionEvents: List<ReactionEvent>
-    ): List<ViewTyped>
-
-    fun getReactionEvent(
+    fun updateMessagesByReactionEvent(
         queueId: String,
         lastEventId: String,
         currentList: List<ViewTyped>
-    ): Observable<LoadedData.ReactionLongpollingData>
+    ): Observable<MessageData.ReactionLongpollingData>
 
-    fun getMessageEvent(
+    fun updateMessagesByMessageEvent(
         queueId: String,
         lastEventId: String,
         nameOfTopic: String,
         nameOfStream: String,
         currentList: List<ViewTyped>,
-        setOfRawUidsOfMessages: HashSet<Int>
-    ): Observable<LoadedData.MessageLongpollingData>
+    ): Observable<MessageData.MessageLongpollingData>
 
     fun getAllUsers(): Observable<List<User>>
 
-    fun <T : PreViewTyped> Observable<List<T>>.toViewTypedItems(): Observable<List<ViewTyped>>
-
-    fun getEvents(
+    fun updateMessagesByEvents(
         nameOfTopic: String,
         nameOfStream: String,
         messageQueueId: String,
@@ -55,11 +47,12 @@ interface Repository {
         reactionQueueId: String,
         reactionEventId: String,
         currentList: List<ViewTyped>,
-        setOfRawUidsOfMessages: java.util.HashSet<Int>
-    ): Observable<LoadedData>
+    ): Observable<MessageData>
 
     fun registerEvents(
         nameOfTopic: String,
         nameOfStream: String
-    ): Observable<LoadedData.EventRegistrationData>
+    ): Observable<MessageData.EventRegistrationData>
+
+    fun sendMessage(nameOfTopic: String, nameOfStream: String, message: String): Observable<OutMessageUI>
 }

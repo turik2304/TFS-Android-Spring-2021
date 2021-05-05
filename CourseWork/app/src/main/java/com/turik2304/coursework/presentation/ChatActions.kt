@@ -25,7 +25,6 @@ sealed class ChatActions : Action {
         val reactionQueueId: String,
         val reactionEventId: String,
         val currentList: List<ViewTyped>,
-        val setOfRawUidsOfMessages: HashSet<Int>
     ) : ChatActions()
 
     class MessageEventReceived(
@@ -48,13 +47,21 @@ sealed class ChatActions : Action {
         val uidOfLastLoadedMessage: String
     ) : ChatActions()
 
-    data class ItemsLoaded(val items: List<ViewTyped>, val isFirstPage: Boolean) : ChatActions()
+    data class MessagesLoaded(val messages: List<ViewTyped>, val isFirstPage: Boolean) : ChatActions()
 
     object LoadedEmptyList : ChatActions()
 
     class ErrorLoading(val error: Throwable) : ChatActions()
 
-    object SendMessage : ChatActions()
+    class SendMessage(
+        val nameOfStream: String,
+        val nameOfTopic: String,
+        val message: String
+    ) : ChatActions()
+
+    class MessageSent(
+        val messages: List<ViewTyped>
+    ) : ChatActions()
 
     object AddReaction : ChatActions()
 

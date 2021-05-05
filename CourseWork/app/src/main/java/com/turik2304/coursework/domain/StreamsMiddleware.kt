@@ -2,7 +2,6 @@ package com.turik2304.coursework.domain
 
 import com.turik2304.coursework.data.repository.Repository
 import com.turik2304.coursework.data.repository.ZulipRepository
-import com.turik2304.coursework.data.repository.ZulipRepository.toViewTypedItems
 import com.turik2304.coursework.presentation.GeneralActions
 import com.turik2304.coursework.presentation.GeneralUiState
 import io.reactivex.rxjava3.core.Observable
@@ -19,8 +18,10 @@ class StreamsMiddleware(private val needAllStreams: Boolean) :
         return actions.ofType(GeneralActions.LoadItems::class.java)
             .flatMap {
                 return@flatMap ZulipRepository.getStreams(needAllStreams = needAllStreams)
-                    .toViewTypedItems()
-                    .map<GeneralActions> { result -> GeneralActions.ItemsLoaded(result) }
+                    .map<GeneralActions> { result ->
+                        val streams = repository.converter.convertToViewTypedItems(result)
+                        GeneralActions.ItemsLoaded(streams)
+                    }
                     .onErrorReturn { error -> GeneralActions.ErrorLoading(error) }
             }
     }
