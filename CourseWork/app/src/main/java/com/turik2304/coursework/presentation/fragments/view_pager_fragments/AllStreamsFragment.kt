@@ -119,7 +119,7 @@ class AllStreamsFragment : MviFragment<GeneralActions, GeneralUiState>() {
         }
         if (state.data != null) {
             val streamList = state.data as List<StreamUI>
-            asyncAdapter.items.submitList(streamList)
+            asyncAdapter.items = streamList
             listOfStreams = streamList
             innerViewTypedList = streamList
             Search.initSearch(parentBinding.edSearchStreams, binding.recycleViewAllStreams)

@@ -58,7 +58,7 @@ class PeopleFragment : MviFragment<GeneralActions, GeneralUiState>() {
             userShimmer.showShimmer(true)
             val positionOfClickedView =
                 binding.recycleViewUsers.getChildAdapterPosition(clickedView)
-            val clickedUserUI = asyncAdapter.items.currentList[positionOfClickedView] as UserUI
+            val clickedUserUI = asyncAdapter.items[positionOfClickedView] as UserUI
             loadProfileDetails(clickedUserUI)
             userShimmer.stopAndHideShimmer()
         }
@@ -118,7 +118,7 @@ class PeopleFragment : MviFragment<GeneralActions, GeneralUiState>() {
         }
         if (state.data != null) {
             val userList = state.data as List<ViewTyped>
-            asyncAdapter.items.submitList(userList)
+            asyncAdapter.items = userList
             Search.initSearch(
                 editText = binding.edSearchUsers,
                 recyclerView = binding.recycleViewUsers

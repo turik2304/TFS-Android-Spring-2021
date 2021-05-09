@@ -82,7 +82,7 @@ class SubscribedFragment : MviFragment<GeneralActions, GeneralUiState>() {
         val clickListener = clickListener@{ clickedView: View ->
             val positionOfClickedView =
                 binding.recycleViewSubscribedStreams.getChildAdapterPosition(clickedView)
-            val clickedItem = asyncAdapter.items.currentList[positionOfClickedView]
+            val clickedItem = asyncAdapter.items[positionOfClickedView]
             if (clickedItem.viewType == R.layout.item_stream) {
                 val expandImageView = clickedView.findViewById<ImageView>(R.id.imExpandStream)
                 val uidOfClickedStreamUI = clickedItem.uid
@@ -102,7 +102,7 @@ class SubscribedFragment : MviFragment<GeneralActions, GeneralUiState>() {
                 innerViewTypedList = listOfStreams.flatMap { stream ->
                     listOf(stream) + if (stream.uid in listOfExpandedStreams) stream.topics else emptyList()
                 }
-                asyncAdapter.items.submitList(innerViewTypedList)
+                asyncAdapter.items = innerViewTypedList
             } else {
                 val uidOfClickedTopicUI = clickedItem.uid
                 //some logic to start chat by topic ID
@@ -156,7 +156,7 @@ class SubscribedFragment : MviFragment<GeneralActions, GeneralUiState>() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        asyncAdapter.items.currentList.forEach { item ->
+        asyncAdapter.items.forEach { item ->
             if (item is StreamUI) {
                 item.isExpanded = false
             }
@@ -177,7 +177,7 @@ class SubscribedFragment : MviFragment<GeneralActions, GeneralUiState>() {
         }
         if (state.data != null) {
             val streamList = state.data as List<StreamUI>
-            asyncAdapter.items.submitList(streamList)
+            asyncAdapter.items = streamList
             listOfStreams = streamList
             innerViewTypedList = streamList
             Search.initSearch(parentBinding.edSearchStreams, binding.recycleViewSubscribedStreams)

@@ -203,7 +203,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 }
             }
             is MessageData.SentMessageData -> {
-                val currentList = asyncAdapter.items.currentList
+                val currentList = asyncAdapter.items
                 asyncAdapter.updateList(currentList + state.data.messages) {
                     chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
                 }
@@ -216,7 +216,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     newPage[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
                 if (uidOfUpperMessageInNewPage == uidOfUpperMessage) isLastPage = true
                 else {
-                    val actualList = (newPage + asyncAdapter.items.currentList).distinct()
+                    val actualList = (newPage + asyncAdapter.items).distinct()
                     asyncAdapter.updateList(actualList) {
                         uidOfUpperMessage =
                             actualList[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
@@ -301,7 +301,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 messageEventId = lastMessageEventId,
                 reactionQueueId = reactionsQueueId,
                 reactionEventId = lastReactionEventId,
-                currentList = asyncAdapter.items.currentList,
+                currentList = asyncAdapter.items,
             )
         )
     }
@@ -311,7 +311,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         runnable: Runnable? = null
     ) {
         if (!newList.isNullOrEmpty()) {
-            this.items.submitList(newList) {
+            this.setItemsWithCommitCallback(newList) {
                 runnable?.run()
             }
         } else runnable?.run()

@@ -4,8 +4,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
+import io.reactivex.rxjava3.core.Observable
 
 abstract class HolderFactory : (ViewGroup, Int) -> BaseViewHolder<ViewTyped> {
+
+    protected val clicks = RecyclerItemClicksObservable()
 
     abstract fun createViewHolder(view: View, viewType: Int): BaseViewHolder<*>?
 
@@ -16,6 +19,18 @@ abstract class HolderFactory : (ViewGroup, Int) -> BaseViewHolder<ViewTyped> {
         } as BaseViewHolder<ViewTyped>
     }
 
+    fun clickPosition(vararg viewType: Int): Observable<Int> {
+        return clicks.filter { it.viewType in viewType }.map(ItemClick::position)
+    }
+
+    fun clickPosition(viewType: Int, viewId: Int): Observable<Int> {
+        return clicks.filter { it.viewType == viewType && it.view.id == viewId }
+            .map(ItemClick::position)
+    }
+
+    fun repeatOnErrorClicks(): Observable<*> {
+        return Observable.empty<Any>()
+    }
 }
 
 fun <T : View> View.inflate(
