@@ -1,5 +1,6 @@
 package com.turik2304.coursework.data.repository
 
+import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
@@ -15,6 +16,7 @@ import com.turik2304.coursework.data.network.utils.ViewTypedConverterImpl
 import com.turik2304.coursework.data.room.DatabaseClient
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.*
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.*
@@ -141,6 +143,31 @@ object ZulipRepository : Repository {
         )
             .subscribeOn(Schedulers.io())
         return sendMessageCall.startWith(rawMessageSupplier)
+    }
+
+    override fun sendReaction(
+        messageId: Int,
+        emojiName: String,
+        emojiCode: String
+    ): Completable {
+        return RetroClient.zulipApi.sendReaction(
+            messageId = messageId,
+            emojiName = emojiName,
+            emojiCode = emojiCode
+        )
+            .subscribeOn(Schedulers.io())
+    }
+
+    override fun removeReaction(
+        messageId: Int,
+        emojiName: String,
+        emojiCode: String
+    ): Completable {
+        return RetroClient.zulipApi.removeReaction(
+            messageId = messageId,
+            emojiName = emojiName,
+            emojiCode = emojiCode
+        )
     }
 
     override fun getMessages(

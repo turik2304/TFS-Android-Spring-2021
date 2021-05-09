@@ -8,17 +8,13 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.view.setPadding
-import com.facebook.shimmer.ShimmerFrameLayout
+import com.turik2304.coursework.ChatActivity
 import com.turik2304.coursework.R
 import com.turik2304.coursework.data.EmojiEnum
 import com.turik2304.coursework.data.MyUserId
-import com.turik2304.coursework.data.network.RetroClient
 import com.turik2304.coursework.extensions.dpToPx
 import com.turik2304.coursework.extensions.spToPx
-import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.presentation.utils.Error
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.schedulers.Schedulers
+import com.turik2304.coursework.presentation.ChatActions
 
 
 class EmojiView @JvmOverloads constructor(
@@ -43,6 +39,7 @@ class EmojiView @JvmOverloads constructor(
             }
         }
     val listOfUsersWhoClicked = mutableListOf<Int>()
+    var uidOfMessage = 0
 
     private val superellipseColor =
         resources.getColor(R.color.gray_not_selected_background, context.theme)
@@ -149,52 +146,33 @@ class EmojiView @JvmOverloads constructor(
 
     override fun performClick(): Boolean {
         val userClicked = listOfUsersWhoClicked.contains(MyUserId.MY_USER_ID)
-        val directParent = parent as FlexboxLayout
-        val mainParent = directParent.parent as MessageViewGroup
-        val parentOfShimmer = ((mainParent.parent as View).parent as View)
-        val uidOfMessage = mainParent.uid
-        val nameAndZulipEmojiCode = EmojiEnum.getNameByCodePoint(emojiCode)
-        val name = nameAndZulipEmojiCode.first
-        val zulipEmojiCode = nameAndZulipEmojiCode.second
-        val chatShimmer = parentOfShimmer.findViewById<ShimmerFrameLayout>(R.id.chatShimmer)
-        chatShimmer.showShimmer(true)
+        val parent: FlexboxLayout = parent as FlexboxLayout
+        val zulipNameAndEmojiCode = EmojiEnum.getNameAndCodeByCodePoint(emojiCode)
+        val zulipName = zulipNameAndEmojiCode.first
+        val zulipEmojiCode = zulipNameAndEmojiCode.second
         if (!isSelected && !userClicked) {
             isSelected = !isSelected
             selectCounter++
             listOfUsersWhoClicked.add(MyUserId.MY_USER_ID)
-            RetroClient.zulipApi.sendReaction(uidOfMessage, name, zulipEmojiCode)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    {
-                        chatShimmer.stopAndHideShimmer()
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        chatShimmer.stopAndHideShimmer()
-                    })
+            ChatActivity.activityActions?.accept(
+                ChatActions.AddReaction(
+                    messageId = uidOfMessage,
+                    emojiName = zulipName,
+                    emojiCode = zulipEmojiCode
+                )
+            )
         } else {
             isSelected = !isSelected
             selectCounter--
             listOfUsersWhoClicked.remove(MyUserId.MY_USER_ID)
-            directParent.checkZeroesCounters()
-            RetroClient.zulipApi.removeReaction(uidOfMessage, name, zulipEmojiCode)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    {
-                        chatShimmer.stopAndHideShimmer()
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        chatShimmer.stopAndHideShimmer()
-                    })
+            parent.checkZeroesCounters()
+            ChatActivity.activityActions?.accept(
+                ChatActions.RemoveReaction(
+                    messageId = uidOfMessage,
+                    emojiName = zulipName,
+                    emojiCode = zulipEmojiCode
+                )
+            )
         }
         return super.performClick()
     }
@@ -218,4 +196,3 @@ class EmojiView @JvmOverloads constructor(
     }
 
 }
-

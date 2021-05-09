@@ -24,8 +24,8 @@ class LoadMessagesMiddleware : Middleware<ChatActions, ChatUiState> {
                     action.needFirstPage
                 )
                     .map<ChatActions> { result ->
-                        val messages = repository.converter.convertToViewTypedItems(result)
                         if (result.isNotEmpty()) {
+                            val messages = repository.converter.convertToViewTypedItems(result)
                             return@map ChatActions.MessagesLoaded(
                                 messages = messages,
                                 isFirstPage = action.needFirstPage

@@ -14,7 +14,7 @@ import com.turik2304.coursework.presentation.recycler_view.items.UserUI
 
 object ViewTypedConverterImpl : ViewTypedConverter {
 
-    override val messageHelper = MessageHelperImpl
+    override val messageHelper: MessageHelper = MessageHelperImpl
 
     override fun <T : PreViewTyped> convertToViewTypedItems(modelList: List<T>): List<ViewTyped> {
         if (modelList.firstOrNull() is Message) {

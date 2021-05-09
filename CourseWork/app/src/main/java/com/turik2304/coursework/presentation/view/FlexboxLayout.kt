@@ -7,9 +7,9 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.ImageView
-import androidx.annotation.Px
 import androidx.core.view.children
 import com.turik2304.coursework.R
+import com.turik2304.coursework.extensions.dpToPx
 import kotlin.math.roundToInt
 
 class FlexboxLayout @JvmOverloads constructor(
@@ -19,6 +19,17 @@ class FlexboxLayout @JvmOverloads constructor(
     defStyleRes: Int = 0,
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
+    var imageViewAddsEmojis: ImageView
+    private val gap = 7f.dpToPx().toInt()
+
+    init {
+        setWillNotDraw(true)
+        imageViewAddsEmojis = ImageView(context)
+        addView(imageViewAddsEmojis)
+        imageViewAddsEmojis.setImageResource(R.drawable.ic_add_emoji)
+        imageViewAddsEmojis.visibility = INVISIBLE
+    }
+
     fun checkZeroesCounters() {
         (children - imageViewAddsEmojis).forEachIndexed { index, emojiView ->
             if ((emojiView as EmojiView).selectCounter == 0) {
@@ -27,19 +38,6 @@ class FlexboxLayout @JvmOverloads constructor(
         }
         if (childCount == 1) imageViewAddsEmojis.visibility = INVISIBLE
     }
-
-    var imageViewAddsEmojis: ImageView
-    private val gap = dpToPx(7f)
-
-    init {
-        setWillNotDraw(true)
-
-        imageViewAddsEmojis = ImageView(context)
-        addView(imageViewAddsEmojis)
-        imageViewAddsEmojis.setImageResource(R.drawable.ic_add_emoji)
-        imageViewAddsEmojis.visibility = INVISIBLE
-    }
-
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val widthSpecSize = MeasureSpec.getSize(widthMeasureSpec)
@@ -94,11 +92,6 @@ class FlexboxLayout @JvmOverloads constructor(
             children.layout(children.left, children.top, children.right, children.bottom)
         }
         addView(imageViewAddsEmojis)
-    }
-
-    @Px
-    private fun dpToPx(dp: Float): Int {
-        return (dp * resources.displayMetrics.density).roundToInt()
     }
 
     override fun generateDefaultLayoutParams(): LayoutParams =

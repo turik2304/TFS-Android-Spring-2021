@@ -1540,7 +1540,7 @@ enum class EmojiEnum(val unicodeCodePoint: Int, val nameInZulip: String) {
     HOURGLASS(0x23f3, "hourglass");
 
     companion object {
-        fun getNameByCodePoint(codePoint: Int): Pair<String, String> {
+        fun getNameAndCodeByCodePoint(codePoint: Int): Pair<String, String> {
             val emoji = EmojiEnum.values().find { it.unicodeCodePoint == codePoint }
             val name = emoji?.nameInZulip ?: "none"
             val unicodeCodePoint = emoji?.unicodeCodePoint ?: 0

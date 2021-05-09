@@ -26,7 +26,6 @@ class MessageViewGroup @JvmOverloads constructor(
     defStyleRes: Int = 0,
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
-
     val userName: TextView
     val message: TextView
     var uid: Int = -1
@@ -69,6 +68,7 @@ class MessageViewGroup @JvmOverloads constructor(
                     val emojiView = EmojiView(context).apply {
                         emojiCode = reaction.emojiCode
                         selectCounter = reaction.counter
+                        uidOfMessage = uid
                         listOfUsersWhoClicked.addAll(reaction.usersWhoClicked)
                         isSelected = listOfUsersWhoClicked.contains(MyUserId.MY_USER_ID)
                     }
@@ -241,8 +241,3 @@ class MessageViewGroup @JvmOverloads constructor(
         )
     }
 }
-
-
-
-
-

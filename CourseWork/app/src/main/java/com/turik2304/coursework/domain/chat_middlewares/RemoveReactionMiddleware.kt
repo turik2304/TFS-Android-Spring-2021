@@ -7,7 +7,7 @@ import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatUiState
 import io.reactivex.rxjava3.core.Observable
 
-class SendMessageMiddleware : Middleware<ChatActions, ChatUiState> {
+class RemoveReactionMiddleware : Middleware<ChatActions, ChatUiState> {
 
     override val repository: Repository = ZulipRepository
 
@@ -15,18 +15,14 @@ class SendMessageMiddleware : Middleware<ChatActions, ChatUiState> {
         actions: Observable<ChatActions>,
         state: Observable<ChatUiState>
     ): Observable<ChatActions> {
-        return actions.ofType(ChatActions.SendMessage::class.java)
+        return actions.ofType(ChatActions.RemoveReaction::class.java)
             .flatMap { action ->
-                return@flatMap repository.sendMessage(
-                    nameOfTopic = action.nameOfTopic,
-                    nameOfStream = action.nameOfStream,
-                    message = action.message
+                return@flatMap repository.removeReaction(
+                    messageId = action.messageId,
+                    emojiName = action.emojiName,
+                    emojiCode = action.emojiCode
                 )
-                    .map<ChatActions> { rawMessage ->
-                        ChatActions.MessageSent(
-                            messages = listOf(rawMessage)
-                        )
-                    }
+                    .andThen<ChatActions>(Observable.just(ChatActions.ReactionRemoved))
                     .onErrorReturn { error -> ChatActions.ErrorLoading(error) }
             }
     }

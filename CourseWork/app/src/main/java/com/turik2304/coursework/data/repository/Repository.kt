@@ -8,6 +8,7 @@ import com.turik2304.coursework.data.network.models.response.GetOwnProfileRespon
 import com.turik2304.coursework.data.network.utils.ViewTypedConverter
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 
 interface Repository {
@@ -54,5 +55,12 @@ interface Repository {
         nameOfStream: String
     ): Observable<MessageData.EventRegistrationData>
 
-    fun sendMessage(nameOfTopic: String, nameOfStream: String, message: String): Observable<OutMessageUI>
+    fun sendMessage(
+        nameOfTopic: String,
+        nameOfStream: String,
+        message: String
+    ): Observable<OutMessageUI>
+
+    fun sendReaction(messageId: Int, emojiName: String, emojiCode: String): Completable
+    fun removeReaction(messageId: Int, emojiName: String, emojiCode: String): Completable
 }

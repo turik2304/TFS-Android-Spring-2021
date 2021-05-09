@@ -1,5 +1,6 @@
 package com.turik2304.coursework.data.network.utils
 
+import android.util.Log
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.models.data.Message
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
@@ -10,11 +11,9 @@ import java.util.*
 
 object MessageHelperImpl : MessageHelper {
 
-    override val reactionHelper: ReactionHelper
-        get() = ReactionHelperImpl
+    override val reactionHelper: ReactionHelper = ReactionHelperImpl
 
-    override val setOfRawIdsOfMessages: HashSet<Int>
-        get() = hashSetOf()
+    override val setOfRawIdsOfMessages: HashSet<Int> = hashSetOf()
 
     private var uidOfRawMessage = -1
 

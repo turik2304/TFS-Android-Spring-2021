@@ -25,9 +25,9 @@ class InMessageViewHolder(
     override fun bind(item: InMessageUI) {
         inMessageHolder.userName.text = item.userName
         inMessageHolder.message.text = item.message
+        inMessageHolder.uid = item.uid
         inMessageHolder.addReactions(item.reactions)
         inMessageHolder.dateInSeconds = item.dateInSeconds
-        inMessageHolder.uid = item.uid
         inMessageHolder.flexboxLayout.checkZeroesCounters()
         Glide.with(itemView).load(item.avatarUrl).into(inMessageHolder.avatarImageView)
     }

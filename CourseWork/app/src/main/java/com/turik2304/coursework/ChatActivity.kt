@@ -12,18 +12,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.data.EmojiEnum
-import com.turik2304.coursework.data.MyUserId
-import com.turik2304.coursework.data.network.RetroClient
 import com.turik2304.coursework.data.network.models.data.MessageData
-import com.turik2304.coursework.data.network.models.data.OperationEnum
-import com.turik2304.coursework.data.network.models.data.ReactionEvent
-import com.turik2304.coursework.data.network.utils.ReactionHelperImpl
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.domain.chat_middlewares.EventsLongpollingMiddleware
-import com.turik2304.coursework.domain.chat_middlewares.LoadMessagesMiddleware
-import com.turik2304.coursework.domain.chat_middlewares.RegisterEventsMiddleware
-import com.turik2304.coursework.domain.chat_middlewares.SendMessageMiddleware
+import com.turik2304.coursework.domain.chat_middlewares.*
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.ChatActions
@@ -39,16 +31,16 @@ import com.turik2304.coursework.presentation.recycler_view.holder_factories.Chat
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.view.FlexboxLayout
 import com.turik2304.coursework.presentation.view.MessageViewGroup
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     companion object {
-        const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
-        const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
         private const val POSITION_OF_UPPER_MESSAGE_IN_PAGE = 1
         private const val UID_OF_MESSAGE_AT_FIRST_LOAD = "newest"
+        const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
+        const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
+        var activityActions: PublishRelay<ChatActions>? = null
     }
 
     private lateinit var chatBinding: ActivityChatBinding
@@ -67,7 +59,9 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
             LoadMessagesMiddleware(),
             RegisterEventsMiddleware(),
             EventsLongpollingMiddleware(),
-            SendMessageMiddleware()
+            SendMessageMiddleware(),
+            AddReactionMiddleware(),
+            RemoveReactionMiddleware()
         ),
         initialState = ChatUiState()
     )
@@ -84,6 +78,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private var lastReactionEventId: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         chatBinding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(chatBinding.root)
@@ -268,6 +263,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     override fun onDestroy() {
         super.onDestroy()
+        activityActions = null
         viewBinding.clear()
     }
 
@@ -279,6 +275,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     }
 
     private fun initInitialState() {
+        activityActions = actions
         actions.accept(
             ChatActions.LoadItems(
                 needFirstPage = true,
@@ -349,37 +346,16 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         override fun onClick(widget: View) {
             val emojiCodeString = (widget as TextView).text.subSequence(start, end).toString()
             val emojiCode = emojiCodeString.codePointAt(0)
-            val nameAndZulipEmojiCode = EmojiEnum.getNameByCodePoint(emojiCode)
-            val name = nameAndZulipEmojiCode.first
+            val nameAndZulipEmojiCode = EmojiEnum.getNameAndCodeByCodePoint(emojiCode)
+            val zulipEmojiName = nameAndZulipEmojiCode.first
             val zulipEmojiCode = nameAndZulipEmojiCode.second
-            val reactionEvent = listOf(
-                ReactionEvent(
-                    id = "",
-                    operation = OperationEnum.ADD,
-                    emojiCode = zulipEmojiCode,
+            actions.accept(
+                ChatActions.AddReaction(
                     messageId = uidOfClickedMessage,
-                    userId = MyUserId.MY_USER_ID
+                    emojiName = zulipEmojiName,
+                    emojiCode = zulipEmojiCode
                 )
             )
-            val updatedList = ReactionHelperImpl
-                .updateReactions(asyncAdapter.items.currentList, reactionEvent)
-            asyncAdapter.updateList(updatedList)
-            chatBinding.chatShimmer.showShimmer(true)
-            wiring +=
-                RetroClient.zulipApi.sendReaction(uidOfClickedMessage, name, zulipEmojiCode)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        {
-                            chatBinding.chatShimmer.stopAndHideShimmer()
-                        },
-                        { onError ->
-                            chatBinding.chatShimmer.stopAndHideShimmer()
-                            Error.showError(
-                                applicationContext,
-                                onError
-                            )
-                        })
-
             dialog.dismiss()
         }
 

@@ -1,5 +1,6 @@
 package com.turik2304.coursework.presentation
 
+import android.util.Log
 import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.presentation.base.Reducer
 
@@ -69,8 +70,18 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
                 isLoading = false,
                 data = MessageData.SentMessageData(action.messages)
             )
-            is ChatActions.AddReaction -> TODO()
-            is ChatActions.RemoveReaction -> TODO()
+            is ChatActions.AddReaction -> ChatUiState(
+                isLoading = true
+            )
+            is ChatActions.ReactionAdded -> ChatUiState(
+                isLoading = false
+            )
+            is ChatActions.RemoveReaction -> ChatUiState(
+                isLoading = true
+            )
+            is ChatActions.ReactionRemoved -> ChatUiState(
+                isLoading = false
+            )
         }
     }
 

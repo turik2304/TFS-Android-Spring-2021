@@ -26,9 +26,9 @@ class OutMessageViewHolder(
 
     override fun bind(item: OutMessageUI) {
         outMessageHolder.message.text = item.message
-        outMessageHolder.addReactions(item.reactions)
         outMessageHolder.dateInSeconds = item.dateInSeconds
         outMessageHolder.uid = item.uid
+        outMessageHolder.addReactions(item.reactions)
         outMessageHolder.flexboxLayout.checkZeroesCounters()
         outMessageHolder.isMyMessage = true
     }

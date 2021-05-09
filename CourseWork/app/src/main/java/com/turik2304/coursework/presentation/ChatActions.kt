@@ -47,7 +47,8 @@ sealed class ChatActions : Action {
         val uidOfLastLoadedMessage: String
     ) : ChatActions()
 
-    data class MessagesLoaded(val messages: List<ViewTyped>, val isFirstPage: Boolean) : ChatActions()
+    data class MessagesLoaded(val messages: List<ViewTyped>, val isFirstPage: Boolean) :
+        ChatActions()
 
     object LoadedEmptyList : ChatActions()
 
@@ -63,7 +64,19 @@ sealed class ChatActions : Action {
         val messages: List<ViewTyped>
     ) : ChatActions()
 
-    object AddReaction : ChatActions()
+    class AddReaction(
+        val messageId: Int,
+        val emojiName: String,
+        val emojiCode: String
+    ) : ChatActions()
 
-    object RemoveReaction : ChatActions()
+    object ReactionAdded : ChatActions()
+
+    class RemoveReaction(
+        val messageId: Int,
+        val emojiName: String,
+        val emojiCode: String
+    ) : ChatActions()
+
+    object ReactionRemoved : ChatActions()
 }
