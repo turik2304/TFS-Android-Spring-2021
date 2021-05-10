@@ -11,23 +11,23 @@ import com.turik2304.coursework.databinding.FragmentOwnProfileBinding
 import com.turik2304.coursework.domain.OwnProfileMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.presentation.GeneralActions
-import com.turik2304.coursework.presentation.GeneralReducer
-import com.turik2304.coursework.presentation.GeneralUiState
+import com.turik2304.coursework.presentation.UsersActions
+import com.turik2304.coursework.presentation.UsersReducer
+import com.turik2304.coursework.presentation.UsersUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredTextStatus
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
-class OwnProfileFragment : MviFragment<GeneralActions, GeneralUiState>() {
+class OwnProfileFragment : MviFragment<UsersActions, UsersUiState>() {
 
-    override val store: Store<GeneralActions, GeneralUiState> = Store(
-        reducer = GeneralReducer(),
+    override val store: Store<UsersActions, UsersUiState> = Store(
+        reducer = UsersReducer(),
         middlewares = listOf(OwnProfileMiddleware()),
-        initialState = GeneralUiState()
+        initialState = UsersUiState()
     )
-    override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
+    override val actions: PublishRelay<UsersActions> = PublishRelay.create()
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -47,7 +47,7 @@ class OwnProfileFragment : MviFragment<GeneralActions, GeneralUiState>() {
         super.onViewCreated(view, savedInstanceState)
         compositeDisposable += store.wire()
         compositeDisposable += store.bind(this)
-        actions.accept(GeneralActions.LoadItems)
+        actions.accept(UsersActions.LoadUsers)
     }
 
     override fun onDestroyView() {
@@ -56,7 +56,7 @@ class OwnProfileFragment : MviFragment<GeneralActions, GeneralUiState>() {
         _binding = null
     }
 
-    override fun render(state: GeneralUiState) {
+    override fun render(state: UsersUiState) {
         if (state.isLoading) {
             binding.ownProfileShimmer.showShimmer(true)
         } else {

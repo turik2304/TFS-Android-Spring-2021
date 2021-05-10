@@ -8,7 +8,7 @@ import com.turik2304.coursework.presentation.recycler_view.holders.DateSeparator
 import com.turik2304.coursework.presentation.recycler_view.holders.InMessageViewHolder
 import com.turik2304.coursework.presentation.recycler_view.holders.OutMessageViewHolder
 
-class ChatHolderFactory() : HolderFactory() {
+class ChatHolderFactory : HolderFactory() {
 
     override fun createViewHolder(view: View, viewType: Int): BaseViewHolder<*>? {
         return when (viewType) {

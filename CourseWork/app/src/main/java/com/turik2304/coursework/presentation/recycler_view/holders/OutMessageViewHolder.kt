@@ -8,14 +8,14 @@ import com.turik2304.coursework.presentation.view.MessageViewGroup
 
 class OutMessageViewHolder(
     view: View,
-    click: RecyclerItemClicksObservable,
+    clicks: RecyclerItemClicksObservable,
 ) : BaseViewHolder<OutMessageUI>(view) {
 
     private val outMessageHolder = view as MessageViewGroup
 
     init {
-        click.acceptLong(this)
-        click.accept(outMessageHolder.flexboxLayout.imageViewAddsEmojis, this)
+        clicks.acceptLong(this)
+        clicks.accept(outMessageHolder.flexboxLayout.imageViewAddsEmojis, this)
         outMessageHolder.userName.height = 0
         outMessageHolder.avatarImageView.layoutParams.width = 0
         outMessageHolder.removeViews(0, 2)

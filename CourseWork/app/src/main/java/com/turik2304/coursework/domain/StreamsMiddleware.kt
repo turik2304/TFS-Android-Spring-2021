@@ -2,27 +2,27 @@ package com.turik2304.coursework.domain
 
 import com.turik2304.coursework.data.repository.Repository
 import com.turik2304.coursework.data.repository.ZulipRepository
-import com.turik2304.coursework.presentation.GeneralActions
-import com.turik2304.coursework.presentation.GeneralUiState
+import com.turik2304.coursework.presentation.UsersActions
+import com.turik2304.coursework.presentation.UsersUiState
 import io.reactivex.rxjava3.core.Observable
 
 class StreamsMiddleware(private val needAllStreams: Boolean) :
-    Middleware<GeneralActions, GeneralUiState> {
+    Middleware<UsersActions, UsersUiState> {
 
     override val repository: Repository = ZulipRepository
 
     override fun bind(
-        actions: Observable<GeneralActions>,
-        state: Observable<GeneralUiState>
-    ): Observable<GeneralActions> {
-        return actions.ofType(GeneralActions.LoadItems::class.java)
+        actions: Observable<UsersActions>,
+        state: Observable<UsersUiState>
+    ): Observable<UsersActions> {
+        return actions.ofType(UsersActions.LoadUsers::class.java)
             .flatMap {
                 return@flatMap ZulipRepository.getStreams(needAllStreams = needAllStreams)
-                    .map<GeneralActions> { result ->
+                    .map<UsersActions> { result ->
                         val streams = repository.converter.convertToViewTypedItems(result)
-                        GeneralActions.ItemsLoaded(streams)
+                        UsersActions.UsersLoaded(streams)
                     }
-                    .onErrorReturn { error -> GeneralActions.ErrorLoading(error) }
+                    .onErrorReturn { error -> UsersActions.ErrorLoading(error) }
             }
     }
 }

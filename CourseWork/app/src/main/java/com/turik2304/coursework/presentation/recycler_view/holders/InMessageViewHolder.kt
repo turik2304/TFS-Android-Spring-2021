@@ -9,14 +9,14 @@ import com.turik2304.coursework.presentation.view.MessageViewGroup
 
 class InMessageViewHolder(
     view: View,
-    click: RecyclerItemClicksObservable,
+    clicks: RecyclerItemClicksObservable,
 ) : BaseViewHolder<InMessageUI>(view) {
 
     private val inMessageHolder = view as MessageViewGroup
 
     init {
-        click.acceptLong(this)
-        click.accept(inMessageHolder.flexboxLayout.imageViewAddsEmojis, this)
+        clicks.acceptLong(this)
+        clicks.accept(inMessageHolder.flexboxLayout.imageViewAddsEmojis, this)
     }
 
     override fun bind(item: InMessageUI) {

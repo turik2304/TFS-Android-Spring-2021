@@ -18,9 +18,9 @@ import com.turik2304.coursework.databinding.FragmentChannelsBinding
 import com.turik2304.coursework.domain.StreamsMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.presentation.GeneralActions
-import com.turik2304.coursework.presentation.GeneralReducer
-import com.turik2304.coursework.presentation.GeneralUiState
+import com.turik2304.coursework.presentation.UsersActions
+import com.turik2304.coursework.presentation.UsersReducer
+import com.turik2304.coursework.presentation.UsersUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
@@ -32,19 +32,19 @@ import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
-class AllStreamsFragment : MviFragment<GeneralActions, GeneralUiState>() {
+class AllStreamsFragment : MviFragment<UsersActions, UsersUiState>() {
 
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var listOfStreams: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
-    override val store: Store<GeneralActions, GeneralUiState> =
+    override val store: Store<UsersActions, UsersUiState> =
         Store(
-            reducer = GeneralReducer(),
+            reducer = UsersReducer(),
             middlewares = listOf(StreamsMiddleware(needAllStreams = true)),
-            initialState = GeneralUiState()
+            initialState = UsersUiState()
         )
-    override val actions: PublishRelay<GeneralActions> = PublishRelay.create()
+    override val actions: PublishRelay<UsersActions> = PublishRelay.create()
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -86,14 +86,14 @@ class AllStreamsFragment : MviFragment<GeneralActions, GeneralUiState>() {
                 }
             }
         }
-        val holderFactory = MainHolderFactory(clickListener)
+        val holderFactory = MainHolderFactory()
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         binding.recycleViewAllStreams.adapter = asyncAdapter
 
         compositeDisposable += store.wire()
         compositeDisposable += store.bind(this)
-        actions.accept(GeneralActions.LoadItems)
+        actions.accept(UsersActions.LoadUsers)
     }
 
     override fun onDestroy() {
@@ -107,7 +107,7 @@ class AllStreamsFragment : MviFragment<GeneralActions, GeneralUiState>() {
         _parentBinding = null
     }
 
-    override fun render(state: GeneralUiState) {
+    override fun render(state: UsersUiState) {
         if (state.isLoading) {
             parentBinding.tabLayoutShimmer.showShimmer(true)
         } else {

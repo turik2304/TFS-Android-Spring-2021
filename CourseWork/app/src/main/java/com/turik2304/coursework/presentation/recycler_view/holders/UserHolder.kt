@@ -7,12 +7,13 @@ import com.bumptech.glide.Glide
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.R
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
+import com.turik2304.coursework.presentation.recycler_view.base.RecyclerItemClicksObservable
 import com.turik2304.coursework.presentation.recycler_view.items.UserUI
 import com.turik2304.coursework.presentation.utils.SetStatusUtil.setColoredImageStatus
 
 class UserHolder(
     view: View,
-    startChatClick: (View) -> Unit,
+    clicks: RecyclerItemClicksObservable,
 ) : BaseViewHolder<UserUI>(view) {
 
     private val userName = view.findViewById<TextView>(R.id.tvUserNamePeopleTab)
@@ -21,7 +22,7 @@ class UserHolder(
     private val status = view.findViewById<ImageView>(R.id.imUserStatus)
 
     init {
-        view.setOnClickListener(startChatClick)
+        clicks.accept(this)
         (view as ShimmerFrameLayout).hideShimmer()
         avatar.clipToOutline = true
     }
