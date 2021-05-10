@@ -278,6 +278,7 @@ object ZulipRepository : Repository {
                     )
                 }
             }
+            .retry()
     }
 
     override fun updateMessagesByReactionEvent(
@@ -304,6 +305,7 @@ object ZulipRepository : Repository {
                     polledData = emptyList()
                 )
             }
+            .retry()
     }
 
     override fun updateMessagesByEvents(
