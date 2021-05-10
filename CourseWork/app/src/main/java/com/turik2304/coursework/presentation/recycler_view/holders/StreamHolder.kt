@@ -3,7 +3,6 @@ package com.turik2304.coursework.presentation.recycler_view.holders
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.R
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
 import com.turik2304.coursework.presentation.recycler_view.base.RecyclerItemClicksObservable

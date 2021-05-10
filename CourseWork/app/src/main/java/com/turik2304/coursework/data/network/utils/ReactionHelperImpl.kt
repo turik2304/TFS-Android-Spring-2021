@@ -9,7 +9,7 @@ import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 import com.turik2304.coursework.presentation.recycler_view.items.ReactionUI
 import java.util.*
 
-object ReactionHelperImpl: ReactionHelper {
+object ReactionHelperImpl : ReactionHelper {
 
     override fun updateReactions(
         currentList: List<ViewTyped>,

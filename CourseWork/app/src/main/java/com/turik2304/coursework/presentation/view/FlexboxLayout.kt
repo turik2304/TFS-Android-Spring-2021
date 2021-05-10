@@ -10,7 +10,6 @@ import android.widget.ImageView
 import androidx.core.view.children
 import com.turik2304.coursework.R
 import com.turik2304.coursework.extensions.dpToPx
-import kotlin.math.roundToInt
 
 class FlexboxLayout @JvmOverloads constructor(
     context: Context,

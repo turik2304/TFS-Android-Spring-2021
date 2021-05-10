@@ -23,16 +23,8 @@ class Converters {
     fun toReactionsList(reaction: String) = Json.decodeFromString<List<Reaction>>(reaction)
 
     @TypeConverter
-    fun fromIntList(list: List<Int>) = Json.encodeToString(list)
-
-    @TypeConverter
-    fun toIntList(int: String) = Json.decodeFromString<List<Int>>(int)
-
-    @TypeConverter
     fun fromStatusEnum(statusEnum: StatusEnum) = Json.encodeToString(statusEnum)
 
     @TypeConverter
     fun toStatusEnum(statusEnum: String) = Json.decodeFromString<StatusEnum>(statusEnum)
-
-
 }

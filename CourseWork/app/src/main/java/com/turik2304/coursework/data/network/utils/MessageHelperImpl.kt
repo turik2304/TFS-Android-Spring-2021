@@ -1,6 +1,5 @@
 package com.turik2304.coursework.data.network.utils
 
-import android.util.Log
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.models.data.Message
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped

@@ -13,7 +13,6 @@ import com.turik2304.coursework.ChatActivity
 import com.turik2304.coursework.R
 import com.turik2304.coursework.databinding.FragmentAllStreamsBinding
 import com.turik2304.coursework.databinding.FragmentChannelsBinding
-import com.turik2304.coursework.databinding.FragmentSubscribedBinding
 import com.turik2304.coursework.domain.StreamsMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer

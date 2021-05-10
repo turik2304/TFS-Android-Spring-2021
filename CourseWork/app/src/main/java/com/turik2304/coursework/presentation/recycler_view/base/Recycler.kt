@@ -41,8 +41,8 @@ interface Recycler<T : ViewTyped> {
     val adapter: BaseAdapter<T>
 
     fun setItems(items: List<T>)
-    fun <R: ViewTyped> clickedItem(vararg viewType: Int): Observable<R>
-    fun <R: ViewTyped> clickedViewId(viewType: Int, viewId: Int): Observable<R>
+    fun <R : ViewTyped> clickedItem(vararg viewType: Int): Observable<R>
+    fun <R : ViewTyped> clickedViewId(viewType: Int, viewId: Int): Observable<R>
     fun repeatOnErrorClick(): Observable<*>
 
 

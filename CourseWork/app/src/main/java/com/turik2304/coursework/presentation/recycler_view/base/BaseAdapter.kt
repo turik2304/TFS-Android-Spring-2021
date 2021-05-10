@@ -1,7 +1,6 @@
 package com.turik2304.coursework.presentation.recycler_view.base
 
 import android.view.ViewGroup
-import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.RecyclerView
 
 abstract class BaseAdapter<T : ViewTyped>(internal var holderFactory: HolderFactory) :

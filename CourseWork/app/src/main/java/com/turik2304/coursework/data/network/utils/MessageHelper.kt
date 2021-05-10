@@ -13,6 +13,6 @@ interface MessageHelper {
     ): List<ViewTyped>
 
     fun getFormattedDate(dateOfMessageInSeconds: Int): String
-    fun generateRawMessage(message: String) : OutMessageUI
+    fun generateRawMessage(message: String): OutMessageUI
     fun filterRawMessages(messages: List<ViewTyped>): List<ViewTyped>
 }

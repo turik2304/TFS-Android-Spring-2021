@@ -1,11 +1,11 @@
 package com.turik2304.coursework.domain.chat_middlewares
 
+import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.data.repository.Repository
 import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.domain.Middleware
 import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatUiState
-import com.turik2304.coursework.data.network.models.data.MessageData
 import io.reactivex.rxjava3.core.Observable
 
 class EventsLongpollingMiddleware : Middleware<ChatActions, ChatUiState> {

@@ -1,14 +1,12 @@
 package com.turik2304.coursework.presentation.recycler_view.holders
 
 import android.graphics.Color
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.turik2304.coursework.R
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
 import com.turik2304.coursework.presentation.recycler_view.base.RecyclerItemClicksObservable
 import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
-import java.lang.Exception
 
 class TopicHolder(
     view: View,
@@ -24,9 +22,14 @@ class TopicHolder(
     override fun bind(item: TopicUI) {
         nameOfTopic.text = item.nameOfTopic
         try {
-            itemView.setBackgroundColor(Color.parseColor(item.streamColor));
+            itemView.setBackgroundColor(Color.parseColor(item.streamColor))
         } catch (e: Exception) {
-            itemView.setBackgroundColor(nameOfTopic.resources.getColor(R.color.teal_700, nameOfTopic.context.theme))
+            itemView.setBackgroundColor(
+                nameOfTopic.resources.getColor(
+                    R.color.teal_700,
+                    nameOfTopic.context.theme
+                )
+            )
         }
 
     }
