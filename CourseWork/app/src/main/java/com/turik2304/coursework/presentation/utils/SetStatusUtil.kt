@@ -18,6 +18,7 @@ object SetStatusUtil {
                         context?.theme
                     )
                 )
+                this.text = resources.getString(R.string.status_active)
             }
             StatusEnum.IDLE -> {
                 this.setTextColor(
@@ -26,6 +27,7 @@ object SetStatusUtil {
                         context?.theme
                     )
                 )
+                this.text = resources.getString(R.string.status_idle)
             }
             else -> {
                 this.setTextColor(
@@ -34,6 +36,7 @@ object SetStatusUtil {
                         context?.theme
                     )
                 )
+                this.text = resources.getString(R.string.status_offline)
             }
         }
     }

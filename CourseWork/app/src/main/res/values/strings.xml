@@ -12,5 +12,9 @@
     <string name="topic_toolbar">#general</string>
     <string name="name_of_topic">Topic:  #%1$s</string>
     <string name="name_of_stream">#%1$s</string>
-    <string name="send_message_hint">Написать...</string>
+    <string name="send_message_hint">Написать…</string>
+    <string name="status_active">active</string>
+    <string name="status_idle">idle</string>
+    <string name="status_offline">offline</string>
+
 </resources>

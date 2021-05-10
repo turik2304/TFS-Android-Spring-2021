@@ -32,7 +32,6 @@ class ProfileDetailsFragment : Fragment() {
 
         binding.tvUserNameDetailsProfile.text = requireArguments().getString(ARG_USER_NAME, "none")
         val statusEnum = requireArguments().getSerializable(ARG_STATUS) as StatusEnum
-        binding.tvStatusProfileDetails.text = statusEnum.status
         binding.tvStatusProfileDetails.setColoredTextStatus(statusEnum)
         val avatarUrl = requireArguments().getString(ARG_AVATAR_URL, "")
         Glide.with(this).load(avatarUrl).into(binding.imUserAvatarProfileTab)

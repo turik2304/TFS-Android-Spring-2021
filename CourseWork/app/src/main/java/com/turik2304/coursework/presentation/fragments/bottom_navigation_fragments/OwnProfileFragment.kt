@@ -69,7 +69,6 @@ class OwnProfileFragment : MviFragment<UsersActions, UsersUiState>() {
         if (state.data != null) {
             val ownProfileInfo = state.data as GetOwnProfileResponse
             binding.tvUserNameProfileTab.text = ownProfileInfo.name
-            binding.tvStatusProfile.text = ownProfileInfo.statusEnum.status
             binding.tvStatusProfile.setColoredTextStatus(ownProfileInfo.statusEnum)
             val avatarUrl = ownProfileInfo.avatarUrl
             Glide.with(this).load(avatarUrl).into(binding.imUserAvatarProfileTab)

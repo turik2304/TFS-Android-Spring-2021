@@ -17,13 +17,13 @@ class Aggregated(
 )
 
 @Serializable
-enum class StatusEnum(val status: String) {
+enum class StatusEnum {
     @SerialName("active")
-    ACTIVE("active"),
+    ACTIVE,
 
     @SerialName("idle")
-    IDLE("idle"),
+    IDLE,
 
     @SerialName("offline")
-    OFFLINE("offline")
+    OFFLINE
 }
