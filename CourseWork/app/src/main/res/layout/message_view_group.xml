@@ -7,19 +7,19 @@
 
     <ImageView
         android:id="@+id/avatarView"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="10dp"
+        android:layout_width="37dp"
+        android:layout_height="37dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="20dp"
         android:background="@drawable/round_avatar"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_launcher_background" />
 
     <TextView
         android:id="@+id/userName"
+        android:layout_marginTop="8dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/round_message_top"
         android:text="@string/userName"
         android:textColor="@color/teal_user_name"
         android:textSize="14sp"
@@ -29,7 +29,7 @@
         android:id="@+id/message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/round_message_bottom"
+        android:layout_marginBottom="8dp"
         android:maxWidth="217dp"
         android:text="@string/message"
         android:textSize="16sp" />
@@ -38,6 +38,7 @@
         android:id="@+id/flexBoxLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp" />
+        android:layout_marginStart="-10dp"
+        android:layout_marginTop="7dp" />
 
 </merge>

@@ -1,6 +1,5 @@
 package com.turik2304.coursework
 
-import android.content.Context
 import android.os.Bundle
 import android.text.*
 import android.text.method.LinkMovementMethod
@@ -10,76 +9,69 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.toSpannable
-import com.facebook.shimmer.ShimmerFrameLayout
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.turik2304.coursework.network.LoadersID.MESSAGES_LOADER_ID
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.network.FakeServerApi
-import com.turik2304.coursework.network.ServerApi
+import com.turik2304.coursework.extensions.addTo
+import com.turik2304.coursework.extensions.setTo
+import com.turik2304.coursework.extensions.stopAndHideShimmer
+import com.turik2304.coursework.network.RetroClient
+import com.turik2304.coursework.network.ZulipRepository
+import com.turik2304.coursework.network.models.data.OperationEnum
+import com.turik2304.coursework.network.models.data.ReactionEvent
+import com.turik2304.coursework.network.utils.NarrowConstructor
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
+import com.turik2304.coursework.recycler_view_base.PaginationScrollListener
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.ChatHolderFactory
+import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.disposables.SerialDisposable
+import io.reactivex.rxjava3.schedulers.Schedulers
+import io.reactivex.rxjava3.subjects.PublishSubject
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 class ChatActivity : AppCompatActivity() {
 
     companion object {
-
-        lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-        lateinit var nameOfTopic: String
-        lateinit var nameOfStream: String
-
-        val compositeDisposable = CompositeDisposable()
-        val api: ServerApi = FakeServerApi()
-
-        fun updateMessages(
-            context: Context,
-            shimmer: ShimmerFrameLayout,
-            runnable: Runnable? = null
-        ) {
-            compositeDisposable.add(
-                api.getMessageUIListFromServer(
-                    nameOfTopic,
-                    nameOfStream,
-                    context as AppCompatActivity,
-                    MESSAGES_LOADER_ID++
-                )
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        { list ->
-                            asyncAdapter.items.submitList(list) {
-                                runnable?.run()
-                            }
-                            shimmer.stopAndHideShimmer()
-                        },
-                        { onError ->
-                            Error.showError(
-                                context,
-                                onError
-                            )
-                            shimmer.stopAndHideShimmer()
-                        })
-            )
-        }
-
         const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
         const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
     }
 
-    private lateinit var chatListBinding: ActivityChatBinding
+    private lateinit var chatBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
-
     private lateinit var dialog: BottomSheetDialog
-    private var uidOfClickedMessage: String = ""
+    private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
+    private lateinit var nameOfTopic: String
+    private lateinit var nameOfStream: String
+    private lateinit var currentList: MutableList<ViewTyped>
 
+    private val compositeDisposable = CompositeDisposable()
+    private val longpollingDisposable = CompositeDisposable()
+
+    private var messagesQueueId: String = ""
+    private var lastMessageEventId: String = ""
+    private var isFirstLoading = true
+    private var isLastPage = false
+    private var isLoading = false
+    private var uidOfLastLoadedMessage = "newest"
+    private var uidOfClickedMessage: Int = -1
+    private val setOfRawUidsOfMessages = hashSetOf<Int>()
+
+    private var reactionsQueueId: String = ""
+    private var lastReactionEventId: String = ""
+    private val updateReactionsOfMessagesSubject = PublishSubject.create<List<ViewTyped>>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        chatListBinding = ActivityChatBinding.inflate(layoutInflater)
-        setContentView(chatListBinding.root)
+        chatBinding = ActivityChatBinding.inflate(layoutInflater)
+        setContentView(chatBinding.root)
 
         dialog = BottomSheetDialog(this)
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
@@ -87,12 +79,11 @@ class ChatActivity : AppCompatActivity() {
 
         nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM).toString()
         nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC).toString()
-        chatListBinding.tvNameOfStream.text = "#$nameOfStream"
-        chatListBinding.tvNameOfTopic.text = "Topic:  #${nameOfTopic?.toLowerCase()}"
-        chatListBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
+        chatBinding.tvNameOfStream.text = "#$nameOfStream"
+        chatBinding.tvNameOfTopic.text = "Topic:  #${nameOfTopic.toLowerCase()}"
+        chatBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
 
         fillTextViewWithEmojisAsSpannableText(
-            this,
             textView = dialogBinding.emojiListTextView,
             emojiCodeRange = 0x1F600..0x1F645
         )
@@ -115,37 +106,84 @@ class ChatActivity : AppCompatActivity() {
         val holderFactory = ChatHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
-        chatListBinding.recycleView.adapter = asyncAdapter
-        updateMessages(this, chatListBinding.chatShimmer)
+        chatBinding.recycleView.adapter = asyncAdapter
 
-        chatListBinding.imageViewSendMessage.setOnClickListener {
-            if (chatListBinding.editTextEnterMessage.text.isNotEmpty()) {
-                val message = chatListBinding.editTextEnterMessage.text.toString()
-                chatListBinding.chatShimmer.showShimmer(true)
-                compositeDisposable.add(
-                    api.sendMessageToServer(nameOfTopic, nameOfStream, message)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                            {
-                                updateMessages(this, chatListBinding.chatShimmer) {
-                                    chatListBinding.recycleView.smoothScrollToPosition(
-                                        asyncAdapter.itemCount
-                                    )
-                                }
-                            },
-                            { onError ->
-                                Error.showError(
-                                    applicationContext,
-                                    onError
-                                )
-                                chatListBinding.chatShimmer.stopAndHideShimmer()
-                            })
+        loadMessages(
+            uidOfLastLoadedMessage,
+            needFirstPage = true
+        ) {
+            chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+        }
+
+        //catches reactions events
+        updateReactionsOfMessagesSubject
+            .debounce(2, TimeUnit.SECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { result ->
+                val actualChanges = asyncAdapter.items.currentList - result
+                asyncAdapter.updateList((result + actualChanges).distinctBy { it.uid })
+            }
+            .addTo(compositeDisposable)
+
+
+        chatBinding.recycleView.addOnScrollListener(object :
+            PaginationScrollListener(chatBinding.recycleView.layoutManager as LinearLayoutManager) {
+            override fun isLastPage(): Boolean {
+                return isLastPage
+            }
+
+            override fun isLoading(): Boolean {
+                return isLoading
+            }
+
+            override fun loadMoreItems() {
+                loadMessages(uidOfLastLoadedMessage)
+            }
+        })
+
+        chatBinding.imageViewSendMessage.setOnClickListener {
+            if (chatBinding.editTextEnterMessage.text.isNotEmpty()) {
+                val message = chatBinding.editTextEnterMessage.text.toString()
+                chatBinding.chatShimmer.showShimmer(true)
+                val rawMessage = OutMessageUI(
+                    nameOfStream = nameOfStream,
+                    nameOfTopic = nameOfTopic,
+                    userName = "",
+                    userId = MyUserId.MY_USER_ID,
+                    message = message,
+                    reactions = emptyList(),
+                    dateInSeconds = (Calendar.getInstance().timeInMillis / 1000).toInt(),
+                    uid = -abs(asyncAdapter.items.currentList.last().uid) - 1
                 )
-                chatListBinding.editTextEnterMessage.text.clear()
+                setOfRawUidsOfMessages.add(rawMessage.uid)
+                val newList = asyncAdapter.items.currentList + listOf(rawMessage)
+                asyncAdapter.updateList(newList) {
+                    chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+                }
+                RetroClient.zulipApi.sendMessage(
+                    nameOfStream = nameOfStream,
+                    nameOfTopic = nameOfTopic,
+                    message = message
+                )
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        {
+                            chatBinding.chatShimmer.stopAndHideShimmer()
+                        },
+                        { onError ->
+                            Error.showError(
+                                applicationContext,
+                                onError
+                            )
+                            chatBinding.chatShimmer.stopAndHideShimmer()
+                        })
+                    .addTo(compositeDisposable)
+                chatBinding.editTextEnterMessage.text.clear()
             }
         }
 
-        chatListBinding.editTextEnterMessage.addTextChangedListener(object : TextWatcher {
+        chatBinding.editTextEnterMessage.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(
                 s: CharSequence?,
                 start: Int,
@@ -161,8 +199,8 @@ class ChatActivity : AppCompatActivity() {
                 count: Int
             ) {
                 when (message.length) {
-                    0 -> chatListBinding.imageViewSendMessage.setImageResource(R.drawable.ic_add_files)
-                    1 -> chatListBinding.imageViewSendMessage.setImageResource(R.drawable.ic_send_message)
+                    0 -> chatBinding.imageViewSendMessage.setImageResource(R.drawable.ic_add_files)
+                    1 -> chatBinding.imageViewSendMessage.setImageResource(R.drawable.ic_send_message)
                 }
             }
 
@@ -171,26 +209,160 @@ class ChatActivity : AppCompatActivity() {
         })
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        MESSAGES_LOADER_ID--
-    }
-
     override fun onStart() {
         super.onStart()
-        chatListBinding.chatShimmer.startShimmer()
+        chatBinding.chatShimmer.startShimmer()
+        val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
+        if (isFirstLoading) {
+            RetroClient.zulipApi.registerMessageEvents(narrow)
+                .onErrorComplete()
+                .subscribeOn(Schedulers.io())
+                .subscribe { registerMessagesEventsResponse ->
+                    messagesQueueId = registerMessagesEventsResponse.queueId
+                    lastMessageEventId = registerMessagesEventsResponse.lastEventId
+                    initMessagesLongpolling()
+                    RetroClient.zulipApi.registerReactionEvents(narrow)
+                        .onErrorComplete()
+                        .subscribe { registerReactionsEventsResponse ->
+                            reactionsQueueId = registerReactionsEventsResponse.queueId
+                            lastReactionEventId =
+                                registerReactionsEventsResponse.lastEventId
+                            initReactionsLongpolling()
+                            isFirstLoading = false
+                        }
+                        .addTo(longpollingDisposable)
+                }
+                .addTo(longpollingDisposable)
+        } else {
+            initMessagesLongpolling()
+            initReactionsLongpolling()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        longpollingDisposable.clear()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        asyncAdapter.items.submitList(null)
+        RetroClient.zulipApi.unregisterEvents(messagesQueueId)
+            .onErrorComplete()
+            .subscribeOn(Schedulers.io())
+            .subscribe {
+                RetroClient.zulipApi.unregisterEvents(reactionsQueueId)
+                    .onErrorComplete()
+                    .subscribe()
+            }
+        asyncAdapter.updateList(null)
         asyncAdapter.holderFactory = null
-        chatListBinding.recycleView.adapter = null
+        chatBinding.recycleView.adapter = null
         compositeDisposable.clear()
+        isLastPage = false
+        isLoading = false
+        uidOfLastLoadedMessage = "newest"
+    }
+
+    private fun AsyncAdapter<ViewTyped>.updateList(
+        newList: List<ViewTyped>?,
+        runnable: Runnable? = null
+    ) {
+        this.items.submitList(newList) {
+            runnable?.run()
+            currentList = this.items.currentList
+        }
+
+    }
+
+    private fun loadMessages(
+        uidOfLastLoadedMessage: String,
+        needFirstPage: Boolean = false,
+        runnable: Runnable? = null
+    ) {
+        isLoading = true
+        ZulipRepository.getMessages(
+            nameOfTopic,
+            nameOfStream,
+            uidOfLastLoadedMessage,
+            needFirstPage
+        )
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { messages ->
+                    if (messages.isNotEmpty()) {
+                        val lastUidOfMessageInPage = messages[1].uid.toString()
+                        if (lastUidOfMessageInPage != uidOfLastLoadedMessage) {
+                            val updatedList =
+                                if (needFirstPage) messages else messages + asyncAdapter.items.currentList
+                            asyncAdapter.updateList(updatedList.distinct(), runnable)
+                            this.uidOfLastLoadedMessage = lastUidOfMessageInPage
+                            isLoading = false
+                        } else isLastPage = true
+                        chatBinding.chatShimmer.stopAndHideShimmer()
+                    }
+                },
+                { onError ->
+                    Error.showError(
+                        applicationContext,
+                        onError
+                    )
+                    chatBinding.chatShimmer.stopAndHideShimmer()
+                })
+            .addTo(compositeDisposable)
+    }
+
+    private fun initMessagesLongpolling() {
+        val serialDisposable = SerialDisposable()
+        longpollingDisposable.add(serialDisposable)
+        Observable.interval(2, TimeUnit.SECONDS)
+            .flatMap {
+                ZulipRepository.getMessageEvent(
+                    messagesQueueId,
+                    lastMessageEventId,
+                    nameOfTopic,
+                    nameOfStream,
+                    asyncAdapter.items.currentList,
+                    setOfRawUidsOfMessages
+                )
+            }
+            .retry()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { eventIdAndNewMessages ->
+                if (eventIdAndNewMessages.second.isNotEmpty()) {
+                    lastMessageEventId = eventIdAndNewMessages.first
+                    asyncAdapter.updateList(eventIdAndNewMessages.second) {
+                        chatBinding.recycleView.smoothScrollToPosition(
+                            asyncAdapter.itemCount
+                        )
+                    }
+                }
+            }
+            .setTo(serialDisposable)
+    }
+
+    private fun initReactionsLongpolling() {
+        val serialDisposable = SerialDisposable()
+        longpollingDisposable.add(serialDisposable)
+        Observable.interval(2, TimeUnit.SECONDS)
+            .flatMap {
+                ZulipRepository.getReactionEvent(
+                    reactionsQueueId,
+                    lastReactionEventId,
+                    currentList
+                )
+            }
+            .retry()
+            .subscribe { eventIdToUpdatedList ->
+                if (eventIdToUpdatedList.second.isNotEmpty()) {
+                    lastReactionEventId = eventIdToUpdatedList.first
+                    currentList = eventIdToUpdatedList.second.toMutableList()
+                    updateReactionsOfMessagesSubject.onNext(eventIdToUpdatedList.second)
+                }
+            }
+            .setTo(serialDisposable)
     }
 
     private fun fillTextViewWithEmojisAsSpannableText(
-        context: Context,
         textView: TextView,
         emojiCodeRange: IntRange
     ) {
@@ -201,7 +373,7 @@ class ChatActivity : AppCompatActivity() {
             stringBuilder.append(SpannableString(emojiString))
             val curInd = stringBuilder.length
             stringBuilder.setSpan(
-                MyClickableSpan(context, prevInd, curInd),
+                MyClickableSpan(prevInd, curInd),
                 prevInd,
                 curInd,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -211,30 +383,45 @@ class ChatActivity : AppCompatActivity() {
         textView.movementMethod = LinkMovementMethod.getInstance()
     }
 
-    inner class MyClickableSpan(private val context: Context, private val start: Int, private val end: Int) :
+    inner class MyClickableSpan(
+        private val start: Int,
+        private val end: Int
+    ) :
         ClickableSpan() {
-
         override fun onClick(widget: View) {
             val emojiCodeString = (widget as TextView).text.subSequence(start, end).toString()
             val emojiCode = emojiCodeString.codePointAt(0)
             val nameAndZulipEmojiCode = EmojiEnum.getNameByCodePoint(emojiCode)
             val name = nameAndZulipEmojiCode.first
             val zulipEmojiCode = nameAndZulipEmojiCode.second
-            chatListBinding.chatShimmer.showShimmer(true)
-            compositeDisposable.add(
-                api.sendReaction(uidOfClickedMessage, zulipEmojiCode, name)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        {
-                            updateMessages(context, chatListBinding.chatShimmer)
-                        },
-                        { onError ->
-                            Error.showError(
-                                applicationContext,
-                                onError
-                            )
-                        })
+            val reactionEvent = listOf(
+                ReactionEvent(
+                    id = "",
+                    operation = OperationEnum.ADD,
+                    emojiCode = zulipEmojiCode,
+                    messageId = uidOfClickedMessage,
+                    userId = MyUserId.MY_USER_ID
+                )
             )
+            val updatedList =
+                ZulipRepository.updateReactions(asyncAdapter.items.currentList, reactionEvent)
+            asyncAdapter.updateList(updatedList)
+            chatBinding.chatShimmer.showShimmer(true)
+            RetroClient.zulipApi.sendReaction(uidOfClickedMessage, name, zulipEmojiCode)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    {
+                        chatBinding.chatShimmer.stopAndHideShimmer()
+                    },
+                    { onError ->
+                        chatBinding.chatShimmer.stopAndHideShimmer()
+                        Error.showError(
+                            applicationContext,
+                            onError
+                        )
+                    })
+                .addTo(compositeDisposable)
+
             dialog.dismiss()
         }
 

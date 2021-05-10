@@ -2,7 +2,6 @@ package com.turik2304.coursework
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -79,7 +78,7 @@ class FlexboxLayout @JvmOverloads constructor(
         }
 
         setMeasuredDimension(
-            resolveSize(widthOfLayout, widthMeasureSpec),
+            resolveSize(widthOfLayout - gap, widthMeasureSpec),
             resolveSize(
                 if (heightOfLayout == 0) maxHeightOfChild else heightOfLayout,
                 heightMeasureSpec

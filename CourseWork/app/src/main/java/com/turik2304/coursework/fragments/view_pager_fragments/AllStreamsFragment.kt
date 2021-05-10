@@ -11,10 +11,13 @@ import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
-import com.turik2304.coursework.*
-import com.turik2304.coursework.network.FakeServerApi
-import com.turik2304.coursework.network.LoadersID
-import com.turik2304.coursework.network.ServerApi
+import com.turik2304.coursework.ChatActivity
+import com.turik2304.coursework.Error
+import com.turik2304.coursework.R
+import com.turik2304.coursework.Search
+import com.turik2304.coursework.extensions.addTo
+import com.turik2304.coursework.extensions.stopAndHideShimmer
+import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
@@ -27,7 +30,6 @@ class AllStreamsFragment : Fragment() {
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var listOfStreams: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
-    private val api: ServerApi = FakeServerApi()
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
@@ -62,8 +64,7 @@ class AllStreamsFragment : Fragment() {
 
         val asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewAllStreams.adapter = asyncAdapter
-        compositeDisposable.add(
-        api.getStreamUIListFromServer(true, requireActivity(), LoadersID.ALL_STREAMS_LOADER_ID)
+        ZulipRepository.getStreams(true)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { streamList ->
@@ -83,7 +84,8 @@ class AllStreamsFragment : Fragment() {
                         onError
                     )
                     tabLayoutShimmer?.stopAndHideShimmer()
-                }))
+                })
+            .addTo(compositeDisposable)
     }
 
     override fun onDestroy() {
