@@ -5,7 +5,6 @@ import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.ViewTyped
-import com.turik2304.coursework.recycler_view_base.items.StreamAndTopicSeparatorUI
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
 import com.turik2304.coursework.recycler_view_base.items.TopicUI
 import com.turik2304.coursework.recycler_view_base.items.UserUI
@@ -35,7 +34,6 @@ object Search {
                             when (viewTypedUI) {
                                 is StreamUI -> viewTypedUI.name.contains(inputText, true)
                                 is TopicUI -> viewTypedUI.name.contains(inputText, true)
-                                is StreamAndTopicSeparatorUI -> true
                                 is UserUI -> viewTypedUI.userName.contains(inputText, true)
                                 else -> false
                             }

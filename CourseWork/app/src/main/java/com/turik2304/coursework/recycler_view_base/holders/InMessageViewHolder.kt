@@ -1,6 +1,7 @@
 package com.turik2304.coursework.recycler_view_base.holders
 
 import android.view.View
+import com.bumptech.glide.Glide
 import com.turik2304.coursework.MessageViewGroup
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.InMessageUI
@@ -28,5 +29,6 @@ class InMessageViewHolder(
         inMessageHolder.dateInSeconds = item.dateInSeconds
         inMessageHolder.uid = item.uid
         inMessageHolder.flexboxLayout.checkZeroesCounters()
+        Glide.with(itemView).load(item.avatarUrl).into(inMessageHolder.avatarImageView)
     }
 }
