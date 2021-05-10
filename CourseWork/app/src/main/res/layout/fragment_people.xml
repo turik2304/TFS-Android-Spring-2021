@@ -8,6 +8,7 @@
 
     <com.facebook.shimmer.ShimmerFrameLayout
         android:id="@+id/usersShimmer"
+        app:shimmer_auto_start="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 

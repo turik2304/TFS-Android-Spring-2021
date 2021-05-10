@@ -56,7 +56,7 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
                 }
 
             is ChatActions.LoadedEmptyList -> ChatUiState(
-                isLoading = false
+                isLoading = true
             )
             is ChatActions.ErrorLoading -> ChatUiState(
                 isLoading = false,

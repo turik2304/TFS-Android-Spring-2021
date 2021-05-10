@@ -37,7 +37,7 @@ object ViewTypedConverterImpl : ViewTypedConverter {
             return modelList.mapNotNull { model ->
                 when (model) {
                     is Stream -> StreamUI(
-                        name = model.name,
+                        nameOfStream = model.nameOfStream,
                         uid = model.id,
                         topics = model.topics.toViewTyped(),
                         isSubscribed = model.isSubscribed,
@@ -59,8 +59,9 @@ object ViewTypedConverterImpl : ViewTypedConverter {
     private fun List<Topic>.toViewTyped(): List<TopicUI> {
         return map { topic ->
             TopicUI(
-                name = topic.name,
-                numberOfMessages = topic.numberOfMessages,
+                nameOfTopic = topic.nameOfTopic,
+                nameOfStream = topic.nameOfStream,
+                streamColor = topic.streamColor,
                 uid = topic.id
             )
         }

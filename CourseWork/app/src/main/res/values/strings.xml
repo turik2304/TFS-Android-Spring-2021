@@ -16,5 +16,7 @@
     <string name="status_active">active</string>
     <string name="status_idle">idle</string>
     <string name="status_offline">offline</string>
+    <string name="tab_subscribed_streams">Subscribed</string>
+    <string name="tab_all_streams">All streams</string>
 
 </resources>

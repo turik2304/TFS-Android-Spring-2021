@@ -9,6 +9,8 @@ sealed class UsersActions : Action {
 
     class UsersLoaded(val items: Any) : UsersActions()
 
+    object LoadedEmptyList : UsersActions()
+
     class ErrorLoading(val error: Throwable) : UsersActions()
 
     class OpenUserInfo(val user: UserUI) : UsersActions()

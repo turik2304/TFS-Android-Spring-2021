@@ -1,35 +1,34 @@
 package com.turik2304.coursework.presentation.recycler_view.holders
 
 import android.graphics.Color
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.turik2304.coursework.R
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
 import com.turik2304.coursework.presentation.recycler_view.base.RecyclerItemClicksObservable
 import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
-import kotlin.random.Random
+import java.lang.Exception
 
 class TopicHolder(
     view: View,
-    startChatClick: RecyclerItemClicksObservable
+    clicks: RecyclerItemClicksObservable
 ) : BaseViewHolder<TopicUI>(view) {
 
     private val nameOfTopic = view.findViewById<TextView>(R.id.tvNameOfTopic)
-    private val numberOfMessages = view.findViewById<TextView>(R.id.tvNumberOfMessages)
 
     init {
-//        view.setOnClickListener(startChatClick)
-        if (Random.nextBoolean()) {
-            view.setBackgroundColor(Color.rgb(42, 157, 143))
-        } else {
-            view.setBackgroundColor(Color.rgb(233, 196, 106))
-        }
+        clicks.accept(this)
     }
 
-
     override fun bind(item: TopicUI) {
-        nameOfTopic.text = item.name
-        numberOfMessages.text = item.numberOfMessages
+        nameOfTopic.text = item.nameOfTopic
+        try {
+            itemView.setBackgroundColor(Color.parseColor(item.streamColor));
+        } catch (e: Exception) {
+            itemView.setBackgroundColor(nameOfTopic.resources.getColor(R.color.teal_700, nameOfTopic.context.theme))
+        }
+
     }
 
 }

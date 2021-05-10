@@ -1,5 +1,6 @@
 package com.turik2304.coursework.presentation
 
+import com.turik2304.coursework.databinding.UserAvatarBinding
 import com.turik2304.coursework.presentation.base.Reducer
 
 class UsersReducer : Reducer<UsersUiState, UsersActions> {
@@ -10,6 +11,9 @@ class UsersReducer : Reducer<UsersUiState, UsersActions> {
             )
             is UsersActions.UsersLoaded -> UsersUiState(
                 data = action.items
+            )
+            is UsersActions.LoadedEmptyList -> UsersUiState(
+                isLoading = true
             )
             is UsersActions.ErrorLoading -> UsersUiState(
                 isLoading = false,

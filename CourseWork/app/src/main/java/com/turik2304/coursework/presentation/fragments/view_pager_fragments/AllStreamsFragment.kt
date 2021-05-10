@@ -18,9 +18,7 @@ import com.turik2304.coursework.databinding.FragmentChannelsBinding
 import com.turik2304.coursework.domain.StreamsMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.presentation.UsersActions
-import com.turik2304.coursework.presentation.UsersReducer
-import com.turik2304.coursework.presentation.UsersUiState
+import com.turik2304.coursework.presentation.*
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
@@ -32,19 +30,19 @@ import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
-class AllStreamsFragment : MviFragment<UsersActions, UsersUiState>() {
+class AllStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() {
 
     private lateinit var innerViewTypedList: List<ViewTyped>
     private lateinit var listOfStreams: List<ViewTyped>
     private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
 
-    override val store: Store<UsersActions, UsersUiState> =
+    override val store: Store<StreamsActions, StreamsUiState> =
         Store(
-            reducer = UsersReducer(),
+            reducer = StreamsReducer(),
             middlewares = listOf(StreamsMiddleware(needAllStreams = true)),
-            initialState = UsersUiState()
+            initialState = StreamsUiState()
         )
-    override val actions: PublishRelay<UsersActions> = PublishRelay.create()
+    override val actions: PublishRelay<StreamsActions> = PublishRelay.create()
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -93,7 +91,7 @@ class AllStreamsFragment : MviFragment<UsersActions, UsersUiState>() {
 
         compositeDisposable += store.wire()
         compositeDisposable += store.bind(this)
-        actions.accept(UsersActions.LoadUsers)
+        actions.accept(StreamsActions.LoadStreams)
     }
 
     override fun onDestroy() {
@@ -107,7 +105,7 @@ class AllStreamsFragment : MviFragment<UsersActions, UsersUiState>() {
         _parentBinding = null
     }
 
-    override fun render(state: UsersUiState) {
+    override fun render(state: StreamsUiState) {
         if (state.isLoading) {
             parentBinding.tabLayoutShimmer.showShimmer(true)
         } else {

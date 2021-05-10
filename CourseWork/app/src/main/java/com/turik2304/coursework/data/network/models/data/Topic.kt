@@ -8,8 +8,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 class Topic(
     @SerialName("name")
-    val name: String,
-    val numberOfMessages: String = "1240 mes",
+    val nameOfTopic: String,
+    var nameOfStream: String = "",
+    var streamColor: String = "",
     @PrimaryKey
     @SerialName("max_id")
     override val id: Int,

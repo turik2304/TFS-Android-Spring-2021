@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.google.android.material.tabs.TabLayoutMediator
+import com.turik2304.coursework.R
 import com.turik2304.coursework.databinding.FragmentChannelsBinding
 import com.turik2304.coursework.presentation.fragments.fragment_state_adapter.StreamsPagerAdapter
 import com.turik2304.coursework.presentation.fragments.view_pager_fragments.AllStreamsFragment
@@ -27,7 +28,10 @@ class ChannelsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val tabs: List<String> = listOf("Subscribed", "All streams")
+        val tabs: List<String> = listOf(
+            resources.getString(R.string.tab_subscribed_streams),
+            resources.getString(R.string.tab_all_streams)
+        )
         val pagerAdapter = StreamsPagerAdapter(childFragmentManager, viewLifecycleOwner.lifecycle)
         binding.fragmentViewPager.adapter = pagerAdapter
         pagerAdapter.updatePages(listOf(SubscribedFragment(), AllStreamsFragment()))

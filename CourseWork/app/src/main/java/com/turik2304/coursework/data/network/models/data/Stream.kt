@@ -9,7 +9,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 class Stream(
     @SerialName("name")
-    val name: String,
+    val nameOfStream: String,
+    @SerialName("color")
+    val color: String,
     @SerialName("stream_id")
     override val id: Int,
     var topics: List<Topic> = emptyList(),

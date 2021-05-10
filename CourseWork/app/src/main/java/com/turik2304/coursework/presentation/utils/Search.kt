@@ -32,8 +32,8 @@ object Search {
                     val filteredViewTypedList = initialList
                         .filter { viewTypedUI ->
                             when (viewTypedUI) {
-                                is StreamUI -> viewTypedUI.name.contains(inputText, true)
-                                is TopicUI -> viewTypedUI.name.contains(inputText, true)
+                                is StreamUI -> viewTypedUI.nameOfStream.contains(inputText, true)
+                                is TopicUI -> viewTypedUI.nameOfTopic.contains(inputText, true)
                                 is UserUI -> viewTypedUI.userName.contains(inputText, true)
                                 else -> false
                             }
@@ -46,9 +46,6 @@ object Search {
                         recyclerView.smoothScrollToPosition(0)
                     }
                 }
-
         }
-
     }
-
 }

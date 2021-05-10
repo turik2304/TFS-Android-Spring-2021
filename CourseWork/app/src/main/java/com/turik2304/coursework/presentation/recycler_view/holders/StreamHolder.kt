@@ -11,21 +11,18 @@ import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
 
 class StreamHolder(
     view: View,
-    getTopicsClick: RecyclerItemClicksObservable
+    clicks: RecyclerItemClicksObservable
 ) : BaseViewHolder<StreamUI>(view) {
 
     private val nameOfStreamHolder = view.findViewById<TextView>(R.id.tvNameOfStream)
     private val expandImageView = view.findViewById<ImageView>(R.id.imExpandStream)
-    private val shimmer = view as ShimmerFrameLayout
 
     init {
-//        view.setOnClickListener(getTopicsClick)
-//        shimmer.setOnClickListener(getTopicsClick)
-        shimmer.hideShimmer()
+        clicks.accept(this)
     }
 
     override fun bind(item: StreamUI) {
-        nameOfStreamHolder.text = item.name
+        nameOfStreamHolder.text = item.nameOfStream
         if (item.isExpanded) {
             expandImageView.setImageResource(R.drawable.ic_arrow_up_24)
             itemView.setBackgroundColor(

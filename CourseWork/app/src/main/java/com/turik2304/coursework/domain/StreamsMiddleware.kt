@@ -2,27 +2,28 @@ package com.turik2304.coursework.domain
 
 import com.turik2304.coursework.data.repository.Repository
 import com.turik2304.coursework.data.repository.ZulipRepository
-import com.turik2304.coursework.presentation.UsersActions
-import com.turik2304.coursework.presentation.UsersUiState
+import com.turik2304.coursework.presentation.StreamsActions
+import com.turik2304.coursework.presentation.StreamsUiState
 import io.reactivex.rxjava3.core.Observable
 
 class StreamsMiddleware(private val needAllStreams: Boolean) :
-    Middleware<UsersActions, UsersUiState> {
+    Middleware<StreamsActions, StreamsUiState> {
 
     override val repository: Repository = ZulipRepository
 
     override fun bind(
-        actions: Observable<UsersActions>,
-        state: Observable<UsersUiState>
-    ): Observable<UsersActions> {
-        return actions.ofType(UsersActions.LoadUsers::class.java)
+        actions: Observable<StreamsActions>,
+        state: Observable<StreamsUiState>
+    ): Observable<StreamsActions> {
+        return actions.ofType(StreamsActions.LoadStreams::class.java)
             .flatMap {
-                return@flatMap ZulipRepository.getStreams(needAllStreams = needAllStreams)
-                    .map<UsersActions> { result ->
+                return@flatMap repository.getStreams(needAllStreams = needAllStreams)
+                    .map<StreamsActions> { result ->
                         val streams = repository.converter.convertToViewTypedItems(result)
-                        UsersActions.UsersLoaded(streams)
+                        return@map if (streams.isEmpty()) StreamsActions.LoadedEmptyList
+                        else StreamsActions.StreamsLoaded(streams)
                     }
-                    .onErrorReturn { error -> UsersActions.ErrorLoading(error) }
+                    .onErrorReturn { error -> StreamsActions.ErrorLoading(error) }
             }
     }
 }

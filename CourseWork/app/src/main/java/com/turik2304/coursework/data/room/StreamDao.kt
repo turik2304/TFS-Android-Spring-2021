@@ -6,7 +6,7 @@ import com.turik2304.coursework.data.network.models.data.Stream
 @Dao
 interface StreamDao {
 
-    @Query("SELECT * FROM streams WHERE NOT isSubscribed = :needAllStreams ORDER BY name ")
+    @Query("SELECT * FROM streams WHERE NOT isSubscribed = :needAllStreams ORDER BY nameOfStream ")
     fun getStreams(needAllStreams: Boolean): List<Stream>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

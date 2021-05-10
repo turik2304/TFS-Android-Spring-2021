@@ -1,6 +1,5 @@
 package com.turik2304.coursework.data.repository
 
-import android.util.Log
 import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.RetroClient
@@ -108,7 +107,11 @@ object ZulipRepository : Repository {
             .concatMap { stream ->
                 return@concatMap RetroClient.zulipApi.getTopics(stream.id)
                     .map { response ->
-                        stream.topics = response.topics
+                        stream.topics = response.topics.map topicNameMap@{ topic ->
+                            topic.nameOfStream = stream.nameOfStream
+                            topic.streamColor = stream.color
+                            return@topicNameMap topic
+                        }
                         return@map stream
                     }
             }

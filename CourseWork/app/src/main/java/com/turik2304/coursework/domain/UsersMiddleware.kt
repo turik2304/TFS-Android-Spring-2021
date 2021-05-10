@@ -19,7 +19,8 @@ class UsersMiddleware : Middleware<UsersActions, UsersUiState> {
                 return@flatMap repository.getAllUsers()
                     .map<UsersActions> { result ->
                         val users = repository.converter.convertToViewTypedItems(result)
-                        UsersActions.UsersLoaded(users)
+                        return@map if (users.isEmpty()) UsersActions.LoadedEmptyList
+                        else UsersActions.UsersLoaded(users)
                     }
                     .onErrorReturn { error -> UsersActions.ErrorLoading(error) }
             }

@@ -1,6 +1,7 @@
 package com.turik2304.coursework.presentation.fragments.bottom_navigation_fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
