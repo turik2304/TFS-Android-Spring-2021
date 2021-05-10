@@ -9,7 +9,7 @@ import retrofit2.http.*
 interface ZulipAPI {
 
     @GET("users")
-    fun getAllUsers(): Single<GetAllUsersResponse>
+    fun getAllUsers(): Observable<GetAllUsersResponse>
 
     @GET("users/{user_id}")
     fun getUser(@Path("user_id") userId: Int): Single<GetUserResponse>
@@ -21,13 +21,13 @@ interface ZulipAPI {
     fun getOwnProfile(): Single<GetOwnProfileResponse>
 
     @GET("users/me/subscriptions")
-    fun getSubscribedStreams(): Single<GetSubscribedStreamsResponse>
+    fun getSubscribedStreams(): Observable<GetSubscribedStreamsResponse>
 
     @GET("streams")
-    fun getAllStreams(): Single<GetAllStreamsResponse>
+    fun getAllStreams(): Observable<GetAllStreamsResponse>
 
     @GET("users/me/{stream_id}/topics")
-    fun getTopics(@Path("stream_id") streamId: Int): Single<GetTopicsResponse>
+    fun getTopics(@Path("stream_id") streamId: Int): Observable<GetTopicsResponse>
 
     @GET("messages")
     fun getMessages(
@@ -36,7 +36,7 @@ interface ZulipAPI {
         @Query("num_after") numAfter: Int,
         @Query("narrow") narrow: String,
         @Query("apply_markdown") applyMarkdown: Boolean = false,
-    ): Single<GetMessagesResponse>
+    ): Observable<GetMessagesResponse>
 
     @POST("messages")
     fun sendMessage(
@@ -64,10 +64,16 @@ interface ZulipAPI {
     fun registerMessageEvents(
         @Query("narrow") narrow: String,
         @Query("event_types") eventTypes: String = "[\"message\"]"
-    ): Single<RegisterMessageEventsResponse>
+    ): Single<RegisterEventsResponse>
+
+    @POST("register")
+    fun registerReactionEvents(
+        @Query("narrow") narrow: String,
+        @Query("event_types") eventTypes: String = "[\"reaction\"]"
+    ): Single<RegisterEventsResponse>
 
     @DELETE("events")
-    fun unregisterMessageEvents(
+    fun unregisterEvents(
         @Query("queue_id") queueId: String
     ): Completable
 
@@ -76,6 +82,13 @@ interface ZulipAPI {
         @Query("queue_id") queueId: String,
         @Query("last_event_id") lastEventId: String
     ): Observable<GetMessageEventResponse>
+
+    @GET("events")
+    fun getReactionEvents(
+        @Query("queue_id") queueId: String,
+        @Query("last_event_id") lastEventId: String
+    ): Observable<GetReactionEventResponse>
+
 }
 
 

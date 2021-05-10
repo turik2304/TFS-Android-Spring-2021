@@ -33,7 +33,6 @@ class ProfileDetailsFragment : Fragment() {
         backImageView.setOnClickListener { (context as MainActivity).onBackPressed() }
 
         userNameTextView.text = requireArguments().getString(ARG_USER_NAME, "none")
-//        statusTextView.text = requireArguments().getString(ARG_STATUS, "none")
         val statusEnum = requireArguments().getSerializable(ARG_STATUS) as StatusEnum
         statusTextView.text = statusEnum.status
         statusTextView.setColoredTextStatus(statusEnum)

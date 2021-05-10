@@ -9,4 +9,3 @@ class GetMessagesResponse(
     @SerialName("messages")
     val messages: List<ZulipMessage>
 )
-

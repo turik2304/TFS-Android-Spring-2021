@@ -14,4 +14,3 @@ class GetOwnProfileResponse(
     val avatarUrl: String,
     var statusEnum: StatusEnum = StatusEnum.OFFLINE
 )
-

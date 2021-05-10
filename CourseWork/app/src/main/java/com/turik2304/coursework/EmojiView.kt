@@ -1,16 +1,20 @@
 package com.turik2304.coursework
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
-import androidx.annotation.Px
 import androidx.core.view.setPadding
 import com.facebook.shimmer.ShimmerFrameLayout
+import com.turik2304.coursework.extensions.dpToPx
+import com.turik2304.coursework.extensions.spToPx
+import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.network.RetroClient
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import java.lang.IllegalArgumentException
-import kotlin.math.roundToInt
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 
 class EmojiView @JvmOverloads constructor(
@@ -82,13 +86,13 @@ class EmojiView @JvmOverloads constructor(
     private val boundariesRect = RectF()
     private var coordinateXOfContent: Float = 0F
     private var coordinateYOfContent: Float = 0F
-    private val padding: Int = dpToPx(6f).toInt()
-    private val radius: Float = dpToPx(10f)
+    private val padding: Int = 6f.dpToPx().toInt()
+    private val radius: Float = 10f.dpToPx()
 
     init {
         isClickable = true
         context.obtainStyledAttributes(attrs, R.styleable.EmojiView).apply {
-            textSize = spToPx(14f)
+            textSize = 14f.spToPx()
             emojiCode = getInteger(R.styleable.EmojiView_emojiCode, DEFAULT_EMOJI_CODE)
             selectCounter = getInteger(R.styleable.EmojiView_selectCounter, selectCounter)
             recycle()
@@ -155,9 +159,11 @@ class EmojiView @JvmOverloads constructor(
             selectCounter++
             listOfUsersWhoClicked.add(MyUserId.MY_USER_ID)
             RetroClient.zulipApi.sendReaction(uidOfMessage, name, zulipEmojiCode)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     {
-                        ChatActivity.updateMessages(context, chatShimmer)
+                        chatShimmer.stopAndHideShimmer()
                     },
                     { onError ->
                         Error.showError(
@@ -172,9 +178,11 @@ class EmojiView @JvmOverloads constructor(
             listOfUsersWhoClicked.remove(MyUserId.MY_USER_ID)
             directParent.checkZeroesCounters()
             RetroClient.zulipApi.removeReaction(uidOfMessage, name, zulipEmojiCode)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     {
-                        ChatActivity.updateMessages(context, chatShimmer)
+                        chatShimmer.stopAndHideShimmer()
                     },
                     { onError ->
                         Error.showError(
@@ -185,16 +193,6 @@ class EmojiView @JvmOverloads constructor(
                     })
         }
         return super.performClick()
-    }
-
-    @Px
-    private fun spToPx(sp: Float): Int {
-        return (sp * resources.displayMetrics.scaledDensity).roundToInt()
-    }
-
-    @Px
-    private fun dpToPx(dp: Float): Float {
-        return (dp * resources.displayMetrics.density)
     }
 
     private fun updateViewContent() {

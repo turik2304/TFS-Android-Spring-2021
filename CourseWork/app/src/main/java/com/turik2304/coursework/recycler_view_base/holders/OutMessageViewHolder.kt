@@ -1,7 +1,7 @@
 package com.turik2304.coursework.recycler_view_base.holders
 
 import android.view.View
-import com.turik2304.coursework.*
+import com.turik2304.coursework.MessageViewGroup
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.OutMessageUI
 

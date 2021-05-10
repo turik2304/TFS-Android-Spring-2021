@@ -11,17 +11,18 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.Error
 import com.turik2304.coursework.R
 import com.turik2304.coursework.Search
-import com.turik2304.coursework.network.RetroClient
+import com.turik2304.coursework.extensions.addTo
+import com.turik2304.coursework.extensions.stopAndHideShimmer
+import com.turik2304.coursework.network.ZulipRepository
 import com.turik2304.coursework.network.models.data.StatusEnum
+import com.turik2304.coursework.network.models.response.ResponseType
 import com.turik2304.coursework.recycler_view_base.AsyncAdapter
 import com.turik2304.coursework.recycler_view_base.DiffCallback
 import com.turik2304.coursework.recycler_view_base.ViewTyped
 import com.turik2304.coursework.recycler_view_base.holder_factories.MainHolderFactory
 import com.turik2304.coursework.recycler_view_base.items.UserUI
-import com.turik2304.coursework.stopAndHideShimmer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
 
 class PeopleFragment : Fragment() {
 
@@ -56,33 +57,44 @@ class PeopleFragment : Fragment() {
         val editText = view.findViewById<EditText>(R.id.edSearchUsers)
         val holderFactory = MainHolderFactory(clickListener)
         val diffCallBack = DiffCallback<ViewTyped>()
-
         asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
         recyclerViewUsers.adapter = asyncAdapter
-        compositeDisposable.add(
-            RetroClient.zulipApi.getAllUsers()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
-                        asyncAdapter.items.submitList(
-                            response.members.sortedBy { user -> user.userName }
-                        )
-                        innerViewTypedList = response.members
-                        Search.initSearch(
-                            editText,
-                            innerViewTypedList,
-                            asyncAdapter,
-                            recyclerViewUsers
-                        )
-                        usersToolbarShimmer.stopAndHideShimmer()
-                        response.members.forEach { user ->
-                            if (!user.isBot) {
-                                RetroClient.zulipApi.getUserPresence(user.email)
-                                    .subscribeOn(Schedulers.io())
-                                    .subscribe({ presenceResponse ->
-                                        user.presence =
-                                            presenceResponse.presence.aggregated.statusEnum
+
+        ZulipRepository.getAllUsers()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { userListAndResponseType ->
+                    val userList = userListAndResponseType.first
+                    val responseType = userListAndResponseType.second
+                    when (responseType) {
+                        ResponseType.FROM_DB -> asyncAdapter.items.submitList(userList) {
+                            Search.initSearch(
+                                editText,
+                                userList,
+                                asyncAdapter,
+                                recyclerViewUsers
+                            )
+                        }
+                        ResponseType.FROM_NETWORK -> {
+                            val userListWithPresences = mutableListOf<UserUI>()
+                            userList.forEach { user ->
+                                ZulipRepository.updateUserPresence(user)
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe({ updatedUser ->
+                                        userListWithPresences.add(updatedUser)
+                                        if (userListWithPresences.size == userList.size) {
+                                            asyncAdapter.items.submitList(
+                                                userListWithPresences.sortedBy { it.userName }
+                                            ) {
+                                                usersToolbarShimmer.stopAndHideShimmer()
+                                                Search.initSearch(
+                                                    editText,
+                                                    userListWithPresences,
+                                                    asyncAdapter,
+                                                    recyclerViewUsers
+                                                )
+                                            }
+                                        }
                                     },
                                         { onError ->
                                             Error.showError(
@@ -93,15 +105,17 @@ class PeopleFragment : Fragment() {
                                         })
                             }
                         }
-                    },
-                    { onError ->
-                        Error.showError(
-                            context,
-                            onError
-                        )
-                        usersToolbarShimmer.stopAndHideShimmer()
-                    })
-        )
+                    }
+
+                },
+                { onError ->
+                    Error.showError(
+                        context,
+                        onError
+                    )
+                    usersToolbarShimmer.stopAndHideShimmer()
+                })
+            .addTo(compositeDisposable)
     }
 
     private fun startProfileDetailsFragment(

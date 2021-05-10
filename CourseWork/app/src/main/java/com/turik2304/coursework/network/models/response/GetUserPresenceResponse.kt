@@ -7,4 +7,3 @@ import kotlinx.serialization.Serializable
 class GetUserPresenceResponse(
     val presence: Presence
 )
-
