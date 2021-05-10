@@ -3,23 +3,20 @@ package com.turik2304.coursework.presentation.recycler_view.holders
 import android.view.View
 import com.bumptech.glide.Glide
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
+import com.turik2304.coursework.presentation.recycler_view.base.RecyclerItemClicksObservable
 import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
 import com.turik2304.coursework.presentation.view.MessageViewGroup
 
 class InMessageViewHolder(
     view: View,
-    getUidClick: (View) -> Unit,
+    click: RecyclerItemClicksObservable,
 ) : BaseViewHolder<InMessageUI>(view) {
 
     private val inMessageHolder = view as MessageViewGroup
 
     init {
-        inMessageHolder.setOnLongClickListener { currentView ->
-            getUidClick(currentView)
-            true
-        }
-        inMessageHolder.flexboxLayout.imageViewAddsEmojis
-            .setOnClickListener(getUidClick)
+        click.acceptLong(this)
+        click.accept(inMessageHolder.flexboxLayout.imageViewAddsEmojis, this)
     }
 
     override fun bind(item: InMessageUI) {

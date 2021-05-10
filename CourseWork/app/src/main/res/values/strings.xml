@@ -2,19 +2,15 @@
     <string name="app_name">CourseWork</string>
     <string name="message">Кастомная ViewGroup, которая отображает аватар пользователя,
         имя пользователя, текст сообщения, Emoji-реакции(FlexBoxLayout с кастомными вьюхами внутри).</string>
-    <string name="userName">Имя Фамилия</string>
-    <string name="navChannels">Channels</string>
-    <string name="navPeople">People</string>
-    <string name="navProfile">Profile</string>
-    <string name="searchHint">Search…</string>
-    <string name="tagNameOfStream">nameOfStream</string>
-    <string name="errorExpandStream">Ops! Something went wrong(</string>
-    <string name="btnLogOut">Log out</string>
-    <string name="profileToolbar">Profile</string>
-    <string name="expandButtonImageView">ExpandButtonImageView</string>
-    <string name="usersHint">Users…</string>
-    <string name="tagTopicLinearLayout">tagTopicLinearLayout</string>
-    <string name="tagExpanded">tagExpanded</string>
-    <string name="tagNotExpanded">tagNotExpanded</string>
-    <string name="topicToolbar">#general</string>
+    <string name="user_name">Имя Фамилия</string>
+    <string name="nav_channels">Channels</string>
+    <string name="nav_people">People</string>
+    <string name="nav_profile">Profile</string>
+    <string name="search_hint">Search…</string>
+    <string name="profile_toolbar">Profile</string>
+    <string name="users_hint">Users…</string>
+    <string name="topic_toolbar">#general</string>
+    <string name="name_of_topic">Topic:  #%1$s</string>
+    <string name="name_of_stream">#%1$s</string>
+    <string name="send_message_hint">Написать...</string>
 </resources>

@@ -8,12 +8,12 @@ import com.turik2304.coursework.presentation.recycler_view.holders.DateSeparator
 import com.turik2304.coursework.presentation.recycler_view.holders.InMessageViewHolder
 import com.turik2304.coursework.presentation.recycler_view.holders.OutMessageViewHolder
 
-class ChatHolderFactory(private val getUidClick: (View) -> Unit) : HolderFactory() {
+class ChatHolderFactory() : HolderFactory() {
 
     override fun createViewHolder(view: View, viewType: Int): BaseViewHolder<*>? {
         return when (viewType) {
-            R.layout.item_incoming_message -> InMessageViewHolder(view, getUidClick)
-            R.layout.item_outcoming_message -> OutMessageViewHolder(view, getUidClick)
+            R.layout.item_incoming_message -> InMessageViewHolder(view, clicks)
+            R.layout.item_outcoming_message -> OutMessageViewHolder(view, clicks)
             R.layout.item_date_separator -> DateSeparatorHolder(view)
             else -> null
         }

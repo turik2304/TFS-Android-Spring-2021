@@ -20,7 +20,7 @@ object Search {
         recyclerView: RecyclerView
     ) {
         val asyncAdapter = recyclerView.adapter as AsyncAdapter<ViewTyped>
-        val initialList = asyncAdapter.items.currentList
+        val initialList = asyncAdapter.items
         editText?.addTextChangedListener { text ->
             textObservable = Observable.create { emitter ->
                 emitter.onNext(text.toString())
@@ -39,10 +39,10 @@ object Search {
                             }
                         }
                     if (inputText.trim().isNotEmpty()) {
-                        asyncAdapter.items.submitList(filteredViewTypedList) {
+                        asyncAdapter.setItemsWithCommitCallback(filteredViewTypedList) {
                             recyclerView.smoothScrollToPosition(0)
                         }
-                    } else asyncAdapter.items.submitList(initialList) {
+                    } else asyncAdapter.setItemsWithCommitCallback(initialList) {
                         recyclerView.smoothScrollToPosition(0)
                     }
                 }

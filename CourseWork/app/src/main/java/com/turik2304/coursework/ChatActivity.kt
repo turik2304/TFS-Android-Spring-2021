@@ -5,7 +5,6 @@ import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.view.View
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.text.toSpannable
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,12 +25,15 @@ import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.PaginationScrollListener
+import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
+import com.turik2304.coursework.presentation.recycler_view.clicks.ChatClickMapper
 import com.turik2304.coursework.presentation.recycler_view.holder_factories.ChatHolderFactory
+import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
+import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 import com.turik2304.coursework.presentation.utils.Error
-import com.turik2304.coursework.presentation.view.FlexboxLayout
-import com.turik2304.coursework.presentation.view.MessageViewGroup
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import java.util.*
 
 class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
@@ -46,7 +48,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private lateinit var chatBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
     private lateinit var dialog: BottomSheetDialog
-    private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
+
+    private lateinit var recycler: Recycler<ViewTyped>
     private lateinit var nameOfTopic: String
     private lateinit var nameOfStream: String
 
@@ -78,71 +81,21 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private var lastReactionEventId: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         chatBinding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(chatBinding.root)
 
-        dialog = BottomSheetDialog(this)
-        dialogBinding = BottomSheetBinding.inflate(layoutInflater)
-        dialog.setContentView(dialogBinding.bottomSheet)
-
-        nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM).toString()
-        nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC).toString()
-        chatBinding.tvNameOfStream.text = "#$nameOfStream"
-        chatBinding.tvNameOfTopic.text = "Topic:  #${nameOfTopic.toLowerCase()}"
-        chatBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
-
-        fillTextViewWithEmojisAsSpannableText(
-            textView = dialogBinding.emojiListTextView,
-            emojiCodeRange = 0x1F600..0x1F645
-        )
-        val clickListener = { clickedView: View ->
-            when (clickedView) {
-                is MessageViewGroup -> {
-                    uidOfClickedMessage = clickedView.uid
-                    dialog.show()
-                }
-                //ImageView that adds Emoji("+"), it are located in FlexBoxLayout, and FlexBox located in MessageViewGroup
-                is ImageView -> {
-                    val flexBoxLayout = clickedView.parent as FlexboxLayout
-                    val messageViewGroup = flexBoxLayout.parent as MessageViewGroup
-                    uidOfClickedMessage = messageViewGroup.uid
-                    dialog.show()
-                }
-            }
-        }
-
-        val holderFactory = ChatHolderFactory(clickListener)
-        val diffCallBack = DiffCallback<ViewTyped>()
-        asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
-        chatBinding.recycleView.adapter = asyncAdapter
+        initBottomSheetDialog()
+        initNamesOfTopicAndStream()
+        initRecycler()
+        initRecyclerClicks()
 
         wiring += store.wire()
         viewBinding += store.bind(this)
-        initInitialState()
 
-        chatBinding.recycleView.addOnScrollListener(object :
-            PaginationScrollListener(chatBinding.recycleView.layoutManager as LinearLayoutManager) {
-            override fun isLastPage(): Boolean {
-                return isLastPage
-            }
+        loadFirstPage()
 
-            override fun isLoading(): Boolean {
-                return isLoading
-            }
-
-            override fun loadMoreItems() {
-                actions.accept(
-                    ChatActions.LoadItems(
-                        nameOfTopic = nameOfTopic,
-                        nameOfStream = nameOfStream,
-                        uidOfLastLoadedMessage = uidOfUpperMessage
-                    )
-                )
-            }
-        })
-
+        chatBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
         chatBinding.imageViewSendMessage.setOnClickListener {
             if (chatBinding.editTextEnterMessage.text.isNotEmpty()) {
                 val message = chatBinding.editTextEnterMessage.text.toString()
@@ -156,7 +109,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 chatBinding.editTextEnterMessage.text.clear()
             }
         }
-
         chatBinding.editTextEnterMessage.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(
                 s: CharSequence?,
@@ -191,6 +143,11 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
             chatBinding.chatShimmer.stopAndHideShimmer()
         }
 
+        state.uidOfClickedMessage?.let {
+            dialog.show()
+            uidOfClickedMessage = state.uidOfClickedMessage
+        }
+
         state.error?.let { Error.showError(applicationContext, it) }
 
         when (state.data) {
@@ -198,14 +155,20 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 val messages = state.data.items
                 uidOfUpperMessage =
                     messages[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
-                asyncAdapter.updateList(messages) {
-                    chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+                recycler.updateList(messages) {
+                    chatBinding.recycleView.smoothScrollToPosition(recycler.adapter.itemCount)
+                    actions.accept(
+                        ChatActions.RegisterEvents(
+                            nameOfTopic = nameOfTopic,
+                            nameOfStream = nameOfStream
+                        )
+                    )
                 }
             }
             is MessageData.SentMessageData -> {
-                val currentList = asyncAdapter.items
-                asyncAdapter.updateList(currentList + state.data.messages) {
-                    chatBinding.recycleView.smoothScrollToPosition(asyncAdapter.itemCount)
+                val currentList = recycler.adapter.items
+                recycler.updateList(currentList + state.data.messages) {
+                    chatBinding.recycleView.smoothScrollToPosition(recycler.adapter.itemCount)
                 }
             }
             is MessageData.NextPageData -> {
@@ -216,8 +179,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                     newPage[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
                 if (uidOfUpperMessageInNewPage == uidOfUpperMessage) isLastPage = true
                 else {
-                    val actualList = (newPage + asyncAdapter.items).distinct()
-                    asyncAdapter.updateList(actualList) {
+                    val actualList = (newPage + recycler.adapter.items).distinct()
+                    recycler.updateList(actualList) {
                         uidOfUpperMessage =
                             actualList[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
                         sendActionToPollEvents()
@@ -234,9 +197,9 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
             is MessageData.MessageLongpollingData -> {
                 messagesQueueId = state.data.messagesQueueId
                 lastMessageEventId = state.data.lastMessageEventId
-                asyncAdapter.updateList(state.data.polledData) {
+                recycler.updateList(state.data.polledData) {
                     chatBinding.recycleView.smoothScrollToPosition(
-                        asyncAdapter.itemCount
+                        recycler.adapter.itemCount
                     )
                     sendActionToPollEvents()
                 }
@@ -244,7 +207,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
             is MessageData.ReactionLongpollingData -> {
                 reactionsQueueId = state.data.reactionsQueueId
                 lastReactionEventId = state.data.lastReactionEventId
-                asyncAdapter.updateList(state.data.polledData) {
+                recycler.updateList(state.data.polledData) {
                     sendActionToPollEvents()
                 }
             }
@@ -274,7 +237,66 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         }
     }
 
-    private fun initInitialState() {
+    private fun initRecycler() {
+        recycler = Recycler(
+            recyclerView = chatBinding.recycleView,
+            diffCallback = DiffCallback<ViewTyped>(),
+            holderFactory = ChatHolderFactory()
+        )
+        chatBinding.recycleView.addOnScrollListener(object :
+            PaginationScrollListener(chatBinding.recycleView.layoutManager as LinearLayoutManager) {
+            override fun isLastPage(): Boolean {
+                return isLastPage
+            }
+
+            override fun isLoading(): Boolean {
+                return isLoading
+            }
+
+            override fun loadMoreItems() {
+                actions.accept(
+                    ChatActions.LoadItems(
+                        nameOfTopic = nameOfTopic,
+                        nameOfStream = nameOfStream,
+                        uidOfLastLoadedMessage = uidOfUpperMessage
+                    )
+                )
+            }
+        })
+    }
+
+    private fun initRecyclerClicks() {
+        val outMessageClick = recycler.clickedItem<OutMessageUI>(R.layout.item_outcoming_message)
+        val inMessageClick = recycler.clickedItem<InMessageUI>(R.layout.item_incoming_message)
+        viewBinding += ChatClickMapper(outMessageClick, inMessageClick).bind(actions)
+    }
+
+    private fun initNamesOfTopicAndStream() {
+        nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM).toString()
+        nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC).toString()
+        chatBinding.tvNameOfStream.text = getString(R.string.name_of_stream, nameOfStream)
+        chatBinding.tvNameOfTopic.text = getString(
+            R.string.name_of_topic,
+            nameOfTopic.toLowerCase(Locale.ROOT)
+        )
+    }
+
+    private fun initBottomSheetDialog() {
+        dialog = BottomSheetDialog(this)
+        dialogBinding = BottomSheetBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogBinding.bottomSheet)
+        dialog.setOnDismissListener {
+            actions.accept(
+                ChatActions.DismissBottomSheetDialog
+            )
+        }
+        fillTextViewWithEmojisAsSpannableText(
+            textView = dialogBinding.emojiListTextView,
+            emojiCodeRange = 0x1F600..0x1F645
+        )
+    }
+
+    private fun loadFirstPage() {
         activityActions = actions
         actions.accept(
             ChatActions.LoadItems(
@@ -282,12 +304,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 nameOfTopic = nameOfTopic,
                 nameOfStream = nameOfStream,
                 uidOfLastLoadedMessage = uidOfUpperMessage
-            )
-        )
-        actions.accept(
-            ChatActions.RegisterEvents(
-                nameOfTopic = nameOfTopic,
-                nameOfStream = nameOfStream
             )
         )
     }
@@ -301,17 +317,18 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 messageEventId = lastMessageEventId,
                 reactionQueueId = reactionsQueueId,
                 reactionEventId = lastReactionEventId,
-                currentList = asyncAdapter.items,
+                currentList = recycler.adapter.items,
             )
         )
     }
 
-    private fun AsyncAdapter<ViewTyped>.updateList(
+    private fun Recycler<ViewTyped>.updateList(
         newList: List<ViewTyped>?,
         runnable: Runnable? = null
     ) {
+        val adapter = this.adapter as AsyncAdapter
         if (!newList.isNullOrEmpty()) {
-            this.setItemsWithCommitCallback(newList) {
+            adapter.setItemsWithCommitCallback(newList) {
                 runnable?.run()
             }
         } else runnable?.run()

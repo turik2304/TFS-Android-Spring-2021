@@ -1,6 +1,5 @@
 package com.turik2304.coursework.presentation
 
-import android.util.Log
 import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.presentation.base.Reducer
 
@@ -82,6 +81,10 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
             is ChatActions.ReactionRemoved -> ChatUiState(
                 isLoading = false
             )
+            is ChatActions.ShowBottomSheetDialog -> ChatUiState(
+                uidOfClickedMessage = action.uidOfClickedMessage
+            )
+            is ChatActions.DismissBottomSheetDialog -> ChatUiState()
         }
     }
 

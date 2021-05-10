@@ -5,7 +5,7 @@ import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 
 sealed class ChatActions : Action {
     //Longpolling actions
-    class RegisterEvents(
+    data class RegisterEvents(
         val nameOfTopic: String,
         val nameOfStream: String
     ) : ChatActions()
@@ -79,4 +79,10 @@ sealed class ChatActions : Action {
     ) : ChatActions()
 
     object ReactionRemoved : ChatActions()
+
+    class ShowBottomSheetDialog(
+        val uidOfClickedMessage: Int
+    ) : ChatActions()
+
+    object DismissBottomSheetDialog : ChatActions()
 }

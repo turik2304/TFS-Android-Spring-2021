@@ -23,7 +23,7 @@
                 android:layout_marginLeft="2dp"
                 android:layout_weight="8"
                 android:backgroundTint="@color/gray_tint"
-                android:hint="@string/searchHint"
+                android:hint="@string/search_hint"
                 android:paddingLeft="20dp"
                 android:textColor="@color/gray_primary"
                 android:textColorHint="@color/gray_primary"

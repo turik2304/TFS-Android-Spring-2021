@@ -1,6 +1,5 @@
 package com.turik2304.coursework.presentation.recycler_view
 
-import android.view.View
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import com.turik2304.coursework.presentation.recycler_view.base.BaseAdapter
@@ -21,7 +20,10 @@ class AsyncAdapter<T : ViewTyped>(
             localItems.submitList(newItems)
         }
 
-    fun<T: ViewTyped> AsyncAdapter<T>.setItemsWithCommitCallback(newItems: List<T>, runnable: Runnable) {
+    fun setItemsWithCommitCallback(
+        newItems: List<T>,
+        runnable: Runnable
+    ) {
         localItems.submitList(newItems) {
             runnable.run()
         }

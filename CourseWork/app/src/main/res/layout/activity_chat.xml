@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="left"
             android:layout_marginLeft="43dp"
-            android:text="@string/topicToolbar"
+            android:text="@string/topic_toolbar"
             android:textSize="24sp" />
 
     </androidx.appcompat.widget.Toolbar>
@@ -77,7 +77,7 @@
                     android:layout_marginEnd="10dp"
                     android:layout_weight="0.6"
                     android:background="@drawable/round_edit_text_send_message"
-                    android:hint="Написать..."
+                    android:hint="@string/send_message_hint"
                     android:paddingStart="16dp"
                     android:paddingTop="10dp"
                     android:paddingEnd="16dp"
