@@ -22,8 +22,9 @@
     <color name="black_date_separator">#070707</color>
     <color name="teal_user_name">#2A9D8F</color>
     <color name="teal_secondary">#219653</color>
-    <color name="teal_status_online">#4AB54D</color>
+    <color name="green_status_online">#4AB54D</color>
 
     <color name="emoji_view_content_color">#808080</color>
-    <color name="teal_status_offline">#E53935</color>
+    <color name="red_status_offline">#E53935</color>
+    <color name="yellow_status_idle">#C0CA33</color>
 </resources>

@@ -9,7 +9,7 @@ data class OutMessageUI(
     val userId: String,
     val message: String,
     var reactions: List<ServerApi.Reaction>,
-    val dateInMillis: Long,
+    val dateInSeconds: Int,
     override val uid: String,
     override val viewType: Int = R.layout.item_outcoming_message
 ) : ViewTyped {

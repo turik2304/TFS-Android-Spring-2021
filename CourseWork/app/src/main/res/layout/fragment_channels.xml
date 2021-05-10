@@ -17,7 +17,7 @@
             android:orientation="horizontal">
 
             <EditText
-                android:id="@+id/edSearch"
+                android:id="@+id/edSearchStreams"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginLeft="2dp"
@@ -40,17 +40,23 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout"
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/tabLayoutShimmer"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:background="@color/gray"
-        android:paddingBottom="27dp"
-        app:tabIndicatorColor="@color/teal_secondary"
-        app:tabMaxWidth="150dp"
-        app:tabMinWidth="150dp"
-        app:tabTextAppearance="@style/ToolbarStyle"
-        app:tabTextColor="@color/gray_primary" />
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:background="@color/gray"
+            android:paddingBottom="27dp"
+            app:tabIndicatorColor="@color/teal_secondary"
+            app:tabMaxWidth="150dp"
+            app:tabMinWidth="150dp"
+            app:tabTextAppearance="@style/ToolbarStyle"
+            app:tabTextColor="@color/gray_primary" />
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/fragmentViewPager"
