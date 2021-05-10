@@ -5,8 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,33 +13,37 @@ import com.turik2304.coursework.ChatActivity
 import com.turik2304.coursework.R
 import com.turik2304.coursework.databinding.FragmentAllStreamsBinding
 import com.turik2304.coursework.databinding.FragmentChannelsBinding
+import com.turik2304.coursework.databinding.FragmentSubscribedBinding
 import com.turik2304.coursework.domain.StreamsMiddleware
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
-import com.turik2304.coursework.presentation.*
+import com.turik2304.coursework.presentation.StreamsActions
+import com.turik2304.coursework.presentation.StreamsReducer
+import com.turik2304.coursework.presentation.StreamsUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
-import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
+import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
+import com.turik2304.coursework.presentation.recycler_view.clicks.StreamsClickMapper
 import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
+import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class AllStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() {
 
-    private lateinit var innerViewTypedList: List<ViewTyped>
-    private lateinit var listOfStreams: List<ViewTyped>
-    private lateinit var asyncAdapter: AsyncAdapter<ViewTyped>
+    private lateinit var listOfStreams: List<StreamUI>
+    private lateinit var recycler: Recycler<ViewTyped>
+    private val listOfExpandedStreams = mutableListOf<Int>()
 
-    override val store: Store<StreamsActions, StreamsUiState> =
-        Store(
-            reducer = StreamsReducer(),
-            middlewares = listOf(StreamsMiddleware(needAllStreams = true)),
-            initialState = StreamsUiState()
-        )
+    override val store: Store<StreamsActions, StreamsUiState> = Store(
+        reducer = StreamsReducer(),
+        middlewares = listOf(StreamsMiddleware(needAllStreams = true)),
+        initialState = StreamsUiState()
+    )
     override val actions: PublishRelay<StreamsActions> = PublishRelay.create()
 
     private val compositeDisposable = CompositeDisposable()
@@ -64,43 +66,17 @@ class AllStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() {
         super.onViewCreated(view, savedInstanceState)
         _parentBinding = parentFragment?.let { FragmentChannelsBinding.bind(it.requireView()) }
 
-        val divider = DividerItemDecoration(
-            context,
-            (binding.recycleViewAllStreams.layoutManager as LinearLayoutManager).orientation
-        )
-        val drawable =
-            ResourcesCompat.getDrawable(resources, R.drawable.ic_stream_separator, context?.theme)
-        drawable?.let { divider.setDrawable(it) }
-        binding.recycleViewAllStreams.addItemDecoration(divider)
-
-        val clickListener = { clickedView: View ->
-            when (clickedView) {
-                is ImageView -> {
-                    clickedView.setImageResource(R.drawable.ic_arrow_up_24)
-                }
-                is LinearLayout -> {
-                    val intent = Intent(context, ChatActivity::class.java)
-                    startActivity(intent)
-                }
-            }
-        }
-        val holderFactory = MainHolderFactory()
-        val diffCallBack = DiffCallback<ViewTyped>()
-        asyncAdapter = AsyncAdapter(holderFactory, diffCallBack)
-        binding.recycleViewAllStreams.adapter = asyncAdapter
+        initRecycler()
+        initRecyclerClicks()
 
         compositeDisposable += store.wire()
         compositeDisposable += store.bind(this)
         actions.accept(StreamsActions.LoadStreams)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        compositeDisposable.clear()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
+        compositeDisposable.clear()
         _binding = null
         _parentBinding = null
     }
@@ -111,16 +87,72 @@ class AllStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() {
         } else {
             parentBinding.tabLayoutShimmer.stopAndHideShimmer()
         }
-        if (state.error != null) {
-            parentBinding.tabLayoutShimmer.stopAndHideShimmer()
-            Error.showError(context, state.error)
-        }
-        if (state.data != null) {
+        state.error?.let { Error.showError(context, state.error) }
+
+        state.data?.let {
             val streamList = state.data as List<StreamUI>
-            asyncAdapter.items = streamList
             listOfStreams = streamList
-            innerViewTypedList = streamList
-            Search.initSearch(parentBinding.edSearchStreams, binding.recycleViewAllStreams)
+            updateList()
         }
+
+        state.expandStream?.let { expandedStream ->
+            if (expandedStream.uid !in listOfExpandedStreams) {
+                listOfExpandedStreams.add(expandedStream.uid)
+                updateList()
+                actions.accept(StreamsActions.StreamExpanded)
+            } else {
+                actions.accept(StreamsActions.ReduceStream(expandedStream))
+            }
+        }
+
+        state.reduceStream?.let { reducedStream ->
+            listOfExpandedStreams.remove(reducedStream.uid)
+            updateList()
+            actions.accept(StreamsActions.StreamReduced)
+        }
+
+        if (state.nameOfTopic != null && state.nameOfStream != null) {
+            val intent = Intent(context, ChatActivity::class.java)
+            intent.putExtra(ChatActivity.EXTRA_NAME_OF_TOPIC, state.nameOfTopic)
+            intent.putExtra(ChatActivity.EXTRA_NAME_OF_STREAM, state.nameOfStream)
+            startActivity(intent)
+            actions.accept(StreamsActions.ChatOpened)
+        }
+    }
+
+    private fun initRecycler() {
+        val divider = DividerItemDecoration(
+            context,
+            (binding.recycleViewAllStreams.layoutManager as LinearLayoutManager).orientation
+        )
+        val drawable =
+            ResourcesCompat.getDrawable(resources, R.drawable.ic_stream_separator, context?.theme)
+        drawable?.let { divider.setDrawable(it) }
+        recycler = Recycler(
+            recyclerView = binding.recycleViewAllStreams,
+            diffCallback = DiffCallback<ViewTyped>(),
+            holderFactory = MainHolderFactory(),
+        ) {
+            itemDecoration += divider
+        }
+    }
+
+    private fun initRecyclerClicks() {
+        val streamClick = recycler.clickedItem<StreamUI>(R.layout.item_stream)
+        val topicClick = recycler.clickedItem<TopicUI>(R.layout.item_topic)
+        compositeDisposable += StreamsClickMapper(
+            streamClick = streamClick,
+            topicClick = topicClick
+        ).bind(actions)
+    }
+
+    private fun updateList() {
+        val updatedList = listOfStreams.flatMap { stream ->
+            if (stream.uid in listOfExpandedStreams) {
+                listOf(stream.copy(isExpanded = true)) + stream.topics
+            } else listOf(stream.copy(isExpanded = false))
+        }
+        recycler.setItems(updatedList)
+        Search.initSearch(parentBinding.edSearchStreams, binding.recycleViewAllStreams)
     }
 }

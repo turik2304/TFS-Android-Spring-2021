@@ -11,7 +11,7 @@ class Stream(
     @SerialName("name")
     val nameOfStream: String,
     @SerialName("color")
-    val color: String,
+    var color: String = "",
     @SerialName("stream_id")
     override val id: Int,
     var topics: List<Topic> = emptyList(),
