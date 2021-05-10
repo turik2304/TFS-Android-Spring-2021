@@ -10,14 +10,13 @@ class OutMessageViewHolder(
     getDateInMillisClick: (View) -> Unit,
 ) : BaseViewHolder<OutMessageUI>(view) {
 
-    private val outMessageHolder = view.findViewById<MessageViewGroup>(R.id.outMessageHolder)
+    private val outMessageHolder = view as MessageViewGroup
 
     init {
         outMessageHolder.setOnLongClickListener { currentView ->
             getDateInMillisClick(currentView)
             true
         }
-
         outMessageHolder.flexboxLayout.imageViewAddsEmojis
             .setOnClickListener(getDateInMillisClick)
         outMessageHolder.userName.height = 0
@@ -32,7 +31,6 @@ class OutMessageViewHolder(
         outMessageHolder.uid = item.uid
         outMessageHolder.flexboxLayout.checkZeroesCounters()
         outMessageHolder.isMyMessage = true
-
     }
 
 

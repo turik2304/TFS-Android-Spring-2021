@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/gray_primary_background"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/gray">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/edSearch"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="2dp"
+                android:layout_weight="8"
+                android:backgroundTint="@color/gray_tint"
+                android:hint="@string/searchHint"
+                android:paddingLeft="20dp"
+                android:textColor="@color/gray_primary"
+                android:textColorHint="@color/gray_primary"
+                android:textSize="24sp" />
+
+            <ImageView
+                android:id="@+id/imSearch"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="2"
+                android:src="@drawable/ic_search" />
+        </LinearLayout>
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@color/gray"
+        android:paddingBottom="27dp"
+        app:tabIndicatorColor="@color/teal_secondary"
+        app:tabMaxWidth="150dp"
+        app:tabMinWidth="150dp"
+        app:tabTextAppearance="@style/ToolbarStyle"
+        app:tabTextColor="@color/gray_primary" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/fragmentViewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

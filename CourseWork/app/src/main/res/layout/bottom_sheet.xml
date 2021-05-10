@@ -4,19 +4,28 @@
     android:id="@+id/bottomSheet"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/gray_secondary_background"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".MainActivity">
+    tools:context=".ChatActivity">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:src="@drawable/ic_pin" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:layout_marginTop="5dp"
         android:scrollbars="vertical">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
             <TextView
                 android:id="@+id/emoji_list_text_view"
                 android:layout_width="match_parent"
@@ -24,12 +33,11 @@
                 android:gravity="center"
                 android:letterSpacing="0.4"
                 android:lineSpacingExtra="10sp"
-                android:textSize="30sp"
-                android:textColor="@color/black"/>
+                android:paddingTop="25dp"
+                android:textColor="@color/black"
+                android:textSize="30sp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
-
 
 </LinearLayout>

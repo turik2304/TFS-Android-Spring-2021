@@ -2,7 +2,7 @@ package com.turik2304.coursework.recycler_view_base
 
 import androidx.recyclerview.widget.AsyncListDiffer
 
-class AsyncAdapter<T : ViewTyped>(holderFactory: HolderFactory, diffCallback: BaseDiffCallback<T>) :
+class AsyncAdapter<T : ViewTyped>(holderFactory: HolderFactory, diffCallback: DiffCallback<T>) :
     BaseAdapter<T>(holderFactory) {
 
     private val localItems = AsyncListDiffer(this, diffCallback)

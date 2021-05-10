@@ -10,7 +10,7 @@ data class InMessageUI(
     val message: String,
     var reactions: List<ServerApi.Reaction>,
     val dateInMillis: Long,
-    override val uid: String = "INCOMING_MESSAGE_UI_ID",
+    override val uid: String,
     override val viewType: Int = R.layout.item_incoming_message
 ) : ViewTyped {
 

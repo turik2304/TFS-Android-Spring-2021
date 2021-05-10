@@ -5,8 +5,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center_horizontal"
+    android:background="@color/gray_primary_background"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    tools:context=".ChatActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/teal_user_name">
+
+        <ImageView
+            android:id="@+id/imBackChat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_arrow_left" />
+
+        <TextView
+            android:id="@+id/tvNameOfStream"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:layout_marginLeft="43dp"
+            android:text="@string/topicToolbar"
+            android:textSize="24sp" />
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <TextView
+        android:id="@+id/tvNameOfTopic"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@color/gray_secondary_background"
+        android:gravity="center"
+        android:textSize="20sp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycleView"
@@ -15,21 +46,19 @@
         android:layout_weight="0.9"
         android:scrollbars="vertical"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:stackFromEnd="true"
-
-        />
+        app:stackFromEnd="true" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/emoji_view_night_selected_color"
+        android:layout_height="62dp"
+        android:background="@color/gray"
         android:gravity="center"
         android:orientation="horizontal"
-        android:padding="3dp">
+        android:padding="5dp">
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_gravity="center"
             android:layout_weight="1"
             android:gravity="center"
@@ -49,17 +78,17 @@
                 android:paddingTop="10dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="10dp"
-                android:textColor="@color/black"
-                android:textSize="14sp" />
+                android:textColor="@color/gray_send_message"
+                android:textColorHint="@color/gray_send_message"
+                android:textSize="20sp" />
 
             <ImageView
                 android:id="@+id/ImageViewSendMessage"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
-                android:background="@drawable/round_avatar"
-                android:scaleType="centerInside"
-                android:src="@drawable/enter_message_button" />
+                android:src="@drawable/ic_add_files" />
+
         </LinearLayout>
 
     </LinearLayout>

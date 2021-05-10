@@ -1,26 +1,134 @@
 package com.turik2304.coursework.network
 
-class FakeServerApi: ServerApi {
+class FakeServerApi : ServerApi {
 
     override val userList = listOf(
-        ServerApi.User("ARTUR", "Artur Sibagatullin"),
-        ServerApi.User("Ivan_0", "Ivan Ivanov_0"),
-        ServerApi.User("Ivan_1", "Ivan Ivanov_1"),
-        ServerApi.User("Ivan_2", "Ivan Ivanov_2"),
-        ServerApi.User("Ivan_3", "Ivan Ivanov_3"),
-        ServerApi.User("Ivan_4", "Ivan Ivanov_4"),
-        ServerApi.User("Ivan_5", "Ivan Ivanov_5"),
-        ServerApi.User("Ivan_6", "Ivan Ivanov_6"),
-        ServerApi.User("Ivan_7", "Ivan Ivanov_7"),
-        ServerApi.User("Ivan_8", "Ivan Ivanov_8"),
-        ServerApi.User("Ivan_9", "Ivan Ivanov_9"),
-        ServerApi.User("Ivan_10", "Ivan Ivanov_10"),
-        ServerApi.User("Ivan_11", "Ivan Ivanov_11"),
-        ServerApi.User("Ivan_12", "Ivan Ivanov_12"),
-        ServerApi.User("Ivan_13", "Ivan Ivanov_13"),
-        ServerApi.User("Ivan_14", "Ivan Ivanov_14"),
-        ServerApi.User("Ivan_15", "Ivan Ivanov_15"),
-        ServerApi.User("Ivan_16", "Ivan Ivanov_16"),
+        ServerApi.User(
+            "ARTUR",
+            "Artur Sibagatullin",
+            "Sibagatullin@gmail.com",
+            "In a meeting",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_0",
+            "Ivan Ivanov_0",
+            "Ivan Ivanov_0@gmail.com",
+            "In a meeting0",
+            "offline"
+        ),
+        ServerApi.User(
+            "Ivan_1",
+            "Ivan Ivanov_1",
+            "Ivan Ivanov_1@gmail.com",
+            "In a meeting1",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_2",
+            "Ivan Ivanov_2",
+            "Ivan Ivanov_2@gmail.com",
+            "In a meeting2",
+            "offline"
+        ),
+        ServerApi.User(
+            "Ivan_3",
+            "Ivan Ivanov_3",
+            "Ivan Ivanov_3@gmail.com",
+            "In a meeting3",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_4",
+            "Ivan Ivanov_4",
+            "Ivan Ivanov_4@gmail.com",
+            "In a meeting4",
+            "offline"
+        ),
+        ServerApi.User(
+            "Ivan_5",
+            "Ivan Ivanov_5",
+            "Ivan Ivanov_5@gmail.com",
+            "In a meeting5",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_6",
+            "Ivan Ivanov_6",
+            "Ivan Ivanov_6@gmail.com",
+            "In a meetin6",
+            "offline"
+        ),
+        ServerApi.User(
+            "Ivan_7",
+            "Ivan Ivanov_7",
+            "Ivan Ivanov_7@gmail.com",
+            "In a meeting7",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_8",
+            "Ivan Ivanov_8",
+            "Ivan Ivanov_8@gmail.com",
+            "In a meeting8",
+            "offline"
+        ),
+        ServerApi.User(
+            "Ivan_9",
+            "Ivan Ivanov_9",
+            "Ivan Ivanov_9@gmail.com",
+            "In a meeting9",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_10",
+            "Ivan Ivanov_10",
+            "Ivan Ivanov_10@gmail.com",
+            "In a meeting10",
+            "offline"
+        ),
+        ServerApi.User(
+            "Ivan_11",
+            "Ivan Ivanov_11",
+            "Ivan Ivanov_10@gmail.com",
+            "In a meeting11",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_12",
+            "Ivan Ivanov_12",
+            "Ivan Ivanov_12@gmail.com",
+            "In a meeting12",
+            "offline"
+        ),
+        ServerApi.User(
+            "Ivan_13",
+            "Ivan Ivanov_13",
+            "Ivan Ivanov_13@gmail.com",
+            "In a meeting13",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_14",
+            "Ivan Ivanov_14",
+            "Ivan Ivanov_14@gmail.com",
+            "In a meeting14",
+            "offline"
+        ),
+        ServerApi.User(
+            "Ivan_15",
+            "Ivan Ivanov_15",
+            "Ivan Ivanov_15@gmail.com",
+            "In a meeting15",
+            "online"
+        ),
+        ServerApi.User(
+            "Ivan_16",
+            "Ivan Ivanov_16",
+            "Ivan Ivanov_16@gmail.com",
+            "In a meeting16",
+            "offline"
+        ),
     )
 
     private val react0 = ServerApi.Reaction(0x1F600, 1, listOf("ARTUR"))
@@ -107,6 +215,55 @@ class FakeServerApi: ServerApi {
         ),
     )
 
+    override val topicsByStreamUid = mapOf(
+        "1" to listOf(
+            ServerApi.Topic("Testing1", 1240, "TOPIC_ID_1"),
+            ServerApi.Topic("Bruh1", 124, "TOPIC_ID_2")
+        ),
+
+        "2" to listOf(
+            ServerApi.Topic("Testing2", 12, "TOPIC_ID_3"),
+            ServerApi.Topic("Bruh2", 12234, "TOPIC_ID_4")
+        ),
+
+        "3" to listOf(
+            ServerApi.Topic("Testing3", 38, "TOPIC_ID_5"),
+            ServerApi.Topic("Bruh3", 234, "TOPIC_ID_6")
+        ),
+
+        "4" to listOf(
+            ServerApi.Topic("Testing4", 40, "TOPIC_ID_7"),
+            ServerApi.Topic("Bruh4", 14, "TOPIC_ID_8")
+        )
+    )
+
+    override val subscribedStreamsWithUid = mapOf(
+        "#general" to "1",
+        "#Development" to "2",
+        "#Design" to "3",
+        "#PR" to "4"
+    )
+
+    override val allStreams = mapOf(
+        "#general" to "1",
+        "#mems" to "2",
+        "#health" to "3",
+        "#jobs" to "4",
+        "#friends" to "5",
+        "#mobile" to "6",
+        "#food" to "7",
+        "#tinkoff" to "8",
+        "#bottle" to "9",
+        "#lamp" to "10",
+        "#stack" to "11",
+        "#fun" to "12",
+        "#cooking" to "13",
+        "#books" to "14",
+        "#cars" to "15",
+        "#computers" to "16",
+        "#building" to "17",
+    )
+
     override fun getUserNameById(uid: String): String {
         return userList.find { user ->
             user.uid == uid
@@ -119,5 +276,16 @@ class FakeServerApi: ServerApi {
 
     override fun getMessages(): List<ServerApi.Message> {
         return messages
+    }
+
+    override fun getProfileDetailsById(uid: String): Map<String, String> {
+        val user = userList.find { user ->
+            user.uid == uid
+        }
+        return mapOf(
+            "userName" to (user?.userName ?: "none"),
+            "statusText" to (user?.statusText ?: "none"),
+            "status" to (user?.status ?: "none"),
+        )
     }
 }

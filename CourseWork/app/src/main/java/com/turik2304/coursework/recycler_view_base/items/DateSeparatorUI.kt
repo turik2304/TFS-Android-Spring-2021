@@ -5,7 +5,7 @@ import com.turik2304.coursework.recycler_view_base.ViewTyped
 
 data class DateSeparatorUI(
     val date: String,
-    override val uid: String = "DATE_SEPARATOR_UI_ID",
+    override val uid: String,
     override val viewType: Int = R.layout.item_date_separator,
 ) : ViewTyped {
 }

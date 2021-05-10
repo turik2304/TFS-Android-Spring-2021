@@ -1,7 +1,6 @@
 package com.turik2304.coursework
 
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
@@ -35,42 +34,25 @@ class EmojiView @JvmOverloads constructor(
         }
     val listOfUsersWhoClicked = mutableListOf<String>()
 
-    private val superellipseDayColor =
-        resources.getColor(R.color.design_default_color_background, context.theme)
-    private val superellipseNightColor =
-        resources.getColor(R.color.emoji_view_night_color, context.theme)
-    private val superellipseDayColorSelected =
-        resources.getColor(R.color.emoji_view_day_selected_color, context.theme)
-    private val superellipseNightColorSelected =
-        resources.getColor(R.color.emoji_view_night_selected_color, context.theme)
-
-    private val currentNightMode = resources.configuration.uiMode and
-            Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+    private val superellipseColor =
+        resources.getColor(R.color.gray_not_selected_background, context.theme)
+    private val superellipseColorSelected =
+        resources.getColor(R.color.gray_selected_background, context.theme)
+    private val contentColor =
+        resources.getColor(R.color.gray_send_message, context.theme)
 
     private val superellipsePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = if (currentNightMode) {
-            superellipseNightColor
-        } else superellipseDayColor
+        color = superellipseColor
         style = Paint.Style.FILL
     }
 
     private val superellipseSelectedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = if (currentNightMode) {
-            superellipseNightColorSelected
-        } else superellipseDayColorSelected
+        color = superellipseColorSelected
         style = Paint.Style.FILL
     }
 
-    private val superellipseBoundaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = resources.getColor(R.color.emoji_view_night_selected_color, context.theme)
-        style = Paint.Style.STROKE
-        strokeWidth = dpToPx(2f).toFloat()
-    }
-
     private val contentPaint = Paint().apply {
-        color = if (currentNightMode) {
-            resources.getColor(R.color.emoji_view_content_color, context.theme)
-        } else Color.BLACK
+        color = contentColor
         style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
     }
@@ -98,18 +80,13 @@ class EmojiView @JvmOverloads constructor(
     private val boundariesRect = RectF()
     private var coordinateXOfContent: Float = 0F
     private var coordinateYOfContent: Float = 0F
-    private val padding: Int = textSize
-    private val radius: Float = textSize.toFloat()
-    private val strokeWidth = superellipseBoundaryPaint.strokeWidth.toInt()
+    private val padding: Int = dpToPx(6f).toInt()
+    private val radius: Float = dpToPx(10f)
 
     init {
         isClickable = true
         context.obtainStyledAttributes(attrs, R.styleable.EmojiView).apply {
-            textSize = getDimensionPixelSize(
-                R.styleable.EmojiView_ev_text_size, spToPx(
-                    DEFAULT_TEXT_SIZE_SP
-                )
-            )
+            textSize = spToPx(14f)
             emojiCode = getInteger(R.styleable.EmojiView_emojiCode, DEFAULT_EMOJI_CODE)
             selectCounter = getInteger(R.styleable.EmojiView_selectCounter, selectCounter)
             recycle()
@@ -147,12 +124,10 @@ class EmojiView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         boundariesRect.set(0f, 0f, w.toFloat(), h.toFloat())
-        setBordersOffsetToPreventStrokeClipping(boundariesRect, strokeWidth)
     }
 
     override fun onDraw(canvas: Canvas) {
         val canvasCount = canvas.save()
-        canvas.drawRoundRect(boundariesRect, radius, radius, superellipseBoundaryPaint)
         if (isSelected) {
             canvas.drawRoundRect(boundariesRect, radius, radius, superellipseSelectedPaint)
         } else {
@@ -172,37 +147,51 @@ class EmojiView @JvmOverloads constructor(
             isSelected = !isSelected
             selectCounter++
             listOfUsersWhoClicked.add(MyUserId.MY_USER_ID)
-            val handlerIncreasingCounter = handler@{ reactionsOfClickedMessage: MutableList<ServerApi.Reaction> ->
-                val updatedReaction = ServerApi.Reaction(emojiCode, selectCounter, listOfUsersWhoClicked)
-                val currentReaction = ServerApi.Reaction(emojiCode, selectCounter - 1, (listOfUsersWhoClicked - MyUserId.MY_USER_ID))
-                reactionsOfClickedMessage.forEachIndexed { index, reaction ->
-                    if (reaction.emojiCode == currentReaction.emojiCode &&
-                        reaction.counter == currentReaction.counter &&
-                        reaction.usersWhoClicked.toSet() == currentReaction.usersWhoClicked.toSet()) {
-                        reactionsOfClickedMessage[index] = updatedReaction
+            val handlerIncreasingCounter =
+                handler@{ reactionsOfClickedMessage: MutableList<ServerApi.Reaction> ->
+                    val updatedReaction =
+                        ServerApi.Reaction(emojiCode, selectCounter, listOfUsersWhoClicked)
+                    val currentReaction = ServerApi.Reaction(
+                        emojiCode,
+                        selectCounter - 1,
+                        (listOfUsersWhoClicked - MyUserId.MY_USER_ID)
+                    )
+                    reactionsOfClickedMessage.forEachIndexed { index, reaction ->
+                        if (reaction.emojiCode == currentReaction.emojiCode &&
+                            reaction.counter == currentReaction.counter &&
+                            reaction.usersWhoClicked.toSet() == currentReaction.usersWhoClicked.toSet()
+                        ) {
+                            reactionsOfClickedMessage[index] = updatedReaction
+                        }
                     }
+                    return@handler true
                 }
-                return@handler true
-            }
-            MainActivity.updateReactionsOfMessages(uidOfMessage, handlerIncreasingCounter)
+            ChatActivity.updateReactionsOfMessages(uidOfMessage, handlerIncreasingCounter)
         } else {
             isSelected = !isSelected
             selectCounter--
             listOfUsersWhoClicked.remove(MyUserId.MY_USER_ID)
             directParent.checkZeroesCounters()
-            val handlerDecreasingCounter = handler@{ reactionsOfClickedMessage: MutableList<ServerApi.Reaction> ->
-                val updatedReaction = ServerApi.Reaction(emojiCode, selectCounter, listOfUsersWhoClicked)
-                val currentReaction = ServerApi.Reaction(emojiCode, selectCounter + 1, (listOfUsersWhoClicked + MyUserId.MY_USER_ID))
-                reactionsOfClickedMessage.forEachIndexed { index, reaction ->
-                    if (reaction.emojiCode == currentReaction.emojiCode &&
+            val handlerDecreasingCounter =
+                handler@{ reactionsOfClickedMessage: MutableList<ServerApi.Reaction> ->
+                    val updatedReaction =
+                        ServerApi.Reaction(emojiCode, selectCounter, listOfUsersWhoClicked)
+                    val currentReaction = ServerApi.Reaction(
+                        emojiCode,
+                        selectCounter + 1,
+                        (listOfUsersWhoClicked + MyUserId.MY_USER_ID)
+                    )
+                    reactionsOfClickedMessage.forEachIndexed { index, reaction ->
+                        if (reaction.emojiCode == currentReaction.emojiCode &&
                             reaction.counter == currentReaction.counter &&
-                            reaction.usersWhoClicked.toSet() == currentReaction.usersWhoClicked.toSet()) {
-                        reactionsOfClickedMessage[index] = updatedReaction
+                            reaction.usersWhoClicked.toSet() == currentReaction.usersWhoClicked.toSet()
+                        ) {
+                            reactionsOfClickedMessage[index] = updatedReaction
+                        }
                     }
+                    return@handler true
                 }
-                return@handler true
-            }
-            MainActivity.updateReactionsOfMessages(uidOfMessage, handlerDecreasingCounter)
+            ChatActivity.updateReactionsOfMessages(uidOfMessage, handlerDecreasingCounter)
         }
         return super.performClick()
     }
@@ -213,15 +202,8 @@ class EmojiView @JvmOverloads constructor(
     }
 
     @Px
-    private fun dpToPx(dp: Float): Int {
-        return (dp * resources.displayMetrics.density).roundToInt()
-    }
-
-    private fun setBordersOffsetToPreventStrokeClipping(rect: RectF, value: Int) {
-        rect.top += value / 2
-        rect.bottom -= value / 2
-        rect.right -= value / 2
-        rect.left += value / 2
+    private fun dpToPx(dp: Float): Float {
+        return (dp * resources.displayMetrics.density)
     }
 
     private fun updateViewContent() {
@@ -238,7 +220,6 @@ class EmojiView @JvmOverloads constructor(
     }
 
     companion object {
-        private const val DEFAULT_TEXT_SIZE_SP = 14F
         private const val DEFAULT_EMOJI_CODE: Int = 0x1F60A
         private const val DEFAULT_SELECT_COUNTER: Int = 0
     }
