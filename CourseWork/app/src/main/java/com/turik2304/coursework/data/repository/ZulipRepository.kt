@@ -226,8 +226,8 @@ object ZulipRepository : Repository {
         nameOfStream: String
     ): Observable<MessageData.EventRegistrationData> {
         val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
-        val registerMessageEvents = RetroClient.zulipApi.registerMessageEvents(narrow)
-        val registerReactionEvents = RetroClient.zulipApi.registerReactionEvents(narrow)
+        val registerMessageEvents = RetroClient.zulipApi.registerMessageEvents(narrow = narrow)
+        val registerReactionEvents = RetroClient.zulipApi.registerReactionEvents(narrow = narrow)
         return Observable.zip(registerMessageEvents, registerReactionEvents,
             { registerMessageEventsResponse: RegisterEventsResponse, registerReactionEventsResponse: RegisterEventsResponse ->
                 converter.messageHelper.setOfRawIdsOfMessages.clear()

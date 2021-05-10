@@ -4,6 +4,7 @@ import com.turik2304.coursework.data.network.models.response.*
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
+import org.json.JSONArray
 import retrofit2.http.*
 
 interface ZulipAPI {
@@ -34,7 +35,7 @@ interface ZulipAPI {
         @Query("anchor") anchor: String,
         @Query("num_before") numBefore: Int,
         @Query("num_after") numAfter: Int,
-        @Query("narrow") narrow: String,
+        @Query("narrow") narrow: JSONArray,
         @Query("apply_markdown") applyMarkdown: Boolean = false,
     ): Observable<GetMessagesResponse>
 
@@ -62,14 +63,14 @@ interface ZulipAPI {
 
     @POST("register")
     fun registerMessageEvents(
-        @Query("narrow") narrow: String,
-        @Query("event_types") eventTypes: String = "[\"message\"]"
+        @Query("narrow") narrow: JSONArray,
+        @Query("event_types") eventTypes: JSONArray = JSONArray().put("message")
     ): Observable<RegisterEventsResponse>
 
     @POST("register")
     fun registerReactionEvents(
-        @Query("narrow") narrow: String,
-        @Query("event_types") eventTypes: String = "[\"reaction\"]"
+        @Query("narrow") narrow: JSONArray,
+        @Query("event_types") eventTypes: JSONArray = JSONArray().put("reaction")
     ): Observable<RegisterEventsResponse>
 
     @DELETE("events")
