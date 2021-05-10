@@ -44,6 +44,4 @@ interface Recycler<T : ViewTyped> {
     fun <R : ViewTyped> clickedItem(vararg viewType: Int): Observable<R>
     fun <R : ViewTyped> clickedViewId(viewType: Int, viewId: Int): Observable<R>
     fun repeatOnErrorClick(): Observable<*>
-
-
 }

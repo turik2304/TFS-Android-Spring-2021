@@ -1,12 +1,8 @@
 package com.turik2304.coursework
 
 import android.os.Bundle
-import android.text.*
-import android.text.method.LinkMovementMethod
-import android.text.style.ClickableSpan
-import android.view.View
-import android.widget.TextView
-import androidx.core.text.toSpannable
+import android.text.Editable
+import android.text.TextWatcher
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.jakewharton.rxrelay3.PublishRelay
@@ -29,6 +25,8 @@ import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.clicks.ChatClickMapper
 import com.turik2304.coursework.presentation.recycler_view.holder_factories.ChatHolderFactory
+import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
+import com.turik2304.coursework.presentation.recycler_view.items.BottomSheetReactionUI
 import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
 import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 import com.turik2304.coursework.presentation.utils.Error
@@ -133,6 +131,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
             override fun afterTextChanged(s: Editable?) {
             }
         })
+
+
     }
 
     override fun render(state: ChatUiState) {
@@ -144,8 +144,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         }
 
         state.uidOfClickedMessage?.let {
-            dialog.show()
             uidOfClickedMessage = state.uidOfClickedMessage
+            dialog.show()
         }
 
         state.error?.let { Error.showError(applicationContext, it) }
@@ -281,6 +281,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         )
     }
 
+    //тут грязно, знаю, не успел((((
     private fun initBottomSheetDialog() {
         dialog = BottomSheetDialog(this)
         dialogBinding = BottomSheetBinding.inflate(layoutInflater)
@@ -290,10 +291,26 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 ChatActions.DismissBottomSheetDialog
             )
         }
-        fillTextViewWithEmojisAsSpannableText(
-            textView = dialogBinding.emojiListTextView,
-            emojiCodeRange = 0x1F600..0x1F645
+        val recyclerSheet = Recycler<ViewTyped>(
+            recyclerView = dialogBinding.bottomSheetRecyclerView,
+            holderFactory = MainHolderFactory()
         )
+        recyclerSheet.setItems(getBottomSheetReactions(0x1F600..0x1F647))
+        viewBinding += recyclerSheet.clickedItem<BottomSheetReactionUI>(R.layout.item_bottom_sheet_reaction)
+            .subscribe { reaction ->
+                val nameAndZulipEmojiCode =
+                    EmojiEnum.getNameAndCodeByCodePoint(reaction.emojiCode)
+                val zulipEmojiName = nameAndZulipEmojiCode.first
+                val zulipEmojiCode = nameAndZulipEmojiCode.second
+                actions.accept(
+                    ChatActions.AddReaction(
+                        messageId = uidOfClickedMessage,
+                        emojiName = zulipEmojiName,
+                        emojiCode = zulipEmojiCode
+                    )
+                )
+                dialog.dismiss()
+            }
     }
 
     private fun loadFirstPage() {
@@ -334,51 +351,19 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         } else runnable?.run()
     }
 
-    private fun fillTextViewWithEmojisAsSpannableText(
-        textView: TextView,
+    private fun getBottomSheetReactions(
         emojiCodeRange: IntRange
-    ) {
-        val stringBuilder = SpannableStringBuilder()
-        for (emojiCode in emojiCodeRange) {
-            val emojiString = String(Character.toChars(emojiCode))
-            val prevInd = stringBuilder.length
-            stringBuilder.append(SpannableString(emojiString))
-            val curInd = stringBuilder.length
-            stringBuilder.setSpan(
-                MyClickableSpan(prevInd, curInd),
-                prevInd,
-                curInd,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-        textView.text = stringBuilder.toSpannable()
-        textView.movementMethod = LinkMovementMethod.getInstance()
-    }
-
-    inner class MyClickableSpan(
-        private val start: Int,
-        private val end: Int
-    ) :
-        ClickableSpan() {
-        override fun onClick(widget: View) {
-            val emojiCodeString = (widget as TextView).text.subSequence(start, end).toString()
-            val emojiCode = emojiCodeString.codePointAt(0)
-            val nameAndZulipEmojiCode = EmojiEnum.getNameAndCodeByCodePoint(emojiCode)
-            val zulipEmojiName = nameAndZulipEmojiCode.first
-            val zulipEmojiCode = nameAndZulipEmojiCode.second
-            actions.accept(
-                ChatActions.AddReaction(
-                    messageId = uidOfClickedMessage,
-                    emojiName = zulipEmojiName,
-                    emojiCode = zulipEmojiCode
+    ): MutableList<BottomSheetReactionUI> {
+        val list = mutableListOf<BottomSheetReactionUI>()
+        for ((uid, emojiCode) in emojiCodeRange.withIndex()) {
+            list.add(
+                BottomSheetReactionUI(
+                    uid = uid,
+                    emojiCode = emojiCode
                 )
             )
-            dialog.dismiss()
         }
-
-        override fun updateDrawState(ds: TextPaint) {
-            ds.isUnderlineText = false
-        }
+        return list
     }
 }
 
