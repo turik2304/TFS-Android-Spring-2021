@@ -1,291 +1,363 @@
 package com.turik2304.coursework.network
 
+import androidx.fragment.app.FragmentActivity
+import com.turik2304.coursework.MyUserId
+import com.turik2304.coursework.network.RxLoader.Companion.attachLoader
+import com.turik2304.coursework.recycler_view_base.ViewTyped
+import com.turik2304.coursework.recycler_view_base.items.*
+import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
+import io.taliox.zulip.ZulipRestExecutor
+import io.taliox.zulip.calls.messages.AddReaction
+import io.taliox.zulip.calls.messages.DeleteReaction
+import io.taliox.zulip.calls.messages.GetMessages
+import io.taliox.zulip.calls.messages.PostMessage
+import io.taliox.zulip.calls.streams.GetAllStreams
+import io.taliox.zulip.calls.streams.GetAllTopicsOfAStream
+import io.taliox.zulip.calls.streams.GetSubscribedStreams
+import io.taliox.zulip.calls.users.GetAllUsers
+import io.taliox.zulip.calls.users.GetProfile
+import io.taliox.zulip.calls.users.GetUserPresence
+import org.json.JSONArray
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
+
 class FakeServerApi : ServerApi {
 
-    override val userList = listOf(
-        ServerApi.User(
-            "ARTUR",
-            "Artur Sibagatullin",
-            "Sibagatullin@gmail.com",
-            "In a meeting",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_0",
-            "Ivan Ivanov_0",
-            "Ivan Ivanov_0@gmail.com",
-            "In a meeting0",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_1",
-            "Ivan Ivanov_1",
-            "Ivan Ivanov_1@gmail.com",
-            "In a meeting1",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_2",
-            "Ivan Ivanov_2",
-            "Ivan Ivanov_2@gmail.com",
-            "In a meeting2",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_3",
-            "Ivan Ivanov_3",
-            "Ivan Ivanov_3@gmail.com",
-            "In a meeting3",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_4",
-            "Ivan Ivanov_4",
-            "Ivan Ivanov_4@gmail.com",
-            "In a meeting4",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_5",
-            "Ivan Ivanov_5",
-            "Ivan Ivanov_5@gmail.com",
-            "In a meeting5",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_6",
-            "Ivan Ivanov_6",
-            "Ivan Ivanov_6@gmail.com",
-            "In a meetin6",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_7",
-            "Ivan Ivanov_7",
-            "Ivan Ivanov_7@gmail.com",
-            "In a meeting7",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_8",
-            "Ivan Ivanov_8",
-            "Ivan Ivanov_8@gmail.com",
-            "In a meeting8",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_9",
-            "Ivan Ivanov_9",
-            "Ivan Ivanov_9@gmail.com",
-            "In a meeting9",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_10",
-            "Ivan Ivanov_10",
-            "Ivan Ivanov_10@gmail.com",
-            "In a meeting10",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_11",
-            "Ivan Ivanov_11",
-            "Ivan Ivanov_10@gmail.com",
-            "In a meeting11",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_12",
-            "Ivan Ivanov_12",
-            "Ivan Ivanov_12@gmail.com",
-            "In a meeting12",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_13",
-            "Ivan Ivanov_13",
-            "Ivan Ivanov_13@gmail.com",
-            "In a meeting13",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_14",
-            "Ivan Ivanov_14",
-            "Ivan Ivanov_14@gmail.com",
-            "In a meeting14",
-            "offline"
-        ),
-        ServerApi.User(
-            "Ivan_15",
-            "Ivan Ivanov_15",
-            "Ivan Ivanov_15@gmail.com",
-            "In a meeting15",
-            "online"
-        ),
-        ServerApi.User(
-            "Ivan_16",
-            "Ivan Ivanov_16",
-            "Ivan Ivanov_16@gmail.com",
-            "In a meeting16",
-            "offline"
-        ),
-    )
+    override val userName: String
+        //generate random errors
+//        get() = if (Random().nextBoolean()) "asibag98@gmail.com" else "bobob"
+        get() = "asibag98@gmail.com"
+    override val password: String
+        get() = "fjMrYYPpJBw87hculEvh47Ckc7eW08yN"
+    override val serverURL: String
+        get() = "https://tfs-android-2021-spring.zulipchat.com/"
 
-    private val react0 = ServerApi.Reaction(0x1F600, 1, listOf("ARTUR"))
-    private val react1 = ServerApi.Reaction(0x1F601, 2, listOf("ARTUR", "DENIS"))
-    private val react2 = ServerApi.Reaction(0x1F602, 3, listOf("IVAN", "ROMA", "ALEX"))
-    private val react3 = ServerApi.Reaction(0x1F603, 4, listOf("ANDREI", "ARTUR", "ROMA", "ALEX"))
+    private val STREAM_LOADER_ID = 0
+    private val TOPIC_LOADER_ID = 1
+    private val MESSAGE_LOADER_ID = 2
+    private val USERS_LOADER_ID = 3
+    private val OWN_PROFILE_LOADER_ID = 4
 
-    private var messages = listOf(
-        ServerApi.Message(
-            "– Буддлея! – с досадой проговорил он, прочитав текст сообщения.",
-            1615628355222, "Ivan_0", listOf(react0), "1"
-        ),
-        ServerApi.Message(
-            "Наконец, для большей эффективности в тексте сообщения следует максимально использовать все возможные элементы",
-            1615628356222, "Ivan_1", listOf(react0), "2"
-        ),
-        ServerApi.Message(
-            "Он бегло просмотрел тексты сообщений, отобранных и систематизированных для него кибернетической системой логической обработки данных",
-            1615728355222, "Ivan_2", listOf(react1), "3"
-        ),
-        ServerApi.Message(
-            "ТЕКСТ, -а, м. 1. Слова, предложения в определенной связи и последовательности, образующие какое-л. высказывание, сочинение,",
-            1615728356222, "Ivan_3", listOf(react2), "4"
-        ),
-        ServerApi.Message(
-            "Текст воинской присяги. Текст пьесы. Записать текст сказки. (Малый академический словарь, МАС)",
-            1615728357222, "Ivan_4", listOf(react3), "5"
-        ),
-        ServerApi.Message(
-            "Привет! Меня зовут Лампобот, я компьютерная программа, которая помогает делать Карту слов",
-            1615728358222, "Ivan_5", listOf(react1, react2), "6"
-        ),
-        ServerApi.Message(
-            "Действие по знач. глаг. сообщить—сообщать и сообщиться—сообщаться. ",
-            1615728359222, "Ivan_6", listOf(react3), "7"
-        ),
-        ServerApi.Message(
-            "Осенью 1913 года весь мир облетело сенсационное сообщение об открытии русскими моряками неизвестных земель",
-            1615828360222, "Ivan_7", listOf(react0), "8"
-        ),
-        ServerApi.Message(
-            "По нехоженой земле. О расстреле мирной манифестации рабочих у Зимнего дворца первым принес сообщение Антон Топилкин. Марков, Строговы",
-            1615828361222, "Ivan_8", listOf(react2), "9"
-        ),
-        ServerApi.Message(
-            "Данные, сведения, передаваемые, сообщаемые, излагаемые кем-л. Сообщение бюро погоды.",
-            1615828355222, "Ivan_9", listOf(react1), "10"
-        ),
-        ServerApi.Message(
-            "Офицер доложил последнее сообщение рации; за исключением тридцать седьмой, размещение корпуса закончилось. ",
-            1615928356222, "Ivan_10", listOf(react1), "11"
-        ),
-        ServerApi.Message(
-            "Леонов, Взятие Великошумска. ",
-            1615928357222, "Ivan_11", listOf(react2, react3, react1), "12"
-        ),
-        ServerApi.Message(
-            "Небольшой доклад на какую-л. тему, информация. Котельников поехал в институт, к профессору Карелину, делать какое-то сообщение на кафедре. ",
-            1615928358222, "Ivan_12", listOf(react3), "13"
-        ),
-        ServerApi.Message(
-            "Возможность проникновения куда-л., связи, сношения с чем-л.",
-            1615928355222, "Ivan_13", listOf(react1), "14"
-        ),
-        ServerApi.Message(
-            "Связь на расстоянии при помощи каких-л. средств, а также средства связи. Железнодорожное сообщение.",
-            1616028356222, "Ivan_14", listOf(react2), "15"
-        ),
-        ServerApi.Message(
-            "Сообщение с севером было очень трудно. Почта не действовала. ",
-            161602835722, "Ivan_15", listOf(react0), "16"
-        ),
-        ServerApi.Message(
-            "Источник (печатная версия): Словарь русского языка: В 4-х т. / РАН, Ин-т лингвистич. исследований",
-            1616028498638, "Ivan_16", listOf(react3), "17"
-        ),
-        ServerApi.Message(
-            "Привет! Как Дела?",
-            1615828498638, "ARTUR", listOf(react3), "18"
-        ),
-        ServerApi.Message(
-            "Lorem ipsum test test test",
-            1615628498638, "ARTUR", listOf(), "19"
-        ),
-    )
-
-    override val topicsByStreamUid = mapOf(
-        "1" to listOf(
-            ServerApi.Topic("Testing1", 1240, "TOPIC_ID_1"),
-            ServerApi.Topic("Bruh1", 124, "TOPIC_ID_2")
-        ),
-
-        "2" to listOf(
-            ServerApi.Topic("Testing2", 12, "TOPIC_ID_3"),
-            ServerApi.Topic("Bruh2", 12234, "TOPIC_ID_4")
-        ),
-
-        "3" to listOf(
-            ServerApi.Topic("Testing3", 38, "TOPIC_ID_5"),
-            ServerApi.Topic("Bruh3", 234, "TOPIC_ID_6")
-        ),
-
-        "4" to listOf(
-            ServerApi.Topic("Testing4", 40, "TOPIC_ID_7"),
-            ServerApi.Topic("Bruh4", 14, "TOPIC_ID_8")
-        )
-    )
-
-    override val subscribedStreamsWithUid = mapOf(
-        "#general" to "1",
-        "#Development" to "2",
-        "#Design" to "3",
-        "#PR" to "4"
-    )
-
-    override val allStreams = mapOf(
-        "#general" to "1",
-        "#mems" to "2",
-        "#health" to "3",
-        "#jobs" to "4",
-        "#friends" to "5",
-        "#mobile" to "6",
-        "#food" to "7",
-        "#tinkoff" to "8",
-        "#bottle" to "9",
-        "#lamp" to "10",
-        "#stack" to "11",
-        "#fun" to "12",
-        "#cooking" to "13",
-        "#books" to "14",
-        "#cars" to "15",
-        "#computers" to "16",
-        "#building" to "17",
-    )
-
-    override fun getUserNameById(uid: String): String {
-        return userList.find { user ->
-            user.uid == uid
-        }?.userName ?: "none"
-    }
-
-    override fun sendMessages(listOfMessages: List<ServerApi.Message>) {
-        messages = listOfMessages
-    }
-
-    override fun getMessages(): List<ServerApi.Message> {
-        return messages
-    }
-
-    override fun getProfileDetailsById(uid: String): Map<String, String> {
-        val user = userList.find { user ->
-            user.uid == uid
+    override fun getStreamUIListFromServer(
+        needAllStreams: Boolean,
+        activity: FragmentActivity,
+        loaderId: Int
+    ): Observable<MutableList<ViewTyped>> {
+        val key: String
+        val getStreams = if (needAllStreams) {
+            key = "streams"
+            GetAllStreams()
+        } else {
+            key = "subscriptions"
+            GetSubscribedStreams()
         }
-        return mapOf(
-            "userName" to (user?.userName ?: "none"),
-            "statusText" to (user?.statusText ?: "none"),
-            "status" to (user?.status ?: "none"),
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
         )
+        return Single.fromCallable { getStreams.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response ->
+                val jsonArrayOfStreams = parseJsonArray(response, key)
+                val listOfStreams = mutableListOf<ViewTyped>()
+                for (indexOfStream in 0 until jsonArrayOfStreams.length()) {
+                    val jsonObjectStream = jsonArrayOfStreams.get(indexOfStream) as JSONObject
+                    val nameOfStream = jsonObjectStream.get("name").toString()
+                    val uid = jsonObjectStream.get("stream_id").toString()
+                    listOfStreams.add(StreamUI(nameOfStream, uid))
+                    listOfStreams.add(StreamAndTopicSeparatorUI(uid = "STREAM_SEPARATOR_$uid"))
+                }
+                return@map listOfStreams
+            }
+            .attachLoader(activity, loaderId)
     }
+
+    override fun getTopicsUIListByStreamUid(
+        streamUid: String,
+        activity: FragmentActivity
+    ): Observable<MutableList<ViewTyped>> {
+        val getTopicsOfStream = GetAllTopicsOfAStream(streamUid)
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        return Single.fromCallable { getTopicsOfStream.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response ->
+                val jsonArrayOfTopics = parseJsonArray(response, "topics")
+                val listOfTopics = mutableListOf<ViewTyped>()
+                for (indexOfTopic in 0 until jsonArrayOfTopics.length()) {
+                    val jsonObjectTopic = jsonArrayOfTopics.get(indexOfTopic) as JSONObject
+                    val nameOfTopic = jsonObjectTopic.get("name").toString()
+                    val uid = jsonObjectTopic.get("max_id").toString()
+                    listOfTopics.add(TopicUI(name = nameOfTopic, uid = uid))
+                    listOfTopics.add(
+                        StreamAndTopicSeparatorUI(
+                            uid = "TOPIC_SEPARATOR_${uid}"
+                        )
+                    )
+                }
+                return@map listOfTopics
+            }
+            .attachLoader(activity, streamUid.hashCode())
+    }
+
+    override fun getMessageUIListFromServer(
+        nameOfTopic: String,
+        nameOfStream: String,
+        activity: FragmentActivity,
+        loaderId: Int
+    ): Observable<List<ViewTyped>> {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val getMessages = GetMessages(100, 0)
+        val operand = "\"operand\""
+        val operator = "\"operator\""
+        val streamKey = "\"stream\""
+        val topicKey = "\"topic\""
+        val jsonNameOfTopic = "\"$nameOfTopic\""
+        val jsonNameOfStream = "\"$nameOfStream\""
+        val narrow = "[{$operand: $jsonNameOfStream, $operator: $streamKey}," +
+                "{$operand: $jsonNameOfTopic, $operator: $topicKey}]"
+        getMessages.narrow = narrow
+        return Single
+            .fromCallable { getMessages.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response ->
+                val jsonArrayOfMessages = parseJsonArray(response, "messages")
+
+
+                val listOfMessages = mutableListOf<ServerApi.Message>()
+                for (indexOfMessage in 0 until jsonArrayOfMessages.length()) {
+                    val jsonObjectMessage = jsonArrayOfMessages.get(indexOfMessage) as JSONObject
+                    val uid = jsonObjectMessage.get("id").toString()
+                    val userName = jsonObjectMessage.get("sender_full_name").toString()
+                    val dateInSeconds =
+                        Integer.parseInt(jsonObjectMessage.get("timestamp").toString())
+                    val senderId = jsonObjectMessage.get("sender_id").toString()
+                    val message = jsonObjectMessage.get("content").toString()
+                    val arrayOfReactions = jsonObjectMessage.getJSONArray("reactions")
+                    val reactions = parseReactions(arrayOfReactions)
+                    listOfMessages.add(
+                        ServerApi.Message(
+                            userName,
+                            message,
+                            dateInSeconds,
+                            senderId,
+                            reactions,
+                            uid
+                        )
+                    )
+
+                }
+                return@map listOfMessages
+            }
+            .map { messageList ->
+                messageList
+                    .sortedBy { it.dateInSeconds }
+                    .groupBy { message ->
+                        getFormattedDate(message.dateInSeconds)
+                    }
+                    .flatMap { (date, messages) ->
+                        listOf(DateSeparatorUI(date, "DATE_SEPARATOR_$date")) + parseMessages(
+                            messages
+                        )
+                    }
+            }
+            .attachLoader(activity, loaderId)
+    }
+
+    private fun parseMessages(remoteMessages: List<ServerApi.Message>): List<ViewTyped> {
+        val messageUIList = mutableListOf<ViewTyped>()
+        remoteMessages.forEach { messageToken ->
+            if (messageToken.userId == MyUserId.MY_USER_ID) {
+                messageUIList.add(
+                    OutMessageUI(
+                        userName = messageToken.userName,
+                        userId = messageToken.userId,
+                        message = messageToken.message,
+                        reactions = messageToken.reactions,
+                        dateInSeconds = messageToken.dateInSeconds,
+                        uid = messageToken.uid,
+                    )
+                )
+            } else {
+                messageUIList.add(
+                    InMessageUI(
+                        userName = messageToken.userName,
+                        userId = messageToken.userId,
+                        message = messageToken.message,
+                        reactions = messageToken.reactions,
+                        dateInSeconds = messageToken.dateInSeconds,
+                        uid = messageToken.uid,
+                    )
+                )
+            }
+        }
+        return messageUIList
+    }
+
+    private fun getFormattedDate(dateOfMessageInSeconds: Int): String {
+        val formatter = SimpleDateFormat("dd MMMM")
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = dateOfMessageInSeconds * 1000L
+        return formatter.format(calendar.time)
+    }
+
+    private fun parseReactions(jsonArrayOfReactions: JSONArray): List<ServerApi.Reaction> {
+        val listOfReactions = mutableListOf<ServerApi.Reaction>()
+        for (indexOfReaction in 0 until jsonArrayOfReactions.length()) {
+            val jsonObjectReaction = jsonArrayOfReactions.get(indexOfReaction) as JSONObject
+            val emojiType = jsonObjectReaction.get("reaction_type").toString()
+            if (emojiType == "unicode_emoji") {
+                val emojiCodeString = jsonObjectReaction.get("emoji_code").toString()
+                val emojiCode = Integer.parseInt(emojiCodeString, 16)
+                val userId = jsonObjectReaction.get("user_id").toString()
+                var isTheSameReaction = false
+                var indexOfSameReaction = -1
+                listOfReactions.forEachIndexed { index, reaction ->
+                    if (reaction.emojiCode == emojiCode) {
+                        isTheSameReaction = true
+                        indexOfSameReaction = index
+                    }
+                }
+                if (isTheSameReaction) {
+                    listOfReactions[indexOfSameReaction].counter++
+                    listOfReactions[indexOfSameReaction].usersWhoClicked.add(userId)
+                } else {
+                    listOfReactions.add(ServerApi.Reaction(emojiCode, 1, mutableListOf(userId)))
+                }
+            }
+        }
+        return listOfReactions
+    }
+
+    override fun sendMessageToServer(
+        nameOfTopic: String,
+        nameOfStream: String,
+        message: String
+    ): Completable {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val postMessage = PostMessage(
+            nameOfStream,
+            nameOfTopic,
+            message
+        )
+        return Completable
+            .fromCallable { executor.executeCall(postMessage) }
+            .subscribeOn(Schedulers.io())
+    }
+
+    override fun sendReaction(
+        uidOfMessage: String,
+        emojiCode: String,
+        emojiName: String
+    ): Completable {
+        val addReaction = AddReaction(uidOfMessage, emojiCode, emojiName)
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        return Completable.fromCallable { addReaction.execute(executor) }
+            .subscribeOn(Schedulers.io())
+    }
+
+    override fun removeReaction(
+        uidOfMessage: String,
+        emojiCode: String,
+        emojiName: String
+    ): Completable {
+        val deleteReaction = DeleteReaction(uidOfMessage, emojiCode, emojiName)
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        return Completable.fromCallable { deleteReaction.execute(executor) }
+            .subscribeOn(Schedulers.io())
+    }
+
+    override fun getProfileDetailsById(
+        email: String,
+        activity: FragmentActivity
+    ): Observable<String> {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val getUserPresence = GetUserPresence(email)
+        return Single.fromCallable { getUserPresence.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response ->
+                val jsonObjectAggregated = parseJsonObject(response, "presence", "aggregated")
+                jsonObjectAggregated.getString("status")
+            }
+            .attachLoader(activity, email.hashCode())
+    }
+
+    override fun getUserUIListFromServer(activity: FragmentActivity, loaderId: Int): Observable<MutableList<ViewTyped>> {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val getAllUsers = GetAllUsers()
+        return Single.fromCallable { getAllUsers.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation())
+            .map { response ->
+                val jsonArrayOfUsers = parseJsonArray(response, "members")
+                val listOfUser = mutableListOf<ViewTyped>()
+                for (indexOfUser in 0 until jsonArrayOfUsers.length()) {
+                    val jsonObjectUser = jsonArrayOfUsers.get(indexOfUser) as JSONObject
+                    val email = jsonObjectUser.get("email").toString()
+                    val name = jsonObjectUser.get("full_name").toString()
+                    val uid = jsonObjectUser.get("user_id").toString()
+                    listOfUser.add(
+                        UserUI(
+                            userName = name,
+                            email = email,
+                            uid = uid
+                        )
+                    )
+                }
+                return@map listOfUser
+            }
+            .attachLoader(activity, loaderId)
+    }
+
+    override fun getOwnProfile(
+        activity: FragmentActivity,
+    ): Observable<Map<String, String>> {
+        val executor = ZulipRestExecutor(
+            userName, password, serverURL
+        )
+        val getOwnProfile = GetProfile()
+        return Single.fromCallable { getOwnProfile.execute(executor) }
+            .subscribeOn(Schedulers.io())
+            .map { response ->
+                val jsonObjectProfile = JSONObject(response)
+                val userName = jsonObjectProfile.get("full_name").toString()
+                return@map mapOf("userName" to userName)
+            }
+            .attachLoader(activity, LoadersID.OWN_PROFILE_LOADER_ID)
+    }
+
+    private fun parseJsonArray(response: String, key: String): JSONArray {
+        return JSONObject(response)
+            .getJSONArray(key)
+    }
+
+    private fun parseJsonObject(response: String, vararg keys: String): JSONObject {
+        var jsonObject = JSONObject(response)
+        for (key in keys) {
+            jsonObject = jsonObject.get(key) as JSONObject
+        }
+        return jsonObject
+    }
+
+
 }

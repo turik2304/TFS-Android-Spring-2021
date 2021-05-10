@@ -3,13 +3,15 @@ package com.turik2304.coursework.recycler_view_base.holders
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.UserUI
+import com.turik2304.coursework.stopAndHideShimmer
 
 class UserHolder(
     view: View,
-    startChatClick: (View) -> Unit
+    startChatClick: (View) -> Unit,
 ) : BaseViewHolder<UserUI>(view) {
 
     private val userName = view.findViewById<TextView>(R.id.tvUserNamePeopleTab)
@@ -21,8 +23,12 @@ class UserHolder(
         avatar.clipToOutline = true
     }
 
-
     override fun bind(item: UserUI) {
+        if (item.profileDetailsLoadingStarted) {
+            (itemView as ShimmerFrameLayout).showShimmer(true)
+        } else {
+            (itemView as ShimmerFrameLayout).stopAndHideShimmer()
+        }
         userName.text = item.userName
         email.text = item.email
     }

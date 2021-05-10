@@ -3,6 +3,7 @@ package com.turik2304.coursework.recycler_view_base.holders
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.turik2304.coursework.R
 import com.turik2304.coursework.recycler_view_base.BaseViewHolder
 import com.turik2304.coursework.recycler_view_base.items.StreamUI
@@ -14,9 +15,12 @@ class StreamHolder(
 
     private val nameOfStreamHolder = view.findViewById<TextView>(R.id.tvNameOfStream)
     private val expandImageView = view.findViewById<ImageView>(R.id.imExpandStream)
+    private val shimmer = view as ShimmerFrameLayout
 
     init {
         view.setOnClickListener(getTopicsClick)
+        shimmer.setOnClickListener(getTopicsClick)
+        shimmer.hideShimmer()
     }
 
     override fun bind(item: StreamUI) {
