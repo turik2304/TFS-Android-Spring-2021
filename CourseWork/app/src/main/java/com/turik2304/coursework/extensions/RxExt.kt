@@ -4,10 +4,10 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.disposables.SerialDisposable
 
-fun Disposable.addTo(disposables: CompositeDisposable) {
-    disposables.add(this)
+operator fun CompositeDisposable.plusAssign(disposable: Disposable) {
+    this.add(disposable)
 }
 
-fun Disposable.setTo(disposables: SerialDisposable) {
-    disposables.set(this)
+operator fun SerialDisposable.plusAssign(disposable: Disposable) {
+    this.set(disposable)
 }

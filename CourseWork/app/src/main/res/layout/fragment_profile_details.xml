@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@string/profileToolbar"
+            android:text="@string/profile_toolbar"
             android:textSize="24sp" />
 
     </androidx.appcompat.widget.Toolbar>

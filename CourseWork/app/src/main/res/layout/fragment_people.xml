@@ -8,6 +8,7 @@
 
     <com.facebook.shimmer.ShimmerFrameLayout
         android:id="@+id/usersShimmer"
+        app:shimmer_auto_start="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -28,7 +29,7 @@
                     android:layout_marginLeft="2dp"
                     android:layout_weight="8"
                     android:background="@null"
-                    android:hint="@string/usersHint"
+                    android:hint="@string/users_hint"
                     android:paddingLeft="20dp"
                     android:textColor="@color/gray_primary"
                     android:textColorHint="@color/gray_primary"
