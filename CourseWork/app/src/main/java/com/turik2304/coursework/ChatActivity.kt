@@ -131,8 +131,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
             override fun afterTextChanged(s: Editable?) {
             }
         })
-
-
     }
 
     override fun render(state: ChatUiState) {
