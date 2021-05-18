@@ -10,14 +10,14 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.ChatActivity
+import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.R
 import com.turik2304.coursework.databinding.FragmentAllStreamsBinding
 import com.turik2304.coursework.databinding.FragmentChannelsBinding
-import com.turik2304.coursework.domain.StreamsMiddleware
+import com.turik2304.coursework.di.modules.StreamsModule
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.StreamsActions
-import com.turik2304.coursework.presentation.StreamsReducer
 import com.turik2304.coursework.presentation.StreamsUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
@@ -31,21 +31,23 @@ import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import javax.inject.Inject
+import javax.inject.Named
 
 class AllStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() {
 
-    private lateinit var listOfStreams: List<StreamUI>
+    @field:[Inject Named(StreamsModule.ALL_STREAMS_STORE)]
+    override lateinit var store: Store<StreamsActions, StreamsUiState>
+
+    @Inject
+    override lateinit var actions: PublishRelay<StreamsActions>
+
+    @Inject
+    lateinit var compositeDisposable: CompositeDisposable
+
     private lateinit var recycler: Recycler<ViewTyped>
+    private lateinit var listOfStreams: List<StreamUI>
     private val listOfExpandedStreams = mutableListOf<Int>()
-
-    override val store: Store<StreamsActions, StreamsUiState> = Store(
-        reducer = StreamsReducer(),
-        middlewares = listOf(StreamsMiddleware(needAllStreams = true)),
-        initialState = StreamsUiState()
-    )
-    override val actions: PublishRelay<StreamsActions> = PublishRelay.create()
-
-    private val compositeDisposable = CompositeDisposable()
 
     private var _binding: FragmentAllStreamsBinding? = null
     private var _parentBinding: FragmentChannelsBinding? = null
@@ -63,6 +65,7 @@ class AllStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        (activity?.application as MyApp).streamsComponent?.inject(this)
         _parentBinding = parentFragment?.let { FragmentChannelsBinding.bind(it.requireView()) }
 
         initRecycler()

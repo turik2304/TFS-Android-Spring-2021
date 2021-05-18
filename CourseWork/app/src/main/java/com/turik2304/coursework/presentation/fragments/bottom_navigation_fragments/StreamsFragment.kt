@@ -10,9 +10,9 @@ import com.turik2304.coursework.R
 import com.turik2304.coursework.databinding.FragmentChannelsBinding
 import com.turik2304.coursework.presentation.fragments.fragment_state_adapter.StreamsPagerAdapter
 import com.turik2304.coursework.presentation.fragments.view_pager_fragments.AllStreamsFragment
-import com.turik2304.coursework.presentation.fragments.view_pager_fragments.SubscribedFragment
+import com.turik2304.coursework.presentation.fragments.view_pager_fragments.SubscribedStreamsFragment
 
-class ChannelsFragment : Fragment() {
+class StreamsFragment : Fragment() {
 
     private var _binding: FragmentChannelsBinding? = null
     private val binding get() = _binding!!
@@ -34,7 +34,7 @@ class ChannelsFragment : Fragment() {
         )
         val pagerAdapter = StreamsPagerAdapter(childFragmentManager, viewLifecycleOwner.lifecycle)
         binding.fragmentViewPager.adapter = pagerAdapter
-        pagerAdapter.updatePages(listOf(SubscribedFragment(), AllStreamsFragment()))
+        pagerAdapter.updatePages(listOf(SubscribedStreamsFragment(), AllStreamsFragment()))
         TabLayoutMediator(binding.tabLayout, binding.fragmentViewPager) { tab, position ->
             tab.text = tabs[position]
         }.attach()

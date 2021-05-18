@@ -1,7 +1,7 @@
 package com.turik2304.coursework.di.modules
 
 import com.jakewharton.rxrelay3.PublishRelay
-import com.turik2304.coursework.di.scopes.PeopleScope
+import com.turik2304.coursework.di.scopes.PeoplesScope
 import com.turik2304.coursework.domain.OwnProfileMiddleware
 import com.turik2304.coursework.domain.UsersMiddleware
 import com.turik2304.coursework.presentation.UsersActions
@@ -22,7 +22,7 @@ class PeopleModule {
     }
 
     @Provides
-    @PeopleScope
+    @PeoplesScope
     @Named(PEOPLE_STORE)
     fun providePeopleStore(
         reducer: UsersReducer,
@@ -37,7 +37,7 @@ class PeopleModule {
     }
 
     @Provides
-    @PeopleScope
+    @PeoplesScope
     @Named(OWN_PROFILE_STORE)
     fun provideOwnProfileStore(
         reducer: UsersReducer,
@@ -52,31 +52,31 @@ class PeopleModule {
     }
 
     @Provides
-    @PeopleScope
+    @PeoplesScope
     fun provideReducer(): UsersReducer {
         return UsersReducer()
     }
 
     @Provides
-    @PeopleScope
+    @PeoplesScope
     fun provideUsersMiddleware(): List<UsersMiddleware> {
         return listOf(UsersMiddleware())
     }
 
     @Provides
-    @PeopleScope
-    fun provideOwnProfileMiddlewares(): List<OwnProfileMiddleware> {
+    @PeoplesScope
+    fun provideOwnProfileMiddleware(): List<OwnProfileMiddleware> {
         return listOf(OwnProfileMiddleware())
     }
 
     @Provides
-    @PeopleScope
+    @PeoplesScope
     fun provideInitialState(): UsersUiState {
         return UsersUiState()
     }
 
     @Provides
-    @PeopleScope
+    @PeoplesScope
     fun provideActions(): PublishRelay<UsersActions> {
         return PublishRelay.create()
     }

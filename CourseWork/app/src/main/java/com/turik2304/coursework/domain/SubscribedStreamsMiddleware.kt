@@ -6,7 +6,7 @@ import com.turik2304.coursework.presentation.StreamsActions
 import com.turik2304.coursework.presentation.StreamsUiState
 import io.reactivex.rxjava3.core.Observable
 
-class StreamsMiddleware(private val needAllStreams: Boolean) :
+class SubscribedStreamsMiddleware :
     Middleware<StreamsActions, StreamsUiState> {
 
     override val repository: Repository = ZulipRepository
@@ -17,7 +17,7 @@ class StreamsMiddleware(private val needAllStreams: Boolean) :
     ): Observable<StreamsActions> {
         return actions.ofType(StreamsActions.LoadStreams::class.java)
             .flatMap {
-                return@flatMap repository.getStreams(needAllStreams = needAllStreams)
+                return@flatMap repository.getStreams(needAllStreams = false)
                     .map<StreamsActions> { result ->
                         val streams = repository.converter.convertToViewTypedItems(result)
                         return@map if (streams.isEmpty()) StreamsActions.LoadedEmptyList
