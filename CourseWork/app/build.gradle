@@ -23,10 +23,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
@@ -34,7 +36,6 @@ android {
     buildFeatures {
         viewBinding true
     }
-
 }
 
 dependencies {
@@ -54,7 +55,7 @@ dependencies {
     implementation "com.jakewharton.rxrelay3:rxrelay:$rxJava"
 
     def retrofit = "2.9.0"
-    implementation "com.squareup.retrofit2:$retrofit"
+    implementation "com.squareup.retrofit2:retrofit:$retrofit"
     implementation "com.squareup.retrofit2:adapter-rxjava3:$retrofit"
     implementation 'com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0'
 
@@ -63,11 +64,15 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:4.8.1'
 
     def glide = "4.12.0"
-    annotationProcessor "com.github.bumptech.glide:compiler:$glide"
+    kapt "com.github.bumptech.glide:compiler:$glide"
     implementation "com.github.bumptech.glide:glide:$glide"
 
     def room = "2.3.0"
     kapt "androidx.room:room-compiler:$room"
     implementation "androidx.room:room-runtime:$room"
     implementation "androidx.room:room-ktx:$room"
+
+    def dagger = "2.33"
+    kapt "com.google.dagger:dagger-compiler:$dagger"
+    implementation "com.google.dagger:dagger:$dagger"
 }

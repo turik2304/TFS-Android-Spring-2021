@@ -26,9 +26,18 @@ class MainActivity : AppCompatActivity() {
 
         mainBinding.bottomNavigation.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.navChannels -> activeFragment = ChannelsFragment()
-                R.id.navPeople -> activeFragment = PeopleFragment()
-                R.id.navProfile -> activeFragment = OwnProfileFragment()
+                R.id.navChannels -> {
+                    (applicationContext as MyApp).clearPeopleComponent()
+                    activeFragment = ChannelsFragment()
+                }
+                R.id.navPeople -> {
+                    (applicationContext as MyApp).addPeopleComponent()
+                    activeFragment = PeopleFragment()
+                }
+                R.id.navProfile -> {
+                    (applicationContext as MyApp).addPeopleComponent()
+                    activeFragment = OwnProfileFragment()
+                }
             }
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, activeFragment)
@@ -36,5 +45,10 @@ class MainActivity : AppCompatActivity() {
                 .commit()
             true
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        (applicationContext as MyApp).clearAllComponents()
     }
 }

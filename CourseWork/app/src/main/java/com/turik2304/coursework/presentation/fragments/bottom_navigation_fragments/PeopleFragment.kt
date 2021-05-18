@@ -5,14 +5,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.jakewharton.rxrelay3.PublishRelay
+import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.R
 import com.turik2304.coursework.data.network.models.data.StatusEnum
 import com.turik2304.coursework.databinding.FragmentPeopleBinding
-import com.turik2304.coursework.domain.UsersMiddleware
+import com.turik2304.coursework.di.modules.PeopleModule
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.UsersActions
-import com.turik2304.coursework.presentation.UsersReducer
 import com.turik2304.coursework.presentation.UsersUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
@@ -24,18 +24,21 @@ import com.turik2304.coursework.presentation.recycler_view.items.UserUI
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import javax.inject.Inject
+import javax.inject.Named
 
 class PeopleFragment : MviFragment<UsersActions, UsersUiState>() {
 
-    private lateinit var recycler: Recycler<ViewTyped>
+    @field:[Inject Named(PeopleModule.PEOPLE_STORE)]
+    override lateinit var store: Store<UsersActions, UsersUiState>
 
-    override val actions: PublishRelay<UsersActions> = PublishRelay.create()
-    override val store: Store<UsersActions, UsersUiState> = Store(
-        reducer = UsersReducer(),
-        middlewares = listOf(UsersMiddleware()),
-        initialState = UsersUiState()
-    )
-    private val compositeDisposable = CompositeDisposable()
+    @Inject
+    override lateinit var actions: PublishRelay<UsersActions>
+
+    @Inject
+    lateinit var compositeDisposable: CompositeDisposable
+
+    private lateinit var recycler: Recycler<ViewTyped>
 
     private var _binding: FragmentPeopleBinding? = null
     private val binding get() = _binding!!
@@ -51,6 +54,7 @@ class PeopleFragment : MviFragment<UsersActions, UsersUiState>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        (activity?.application as MyApp).peopleComponent?.inject(this)
         initRecycler()
         initRecyclerClicks()
         compositeDisposable += store.wire()
