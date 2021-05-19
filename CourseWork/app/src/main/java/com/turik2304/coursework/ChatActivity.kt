@@ -3,6 +3,7 @@ package com.turik2304.coursework
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.jakewharton.rxrelay3.PublishRelay
@@ -10,11 +11,9 @@ import com.turik2304.coursework.data.EmojiEnum
 import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
-import com.turik2304.coursework.domain.chat_middlewares.*
 import com.turik2304.coursework.extensions.plusAssign
 import com.turik2304.coursework.extensions.stopAndHideShimmer
 import com.turik2304.coursework.presentation.ChatActions
-import com.turik2304.coursework.presentation.ChatReducer
 import com.turik2304.coursework.presentation.ChatUiState
 import com.turik2304.coursework.presentation.base.MviActivity
 import com.turik2304.coursework.presentation.base.Store
@@ -32,6 +31,7 @@ import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 import com.turik2304.coursework.presentation.utils.Error
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import java.util.*
+import javax.inject.Inject
 
 class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
@@ -40,33 +40,28 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         private const val UID_OF_MESSAGE_AT_FIRST_LOAD = "newest"
         const val EXTRA_NAME_OF_TOPIC = "EXTRA_NAME_OF_TOPIC"
         const val EXTRA_NAME_OF_STREAM = "EXTRA_NAME_OF_STREAM"
-        var activityActions: PublishRelay<ChatActions>? = null
     }
+
+    @Inject
+    override lateinit var store: Store<ChatActions, ChatUiState>
+
+    @Inject
+    override lateinit var actions: PublishRelay<ChatActions>
+
+    @Inject
+    lateinit var wiring: CompositeDisposable
+
+    @Inject
+    lateinit var viewBinding: CompositeDisposable
 
     private lateinit var chatBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
-    private lateinit var dialog: BottomSheetDialog
 
+    private lateinit var dialog: BottomSheetDialog
     private lateinit var recycler: Recycler<ViewTyped>
+
     private lateinit var nameOfTopic: String
     private lateinit var nameOfStream: String
-
-    private val wiring = CompositeDisposable()
-    private val viewBinding = CompositeDisposable()
-
-    override val store: Store<ChatActions, ChatUiState> = Store(
-        reducer = ChatReducer(),
-        middlewares = listOf(
-            LoadMessagesMiddleware(),
-            RegisterEventsMiddleware(),
-            EventsLongpollingMiddleware(),
-            SendMessageMiddleware(),
-            AddReactionMiddleware(),
-            RemoveReactionMiddleware()
-        ),
-        initialState = ChatUiState()
-    )
-    override val actions: PublishRelay<ChatActions> = PublishRelay.create()
 
     private var messagesQueueId: String = ""
     private var lastMessageEventId: String = ""
@@ -82,6 +77,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         super.onCreate(savedInstanceState)
         chatBinding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(chatBinding.root)
+        (application as MyApp).chatComponent?.inject(this)
 
         initBottomSheetDialog()
         initNamesOfTopicAndStream()
@@ -92,6 +88,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         viewBinding += store.bind(this)
 
         loadFirstPage()
+
+        Log.d("xxx", "activity $actions")
 
         chatBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
         chatBinding.imageViewSendMessage.setOnClickListener {
@@ -224,7 +222,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     override fun onDestroy() {
         super.onDestroy()
-        activityActions = null
         viewBinding.clear()
     }
 
@@ -312,7 +309,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     }
 
     private fun loadFirstPage() {
-        activityActions = actions
         actions.accept(
             ChatActions.LoadItems(
                 needFirstPage = true,

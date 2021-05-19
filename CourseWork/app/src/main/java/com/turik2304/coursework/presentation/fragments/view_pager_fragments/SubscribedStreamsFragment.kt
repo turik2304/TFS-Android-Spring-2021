@@ -78,6 +78,11 @@ class SubscribedStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() 
         actions.accept(StreamsActions.LoadStreams)
     }
 
+    override fun onStart() {
+        super.onStart()
+        (activity?.application as MyApp).clearChatComponent()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         compositeDisposable.clear()
@@ -120,6 +125,7 @@ class SubscribedStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() 
             intent.putExtra(EXTRA_NAME_OF_TOPIC, state.nameOfTopic)
             intent.putExtra(EXTRA_NAME_OF_STREAM, state.nameOfStream)
             startActivity(intent)
+            (activity?.application as MyApp).addChatComponent()
             actions.accept(StreamsActions.ChatOpened)
         }
     }

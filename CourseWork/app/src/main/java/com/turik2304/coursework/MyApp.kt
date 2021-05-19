@@ -1,16 +1,14 @@
 package com.turik2304.coursework
 
 import android.app.Application
-import com.turik2304.coursework.di.components.DaggerPeopleComponent
-import com.turik2304.coursework.di.components.DaggerStreamsComponent
-import com.turik2304.coursework.di.components.PeopleComponent
-import com.turik2304.coursework.di.components.StreamsComponent
+import com.turik2304.coursework.di.components.*
 
 class MyApp : Application() {
 
-//    lateinit var component: AppComponent
+    //    lateinit var component: AppComponent
     var peopleComponent: PeopleComponent? = null
     var streamsComponent: StreamsComponent? = null
+    var chatComponent: ChatComponent? = null
 
     companion object {
         lateinit var app: Application
@@ -31,6 +29,16 @@ class MyApp : Application() {
         if (streamsComponent == null) {
             streamsComponent = DaggerStreamsComponent.create()
         }
+    }
+
+    fun addChatComponent() {
+        if (chatComponent == null) {
+            chatComponent = DaggerChatComponent.create()
+        }
+    }
+
+    fun clearChatComponent() {
+        chatComponent = null
     }
 
     fun clearStreamsComponent() {

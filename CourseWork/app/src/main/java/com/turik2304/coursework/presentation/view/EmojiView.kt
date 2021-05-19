@@ -8,13 +8,15 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.view.setPadding
-import com.turik2304.coursework.ChatActivity
+import com.jakewharton.rxrelay3.PublishRelay
+import com.turik2304.coursework.MyApp
 import com.turik2304.coursework.R
 import com.turik2304.coursework.data.EmojiEnum
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.extensions.dpToPx
 import com.turik2304.coursework.extensions.spToPx
 import com.turik2304.coursework.presentation.ChatActions
+import javax.inject.Inject
 
 
 class EmojiView @JvmOverloads constructor(
@@ -23,6 +25,10 @@ class EmojiView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
     defStyleRes: Int = 0,
 ) : View(context, attrs, defStyleAttr, defStyleRes) {
+
+    @Inject
+    lateinit var chatActions: PublishRelay<ChatActions>
+
     var emojiCode = DEFAULT_EMOJI_CODE
         set(value) {
             if (field != value) {
@@ -98,6 +104,7 @@ class EmojiView @JvmOverloads constructor(
             selectCounter = getInteger(R.styleable.EmojiView_selectCounter, selectCounter)
             recycle()
         }
+        (context.applicationContext as MyApp).chatComponent?.inject(this)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -154,7 +161,7 @@ class EmojiView @JvmOverloads constructor(
             isSelected = !isSelected
             selectCounter++
             listOfUsersWhoClicked.add(MyUserId.MY_USER_ID)
-            ChatActivity.activityActions?.accept(
+            chatActions.accept(
                 ChatActions.AddReaction(
                     messageId = uidOfMessage,
                     emojiName = zulipName,
@@ -166,7 +173,7 @@ class EmojiView @JvmOverloads constructor(
             selectCounter--
             listOfUsersWhoClicked.remove(MyUserId.MY_USER_ID)
             parent.checkZeroesCounters()
-            ChatActivity.activityActions?.accept(
+            chatActions.accept(
                 ChatActions.RemoveReaction(
                     messageId = uidOfMessage,
                     emojiName = zulipName,
