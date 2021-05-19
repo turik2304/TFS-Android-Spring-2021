@@ -20,5 +20,4 @@ abstract class Database : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun streamDao(): StreamDao
     abstract fun messageDao(): MessageDao
-
 }

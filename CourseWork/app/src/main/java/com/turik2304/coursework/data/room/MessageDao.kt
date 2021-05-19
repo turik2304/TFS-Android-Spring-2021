@@ -34,14 +34,6 @@ interface MessageDao {
     @Query("DELETE FROM messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic AND id NOT IN (SELECT id from messages WHERE nameOfStream = :nameOfStream AND nameOfTopic = :nameOfTopic ORDER BY id DESC LIMIT 50)")
     fun checkCapacity(nameOfStream: String, nameOfTopic: String)
 
-//    fun update(viewTypedMessages: List<ViewTyped>) {
-//        updateConverted(viewTypedMessages.toInMessages())
-//    }
-
-//    fun insertAll(viewTypedMessages: List<ViewTyped>) {
-//        insertConverted(viewTypedMessages.toInMessages())
-//    }
-
     @Transaction
     fun insertAllAndCheckCapacity(
         nameOfStream: String,
@@ -51,9 +43,4 @@ interface MessageDao {
         insertAll(messages)
         checkCapacity(nameOfStream, nameOfTopic)
     }
-
-//    fun getAll(nameOfStream: String, nameOfTopic: String): List<ViewTyped> {
-//        return getRaw(nameOfStream, nameOfTopic).toViewTypedMessages()
-//    }
-
 }

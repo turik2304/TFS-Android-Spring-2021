@@ -1,6 +1,7 @@
 package com.turik2304.coursework.di.modules
 
 import com.jakewharton.rxrelay3.PublishRelay
+import com.turik2304.coursework.data.repository.Repository
 import com.turik2304.coursework.di.scopes.ChatScope
 import com.turik2304.coursework.domain.Middleware
 import com.turik2304.coursework.domain.chat_middlewares.*
@@ -21,47 +22,36 @@ class ChatModule {
         reducer: ChatReducer,
         middlewares: List<@JvmSuppressWildcards Middleware<ChatActions, ChatUiState>>,
         initialState: ChatUiState
-    ): Store<ChatActions, ChatUiState> {
-        return Store(
-            reducer = reducer,
-            middlewares = middlewares,
-            initialState = initialState
+    ): Store<ChatActions, ChatUiState> = Store(
+        reducer = reducer,
+        middlewares = middlewares,
+        initialState = initialState
+    )
+
+    @Provides
+    @ChatScope
+    fun provideReducer(): ChatReducer = ChatReducer()
+
+    @Provides
+    @ChatScope
+    fun provideChatMiddlewares(repository: Repository): List<Middleware<ChatActions, ChatUiState>> =
+        listOf(
+            LoadMessagesMiddleware(repository),
+            RegisterEventsMiddleware(repository),
+            EventsLongpollingMiddleware(repository),
+            SendMessageMiddleware(repository),
+            AddReactionMiddleware(repository),
+            RemoveReactionMiddleware(repository)
         )
-    }
 
     @Provides
     @ChatScope
-    fun provideReducer(): ChatReducer {
-        return ChatReducer()
-    }
+    fun provideInitialState(): ChatUiState = ChatUiState()
 
     @Provides
     @ChatScope
-    fun provideChatMiddlewares(): List<Middleware<ChatActions, ChatUiState>> {
-        return listOf(
-            LoadMessagesMiddleware(),
-            RegisterEventsMiddleware(),
-            EventsLongpollingMiddleware(),
-            SendMessageMiddleware(),
-            AddReactionMiddleware(),
-            RemoveReactionMiddleware()
-        )
-    }
+    fun provideActions(): PublishRelay<ChatActions> = PublishRelay.create()
 
     @Provides
-    @ChatScope
-    fun provideInitialState(): ChatUiState {
-        return ChatUiState()
-    }
-
-    @Provides
-    @ChatScope
-    fun provideActions(): PublishRelay<ChatActions> {
-        return PublishRelay.create()
-    }
-
-    @Provides
-    fun provideCompositeDisposable(): CompositeDisposable {
-        return CompositeDisposable()
-    }
+    fun provideCompositeDisposable(): CompositeDisposable = CompositeDisposable()
 }

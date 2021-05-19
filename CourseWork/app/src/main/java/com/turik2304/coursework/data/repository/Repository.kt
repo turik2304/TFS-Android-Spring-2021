@@ -1,18 +1,24 @@
 package com.turik2304.coursework.data.repository
 
+import com.turik2304.coursework.data.network.ZulipApi
 import com.turik2304.coursework.data.network.models.data.Message
 import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.data.User
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
+import com.turik2304.coursework.data.network.utils.NarrowConstructor
 import com.turik2304.coursework.data.network.utils.ViewTypedConverter
+import com.turik2304.coursework.data.room.Database
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 
 interface Repository {
+    val api: ZulipApi
+    val db: Database
     val converter: ViewTypedConverter
+    val narrowConstructor: NarrowConstructor
 
     fun getStreams(needAllStreams: Boolean): Observable<List<Stream>>
     fun getTopicsOfStreams(streams: List<Stream>): Observable<List<Stream>>

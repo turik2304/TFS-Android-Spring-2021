@@ -5,23 +5,20 @@ import com.turik2304.coursework.data.network.models.data.Message
 import com.turik2304.coursework.data.network.models.data.Stream
 import com.turik2304.coursework.data.network.models.data.Topic
 import com.turik2304.coursework.data.network.models.data.User
-import com.turik2304.coursework.data.network.utils.MessageHelperImpl.getFormattedDate
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.DateSeparatorUI
 import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
 import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
 import com.turik2304.coursework.presentation.recycler_view.items.UserUI
 
-object ViewTypedConverterImpl : ViewTypedConverter {
-
-    override val messageHelper: MessageHelper = MessageHelperImpl
+class ViewTypedConverterImpl(override val messageHelper: MessageHelper) : ViewTypedConverter {
 
     override fun <T : PreViewTyped> convertToViewTypedItems(modelList: List<T>): List<ViewTyped> {
         if (modelList.firstOrNull() is Message) {
             return (modelList as List<Message>)
                 .sortedBy { it.dateInSeconds }
                 .groupBy { message ->
-                    getFormattedDate(message.dateInSeconds)
+                    messageHelper.getFormattedDate(message.dateInSeconds)
                 }
                 .flatMap { (date, messages) ->
                     listOf(

@@ -1,7 +1,7 @@
 package com.turik2304.coursework.di.modules
 
 import com.jakewharton.rxrelay3.PublishRelay
-import com.turik2304.coursework.di.scopes.PeoplesScope
+import com.turik2304.coursework.data.repository.Repository
 import com.turik2304.coursework.di.scopes.StreamsScope
 import com.turik2304.coursework.domain.AllStreamsMiddleware
 import com.turik2304.coursework.domain.SubscribedStreamsMiddleware
@@ -29,13 +29,11 @@ class StreamsModule {
         reducer: StreamsReducer,
         middlewares: List<SubscribedStreamsMiddleware>,
         initialState: StreamsUiState
-    ): Store<StreamsActions, StreamsUiState> {
-        return Store(
-            reducer = reducer,
-            middlewares = middlewares,
-            initialState = initialState
-        )
-    }
+    ): Store<StreamsActions, StreamsUiState> = Store(
+        reducer = reducer,
+        middlewares = middlewares,
+        initialState = initialState
+    )
 
     @Provides
     @StreamsScope
@@ -44,46 +42,34 @@ class StreamsModule {
         reducer: StreamsReducer,
         middlewares: List<AllStreamsMiddleware>,
         initialState: StreamsUiState
-    ): Store<StreamsActions, StreamsUiState> {
-        return Store(
-            reducer = reducer,
-            middlewares = middlewares,
-            initialState = initialState
-        )
-    }
+    ): Store<StreamsActions, StreamsUiState> = Store(
+        reducer = reducer,
+        middlewares = middlewares,
+        initialState = initialState
+    )
 
     @Provides
     @StreamsScope
-    fun provideReducer(): StreamsReducer {
-        return StreamsReducer()
-    }
+    fun provideReducer(): StreamsReducer = StreamsReducer()
 
     @Provides
     @StreamsScope
-    fun provideSubscribedStreamsMiddleware(): List<SubscribedStreamsMiddleware> {
-        return listOf(SubscribedStreamsMiddleware())
-    }
+    fun provideSubscribedStreamsMiddleware(repository: Repository): List<SubscribedStreamsMiddleware> =
+        listOf(SubscribedStreamsMiddleware(repository))
 
     @Provides
     @StreamsScope
-    fun provideAllStreamsMiddlewares(): List<AllStreamsMiddleware> {
-        return listOf(AllStreamsMiddleware())
-    }
+    fun provideAllStreamsMiddlewares(repository: Repository): List<AllStreamsMiddleware> =
+        listOf(AllStreamsMiddleware(repository))
 
     @Provides
     @StreamsScope
-    fun provideInitialState(): StreamsUiState {
-        return StreamsUiState()
-    }
+    fun provideInitialState(): StreamsUiState = StreamsUiState()
 
     @Provides
-    fun provideActions(): PublishRelay<StreamsActions> {
-        return PublishRelay.create()
-    }
+    fun provideActions(): PublishRelay<StreamsActions> = PublishRelay.create()
 
     @Provides
     @StreamsScope
-    fun provideCompositeDisposable(): CompositeDisposable {
-        return CompositeDisposable()
-    }
+    fun provideCompositeDisposable(): CompositeDisposable = CompositeDisposable()
 }

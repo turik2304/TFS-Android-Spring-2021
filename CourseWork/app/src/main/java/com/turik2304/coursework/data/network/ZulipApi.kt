@@ -7,7 +7,7 @@ import io.reactivex.rxjava3.core.Single
 import org.json.JSONArray
 import retrofit2.http.*
 
-interface ZulipAPI {
+interface ZulipApi {
 
     @GET("users")
     fun getAllUsers(): Observable<GetAllUsersResponse>

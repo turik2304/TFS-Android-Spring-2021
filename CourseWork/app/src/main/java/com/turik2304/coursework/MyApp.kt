@@ -2,38 +2,48 @@ package com.turik2304.coursework
 
 import android.app.Application
 import com.turik2304.coursework.di.components.*
+import com.turik2304.coursework.di.modules.app_modules.AppModule
 
 class MyApp : Application() {
 
-    //    lateinit var component: AppComponent
+    lateinit var appComponent: AppComponent
     var peopleComponent: PeopleComponent? = null
     var streamsComponent: StreamsComponent? = null
     var chatComponent: ChatComponent? = null
 
-    companion object {
-        lateinit var app: Application
-    }
-
     override fun onCreate() {
         super.onCreate()
-        app = this
+        appComponent = DaggerAppComponent
+            .builder()
+            .appModule(AppModule(this))
+            .build()
+        appComponent.inject(this)
     }
 
     fun addPeopleComponent() {
         if (peopleComponent == null) {
-            peopleComponent = DaggerPeopleComponent.create()
+            peopleComponent = DaggerPeopleComponent
+                .builder()
+                .appComponent(appComponent)
+                .build()
         }
     }
 
     fun addStreamsComponent() {
         if (streamsComponent == null) {
-            streamsComponent = DaggerStreamsComponent.create()
+            streamsComponent = DaggerStreamsComponent
+                .builder()
+                .appComponent(appComponent)
+                .build()
         }
     }
 
     fun addChatComponent() {
         if (chatComponent == null) {
-            chatComponent = DaggerChatComponent.create()
+            chatComponent = DaggerChatComponent
+                .builder()
+                .appComponent(appComponent)
+                .build()
         }
     }
 

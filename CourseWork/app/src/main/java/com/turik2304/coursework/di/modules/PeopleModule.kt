@@ -1,6 +1,7 @@
 package com.turik2304.coursework.di.modules
 
 import com.jakewharton.rxrelay3.PublishRelay
+import com.turik2304.coursework.data.repository.Repository
 import com.turik2304.coursework.di.scopes.PeoplesScope
 import com.turik2304.coursework.domain.OwnProfileMiddleware
 import com.turik2304.coursework.domain.UsersMiddleware
@@ -28,13 +29,11 @@ class PeopleModule {
         reducer: UsersReducer,
         middlewares: List<UsersMiddleware>,
         initialState: UsersUiState
-    ): Store<UsersActions, UsersUiState> {
-        return Store(
-            reducer = reducer,
-            middlewares = middlewares,
-            initialState = initialState
-        )
-    }
+    ): Store<UsersActions, UsersUiState> = Store(
+        reducer = reducer,
+        middlewares = middlewares,
+        initialState = initialState
+    )
 
     @Provides
     @PeoplesScope
@@ -43,46 +42,34 @@ class PeopleModule {
         reducer: UsersReducer,
         middlewares: List<OwnProfileMiddleware>,
         initialState: UsersUiState
-    ): Store<UsersActions, UsersUiState> {
-        return Store(
-            reducer = reducer,
-            middlewares = middlewares,
-            initialState = initialState
-        )
-    }
+    ): Store<UsersActions, UsersUiState> = Store(
+        reducer = reducer,
+        middlewares = middlewares,
+        initialState = initialState
+    )
 
     @Provides
     @PeoplesScope
-    fun provideReducer(): UsersReducer {
-        return UsersReducer()
-    }
+    fun provideReducer(): UsersReducer = UsersReducer()
 
     @Provides
     @PeoplesScope
-    fun provideUsersMiddleware(): List<UsersMiddleware> {
-        return listOf(UsersMiddleware())
-    }
+    fun provideUsersMiddleware(repository: Repository): List<UsersMiddleware> =
+        listOf(UsersMiddleware(repository))
 
     @Provides
     @PeoplesScope
-    fun provideOwnProfileMiddleware(): List<OwnProfileMiddleware> {
-        return listOf(OwnProfileMiddleware())
-    }
+    fun provideOwnProfileMiddleware(repository: Repository): List<OwnProfileMiddleware> =
+        listOf(OwnProfileMiddleware(repository))
 
     @Provides
     @PeoplesScope
-    fun provideInitialState(): UsersUiState {
-        return UsersUiState()
-    }
+    fun provideInitialState(): UsersUiState = UsersUiState()
 
     @Provides
     @PeoplesScope
-    fun provideActions(): PublishRelay<UsersActions> {
-        return PublishRelay.create()
-    }
+    fun provideActions(): PublishRelay<UsersActions> = PublishRelay.create()
 
     @Provides
-    fun provideCompositeDisposable(): CompositeDisposable {
-        return CompositeDisposable()
-    }
+    fun provideCompositeDisposable(): CompositeDisposable = CompositeDisposable()
 }

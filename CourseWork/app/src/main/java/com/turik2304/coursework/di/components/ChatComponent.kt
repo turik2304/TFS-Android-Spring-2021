@@ -11,7 +11,7 @@ import com.turik2304.coursework.presentation.view.EmojiView
 import dagger.Component
 
 @ChatScope
-@Component(modules = [ChatModule::class])
+@Component(dependencies = [AppComponent::class], modules = [ChatModule::class])
 interface ChatComponent {
     fun inject(chatActivity: ChatActivity)
     fun inject(emojiView: EmojiView)

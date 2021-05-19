@@ -7,7 +7,7 @@ import com.turik2304.coursework.presentation.fragments.view_pager_fragments.Subs
 import dagger.Component
 
 @StreamsScope
-@Component(modules = [StreamsModule::class])
+@Component(dependencies = [AppComponent::class], modules = [StreamsModule::class])
 interface StreamsComponent {
     fun inject(subscribedStreamsFragment: SubscribedStreamsFragment)
     fun inject(allStreamsFragment: AllStreamsFragment)

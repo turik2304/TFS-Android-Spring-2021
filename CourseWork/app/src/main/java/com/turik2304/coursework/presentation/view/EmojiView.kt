@@ -93,13 +93,13 @@ class EmojiView @JvmOverloads constructor(
     private val boundariesRect = RectF()
     private var coordinateXOfContent: Float = 0F
     private var coordinateYOfContent: Float = 0F
-    private val padding: Int = 6f.dpToPx().toInt()
-    private val radius: Float = 10f.dpToPx()
+    private val padding: Int = 6f.dpToPx(context).toInt()
+    private val radius: Float = 10f.dpToPx(context)
 
     init {
         isClickable = true
         context.obtainStyledAttributes(attrs, R.styleable.EmojiView).apply {
-            textSize = 14f.spToPx()
+            textSize = 14f.spToPx(context)
             emojiCode = getInteger(R.styleable.EmojiView_emojiCode, DEFAULT_EMOJI_CODE)
             selectCounter = getInteger(R.styleable.EmojiView_selectCounter, selectCounter)
             recycle()

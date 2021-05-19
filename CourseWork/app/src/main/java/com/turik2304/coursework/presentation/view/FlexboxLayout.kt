@@ -19,7 +19,7 @@ class FlexboxLayout @JvmOverloads constructor(
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
     var imageViewAddsEmojis: ImageView
-    private val gap = 7f.dpToPx().toInt()
+    private val gap = 7f.dpToPx(context).toInt()
 
     init {
         setWillNotDraw(true)

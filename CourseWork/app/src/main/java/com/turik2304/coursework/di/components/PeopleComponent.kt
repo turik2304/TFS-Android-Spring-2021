@@ -7,7 +7,7 @@ import com.turik2304.coursework.presentation.fragments.bottom_navigation_fragmen
 import dagger.Component
 
 @PeoplesScope
-@Component(modules = [PeopleModule::class])
+@Component(dependencies = [AppComponent::class], modules = [PeopleModule::class])
 interface PeopleComponent {
     fun inject(peopleFragment: PeopleFragment)
     fun inject(ownProfileFragment: OwnProfileFragment)

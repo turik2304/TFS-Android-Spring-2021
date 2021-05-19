@@ -23,5 +23,4 @@ interface UserDao {
         deleteAll()
         insertAll(users)
     }
-
 }
