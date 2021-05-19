@@ -8,7 +8,6 @@ import com.turik2304.coursework.presentation.recycler_view.holders.BottomSheetRe
 import com.turik2304.coursework.presentation.recycler_view.holders.StreamHolder
 import com.turik2304.coursework.presentation.recycler_view.holders.TopicHolder
 import com.turik2304.coursework.presentation.recycler_view.holders.UserHolder
-import com.turik2304.coursework.presentation.recycler_view.items.BottomSheetReactionUI
 
 class MainHolderFactory : HolderFactory() {
 

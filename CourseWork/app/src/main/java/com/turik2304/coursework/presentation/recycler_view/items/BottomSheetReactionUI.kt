@@ -7,4 +7,4 @@ class BottomSheetReactionUI(
     val emojiCode: Int,
     override val uid: Int,
     override val viewType: Int = R.layout.item_bottom_sheet_reaction
-): ViewTyped
+) : ViewTyped

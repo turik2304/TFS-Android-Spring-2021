@@ -3,7 +3,7 @@ package com.turik2304.coursework.data.network.utils
 import org.json.JSONArray
 import org.json.JSONObject
 
-class NarrowConstructorImpl: NarrowConstructor {
+class NarrowConstructorImpl : NarrowConstructor {
 
     companion object {
         private const val OPERAND_KEY = "operand"

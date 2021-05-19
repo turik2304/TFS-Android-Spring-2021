@@ -2,7 +2,6 @@ package com.turik2304.coursework.extensions
 
 import android.content.Context
 import androidx.annotation.Px
-import com.turik2304.coursework.MyApp
 import kotlin.math.roundToInt
 
 @Px
