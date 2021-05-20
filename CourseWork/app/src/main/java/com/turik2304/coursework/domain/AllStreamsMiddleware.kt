@@ -8,8 +8,6 @@ import io.reactivex.rxjava3.core.Observable
 class AllStreamsMiddleware(override val repository: Repository) :
     Middleware<StreamsActions, StreamsUiState> {
 
-//    override val repository: Repository = ZulipRepository
-
     override fun bind(
         actions: Observable<StreamsActions>,
         state: Observable<StreamsUiState>

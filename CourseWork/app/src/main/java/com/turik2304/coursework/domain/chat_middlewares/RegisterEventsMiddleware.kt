@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit
 class RegisterEventsMiddleware(override val repository: Repository) :
     Middleware<ChatActions, ChatUiState> {
 
-//    override val repository: Repository = ZulipRepository
-
     override fun bind(
         actions: Observable<ChatActions>,
         state: Observable<ChatUiState>

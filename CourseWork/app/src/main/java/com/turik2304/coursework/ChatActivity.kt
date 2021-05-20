@@ -3,11 +3,9 @@ package com.turik2304.coursework
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.jakewharton.rxrelay3.PublishRelay
-import com.turik2304.coursework.data.EmojiEnum
 import com.turik2304.coursework.data.network.models.data.MessageData
 import com.turik2304.coursework.databinding.ActivityChatBinding
 import com.turik2304.coursework.databinding.BottomSheetBinding
@@ -59,6 +57,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     private lateinit var dialog: BottomSheetDialog
     private lateinit var recycler: Recycler<ViewTyped>
+    private lateinit var recyclerSheet: Recycler<ViewTyped>
 
     private lateinit var nameOfTopic: String
     private lateinit var nameOfStream: String
@@ -68,7 +67,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private var isLastPage = false
     private var isLoading = false
     private var uidOfUpperMessage: String = UID_OF_MESSAGE_AT_FIRST_LOAD
-    private var uidOfClickedMessage: Int = -1
 
     private var reactionsQueueId: String = ""
     private var lastReactionEventId: String = ""
@@ -79,14 +77,14 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         setContentView(chatBinding.root)
         (application as MyApp).chatComponent?.inject(this)
 
-        initBottomSheetDialog()
-        initNamesOfTopicAndStream()
-        initRecycler()
-        initRecyclerClicks()
-
         wiring += store.wire()
         viewBinding += store.bind(this)
 
+        initNamesOfTopicAndStream()
+        initBottomSheetDialog()
+        initBottomSheetRecycler()
+        initRecycler()
+        initRecyclersClicks()
         loadFirstPage()
 
         chatBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
@@ -131,80 +129,20 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     override fun render(state: ChatUiState) {
         isLoading = state.isLoading
-        if (state.isLoading) {
-            chatBinding.chatShimmer.showShimmer(true)
-        } else {
-            chatBinding.chatShimmer.stopAndHideShimmer()
-        }
 
-        state.uidOfClickedMessage?.let {
-            uidOfClickedMessage = state.uidOfClickedMessage
-            dialog.show()
-        }
-
-        state.error?.let { Error.showError(applicationContext, it) }
+        renderLoading(state.isLoading)
+        renderError(state.error)
+        renderBottomSheetDialog(state.auxiliaryData)
+        renderClickedMessage(state.messageClicked)
 
         when (state.data) {
-            is MessageData.FirstPageData -> {
-                val messages = state.data.items
-                uidOfUpperMessage =
-                    messages[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
-                recycler.updateList(messages) {
-                    chatBinding.recycleView.smoothScrollToPosition(recycler.adapter.itemCount)
-                    actions.accept(
-                        ChatActions.RegisterEvents(
-                            nameOfTopic = nameOfTopic,
-                            nameOfStream = nameOfStream
-                        )
-                    )
-                }
-            }
-            is MessageData.SentMessageData -> {
-                val currentList = recycler.adapter.items
-                recycler.updateList(currentList + state.data.messages) {
-                    chatBinding.recycleView.smoothScrollToPosition(recycler.adapter.itemCount)
-                }
-            }
-            is MessageData.NextPageData -> {
-                wiring.clear()
-                wiring += store.wire()
-                val newPage = state.data.items
-                val uidOfUpperMessageInNewPage =
-                    newPage[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
-                if (uidOfUpperMessageInNewPage == uidOfUpperMessage) isLastPage = true
-                else {
-                    val actualList = (newPage + recycler.adapter.items).distinct()
-                    recycler.updateList(actualList) {
-                        uidOfUpperMessage =
-                            actualList[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
-                        sendActionToPollEvents()
-                    }
-                }
-            }
-            is MessageData.EventRegistrationData -> {
-                messagesQueueId = state.data.messagesQueueId
-                lastMessageEventId = state.data.messageEventId
-                reactionsQueueId = state.data.reactionsQueueId
-                lastReactionEventId = state.data.reactionEventId
-                sendActionToPollEvents()
-            }
-            is MessageData.MessageLongpollingData -> {
-                messagesQueueId = state.data.messagesQueueId
-                lastMessageEventId = state.data.lastMessageEventId
-                recycler.updateList(state.data.polledData) {
-                    chatBinding.recycleView.smoothScrollToPosition(
-                        recycler.adapter.itemCount
-                    )
-                    sendActionToPollEvents()
-                }
-            }
-            is MessageData.ReactionLongpollingData -> {
-                reactionsQueueId = state.data.reactionsQueueId
-                lastReactionEventId = state.data.lastReactionEventId
-                recycler.updateList(state.data.polledData) {
-                    sendActionToPollEvents()
-                }
-            }
+            is MessageData.FirstPageData -> renderFirstPage(state.data.items)
+            is MessageData.NextPageData -> renderNextPage(state.data.items)
+            is MessageData.SentMessageData -> renderSentMessages(state.data.messages)
+
+            is MessageData.EventRegistrationData -> initEventsRegistrationData(state.data)
+            is MessageData.MessageLongpollingData -> renderPolledMessages(state.data)
+            is MessageData.ReactionLongpollingData -> renderPolledReactions(state.data)
         }
     }
 
@@ -223,10 +161,121 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         viewBinding.clear()
     }
 
+    private fun renderLoading(isLoading: Boolean) {
+        if (isLoading) {
+            chatBinding.chatShimmer.showShimmer(true)
+        } else {
+            chatBinding.chatShimmer.stopAndHideShimmer()
+        }
+    }
+
+    private fun renderError(error: Throwable?) {
+        error?.let { Error.showError(applicationContext, it) }
+    }
+
+    private fun renderBottomSheetDialog(auxiliaryData: List<*>?) {
+        auxiliaryData?.let { data ->
+            if (data.first() is BottomSheetReactionUI) {
+                recyclerSheet.setItems(data as List<ViewTyped>)
+            }
+        }
+    }
+
+    private fun renderClickedMessage(messageClicked: Boolean) {
+        if (messageClicked) {
+            dialog.show()
+        } else dialog.dismiss()
+    }
+
+    private fun renderFirstPage(messages: List<ViewTyped>) {
+        uidOfUpperMessage =
+            messages[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
+        recycler.updateList(messages) {
+            chatBinding.recycleView.smoothScrollToPosition(recycler.adapter.itemCount)
+            actions.accept(
+                ChatActions.RegisterEvents(
+                    nameOfTopic = nameOfTopic,
+                    nameOfStream = nameOfStream
+                )
+            )
+        }
+    }
+
+    private fun renderNextPage(newPage: List<ViewTyped>) {
+        wiring.clear()
+        wiring += store.wire()
+        val uidOfUpperMessageInNewPage =
+            newPage[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
+        if (uidOfUpperMessageInNewPage == uidOfUpperMessage) isLastPage = true
+        else {
+            val actualList = (newPage + recycler.adapter.items).distinct()
+            recycler.updateList(actualList) {
+                uidOfUpperMessage =
+                    actualList[POSITION_OF_UPPER_MESSAGE_IN_PAGE].uid.toString()
+                sendActionToPollEvents()
+            }
+        }
+    }
+
+    private fun renderSentMessages(sentMessages: List<ViewTyped>) {
+        val currentList = recycler.adapter.items
+        recycler.updateList(currentList + sentMessages) {
+            chatBinding.recycleView.smoothScrollToPosition(recycler.adapter.itemCount)
+        }
+    }
+
+    private fun initEventsRegistrationData(registrationData: MessageData.EventRegistrationData) {
+        messagesQueueId = registrationData.messagesQueueId
+        lastMessageEventId = registrationData.messageEventId
+        reactionsQueueId = registrationData.reactionsQueueId
+        lastReactionEventId = registrationData.reactionEventId
+        sendActionToPollEvents()
+    }
+
+    private fun renderPolledMessages(messageLongpollingData: MessageData.MessageLongpollingData) {
+        messagesQueueId = messageLongpollingData.messagesQueueId
+        lastMessageEventId = messageLongpollingData.lastMessageEventId
+        recycler.updateList(messageLongpollingData.polledData) {
+            chatBinding.recycleView.smoothScrollToPosition(
+                recycler.adapter.itemCount
+            )
+            sendActionToPollEvents()
+        }
+    }
+
+    private fun renderPolledReactions(reactionLongpollingData: MessageData.ReactionLongpollingData) {
+        reactionsQueueId = reactionLongpollingData.reactionsQueueId
+        lastReactionEventId = reactionLongpollingData.lastReactionEventId
+        recycler.updateList(reactionLongpollingData.polledData) {
+            sendActionToPollEvents()
+        }
+    }
+
     private fun checkWiring() {
         if (wiring.size() == 0) {
             wiring += store.wire()
             sendActionToPollEvents()
+        }
+    }
+
+    private fun initNamesOfTopicAndStream() {
+        nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM).toString()
+        nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC).toString()
+        chatBinding.tvNameOfStream.text = getString(R.string.name_of_stream, nameOfStream)
+        chatBinding.tvNameOfTopic.text = getString(
+            R.string.name_of_topic,
+            nameOfTopic.toLowerCase(Locale.ROOT)
+        )
+    }
+
+    private fun initBottomSheetDialog() {
+        dialog = BottomSheetDialog(this)
+        dialogBinding = BottomSheetBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogBinding.bottomSheet)
+        dialog.setOnDismissListener {
+            actions.accept(
+                ChatActions.DismissBottomSheetDialog
+            )
         }
     }
 
@@ -258,52 +307,24 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         })
     }
 
-    private fun initRecyclerClicks() {
-        val outMessageClick = recycler.clickedItem<OutMessageUI>(R.layout.item_outcoming_message)
-        val inMessageClick = recycler.clickedItem<InMessageUI>(R.layout.item_incoming_message)
-        viewBinding += ChatClickMapper(outMessageClick, inMessageClick).bind(actions)
-    }
-
-    private fun initNamesOfTopicAndStream() {
-        nameOfStream = intent.getStringExtra(EXTRA_NAME_OF_STREAM).toString()
-        nameOfTopic = intent.getStringExtra(EXTRA_NAME_OF_TOPIC).toString()
-        chatBinding.tvNameOfStream.text = getString(R.string.name_of_stream, nameOfStream)
-        chatBinding.tvNameOfTopic.text = getString(
-            R.string.name_of_topic,
-            nameOfTopic.toLowerCase(Locale.ROOT)
-        )
-    }
-
-    //тут грязно, знаю, не успел((((
-    private fun initBottomSheetDialog() {
-        dialog = BottomSheetDialog(this)
-        dialogBinding = BottomSheetBinding.inflate(layoutInflater)
-        dialog.setContentView(dialogBinding.bottomSheet)
-        dialog.setOnDismissListener {
-            actions.accept(
-                ChatActions.DismissBottomSheetDialog
-            )
-        }
-        val recyclerSheet = Recycler<ViewTyped>(
+    private fun initBottomSheetRecycler() {
+        recyclerSheet = Recycler<ViewTyped>(
             recyclerView = dialogBinding.bottomSheetRecyclerView,
             holderFactory = MainHolderFactory()
         )
-        recyclerSheet.setItems(getBottomSheetReactions(0x1F600..0x1F647))
-        viewBinding += recyclerSheet.clickedItem<BottomSheetReactionUI>(R.layout.item_bottom_sheet_reaction)
-            .subscribe { reaction ->
-                val nameAndZulipEmojiCode =
-                    EmojiEnum.getNameAndCodeByCodePoint(reaction.emojiCode)
-                val zulipEmojiName = nameAndZulipEmojiCode.first
-                val zulipEmojiCode = nameAndZulipEmojiCode.second
-                actions.accept(
-                    ChatActions.AddReaction(
-                        messageId = uidOfClickedMessage,
-                        emojiName = zulipEmojiName,
-                        emojiCode = zulipEmojiCode
-                    )
-                )
-                dialog.dismiss()
-            }
+        actions.accept(ChatActions.GetBottomSheetReactions)
+    }
+
+    private fun initRecyclersClicks() {
+        val outMessageClick = recycler.clickedItem<OutMessageUI>(R.layout.item_outcoming_message)
+        val inMessageClick = recycler.clickedItem<InMessageUI>(R.layout.item_incoming_message)
+        val bottomSheetReactionClick =
+            recyclerSheet.clickedItem<BottomSheetReactionUI>(R.layout.item_bottom_sheet_reaction)
+        viewBinding += ChatClickMapper(
+            outMessageClick,
+            inMessageClick,
+            bottomSheetReactionClick
+        ).bind(actions)
     }
 
     private fun loadFirstPage() {
@@ -341,21 +362,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
                 runnable?.run()
             }
         } else runnable?.run()
-    }
-
-    private fun getBottomSheetReactions(
-        emojiCodeRange: IntRange
-    ): MutableList<BottomSheetReactionUI> {
-        val list = mutableListOf<BottomSheetReactionUI>()
-        for ((uid, emojiCode) in emojiCodeRange.withIndex()) {
-            list.add(
-                BottomSheetReactionUI(
-                    uid = uid,
-                    emojiCode = emojiCode
-                )
-            )
-        }
-        return list
     }
 }
 

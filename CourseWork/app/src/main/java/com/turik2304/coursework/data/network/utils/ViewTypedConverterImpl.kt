@@ -1,15 +1,9 @@
 package com.turik2304.coursework.data.network.utils
 
 import com.turik2304.coursework.data.network.models.PreViewTyped
-import com.turik2304.coursework.data.network.models.data.Message
-import com.turik2304.coursework.data.network.models.data.Stream
-import com.turik2304.coursework.data.network.models.data.Topic
-import com.turik2304.coursework.data.network.models.data.User
+import com.turik2304.coursework.data.network.models.data.*
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
-import com.turik2304.coursework.presentation.recycler_view.items.DateSeparatorUI
-import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
-import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
-import com.turik2304.coursework.presentation.recycler_view.items.UserUI
+import com.turik2304.coursework.presentation.recycler_view.items.*
 
 class ViewTypedConverterImpl(override val messageHelper: MessageHelper) : ViewTypedConverter {
 
@@ -45,6 +39,10 @@ class ViewTypedConverterImpl(override val messageHelper: MessageHelper) : ViewTy
                         avatarUrl = model.avatarUrl,
                         uid = model.id,
                         presence = model.presence,
+                    )
+                    is BottomSheetReaction -> BottomSheetReactionUI(
+                        emojiCode = model.emojiCode,
+                        uid = model.id
                     )
                     else -> null
                 }

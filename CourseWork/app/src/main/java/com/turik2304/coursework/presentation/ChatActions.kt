@@ -80,9 +80,13 @@ sealed class ChatActions : Action {
 
     object ReactionRemoved : ChatActions()
 
-    class ShowBottomSheetDialog(
-        val uidOfClickedMessage: Int
+    object GetBottomSheetReactions : ChatActions()
+
+    class BottomSheetReactionsReceived(
+        val bottomSheetReactions: List<ViewTyped>
     ) : ChatActions()
+
+    object ShowBottomSheetDialog : ChatActions()
 
     object DismissBottomSheetDialog : ChatActions()
 }

@@ -1,5 +1,6 @@
 package com.turik2304.coursework.data.repository
 
+import com.turik2304.coursework.data.EmojiEnum
 import com.turik2304.coursework.data.MyUserId
 import com.turik2304.coursework.data.network.ZulipApi
 import com.turik2304.coursework.data.network.models.data.*
@@ -149,6 +150,20 @@ class ZulipRepository(
         return sendMessageCall.startWith(rawMessageSupplier)
     }
 
+    override fun getBottomSheetReactionList(): Observable<List<BottomSheetReaction>> {
+        val list = mutableListOf<BottomSheetReaction>()
+        val emojiCodeRange = EmojiEnum.values().map { it.unicodeCodePoint }.sortedDescending()
+        for ((id, emojiCode) in emojiCodeRange.withIndex()) {
+            list.add(
+                BottomSheetReaction(
+                    emojiCode = emojiCode,
+                    id = id
+                )
+            )
+        }
+        return Observable.just(list)
+    }
+
     override fun sendReaction(
         messageId: Int,
         emojiName: String,
@@ -213,7 +228,6 @@ class ZulipRepository(
                 }
                 return@map messages
             }
-
         return messagesFromNetwork
             .publish { fromNetwork ->
                 Observable.mergeDelayError(fromNetwork, messagesFromDB.takeUntil(fromNetwork))

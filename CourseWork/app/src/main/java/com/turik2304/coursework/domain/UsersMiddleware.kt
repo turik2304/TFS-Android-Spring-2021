@@ -8,8 +8,6 @@ import io.reactivex.rxjava3.core.Observable
 class UsersMiddleware(override val repository: Repository) :
     Middleware<UsersActions, UsersUiState> {
 
-//    override val repository: Repository = ZulipRepository
-
     override fun bind(
         actions: Observable<UsersActions>,
         state: Observable<UsersUiState>

@@ -1,10 +1,7 @@
 package com.turik2304.coursework.data.repository
 
 import com.turik2304.coursework.data.network.ZulipApi
-import com.turik2304.coursework.data.network.models.data.Message
-import com.turik2304.coursework.data.network.models.data.MessageData
-import com.turik2304.coursework.data.network.models.data.Stream
-import com.turik2304.coursework.data.network.models.data.User
+import com.turik2304.coursework.data.network.models.data.*
 import com.turik2304.coursework.data.network.models.response.GetOwnProfileResponse
 import com.turik2304.coursework.data.network.utils.NarrowConstructor
 import com.turik2304.coursework.data.network.utils.ViewTypedConverter
@@ -67,6 +64,7 @@ interface Repository {
         message: String
     ): Observable<OutMessageUI>
 
+    fun getBottomSheetReactionList(): Observable<List<BottomSheetReaction>>
     fun sendReaction(messageId: Int, emojiName: String, emojiCode: String): Completable
     fun removeReaction(messageId: Int, emojiName: String, emojiCode: String): Completable
 }

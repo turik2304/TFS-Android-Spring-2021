@@ -41,7 +41,8 @@ class ChatModule {
             EventsLongpollingMiddleware(repository),
             SendMessageMiddleware(repository),
             AddReactionMiddleware(repository),
-            RemoveReactionMiddleware(repository)
+            RemoveReactionMiddleware(repository),
+            GetBottomSheetReactionsMiddleware(repository)
         )
 
     @Provides

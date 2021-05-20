@@ -9,8 +9,6 @@ import io.reactivex.rxjava3.core.Observable
 class LoadMessagesMiddleware(override val repository: Repository) :
     Middleware<ChatActions, ChatUiState> {
 
-//    override val repository: Repository = ZulipRepository
-
     override fun bind(
         actions: Observable<ChatActions>,
         state: Observable<ChatUiState>
