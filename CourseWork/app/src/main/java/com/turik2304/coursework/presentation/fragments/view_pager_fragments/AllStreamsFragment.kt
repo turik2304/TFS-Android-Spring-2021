@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.transition.Hold
 import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.ChatActivity
 import com.turik2304.coursework.MyApp
@@ -22,6 +23,7 @@ import com.turik2304.coursework.presentation.StreamsUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
+import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.clicks.StreamsClickMapper
@@ -44,6 +46,12 @@ class AllStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() {
 
     @Inject
     lateinit var compositeDisposable: CompositeDisposable
+
+    @Inject
+    lateinit var diffCallback: DiffCallback<ViewTyped>
+
+    @Inject
+    lateinit var holderFactory: HolderFactory
 
     private lateinit var recycler: Recycler<ViewTyped>
     private lateinit var listOfStreams: List<StreamUI>
@@ -157,8 +165,8 @@ class AllStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() {
         drawable?.let { divider.setDrawable(it) }
         recycler = Recycler(
             recyclerView = binding.recycleViewAllStreams,
-            diffCallback = DiffCallback<ViewTyped>(),
-            holderFactory = MainHolderFactory(),
+            diffCallback = diffCallback,
+            holderFactory = holderFactory,
         ) {
             itemDecoration += divider
         }

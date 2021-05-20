@@ -24,6 +24,7 @@ import com.turik2304.coursework.presentation.StreamsUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
+import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.clicks.StreamsClickMapper
@@ -46,6 +47,12 @@ class SubscribedStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() 
 
     @Inject
     lateinit var compositeDisposable: CompositeDisposable
+
+    @Inject
+    lateinit var diffCallback: DiffCallback<ViewTyped>
+
+    @Inject
+    lateinit var holderFactory: HolderFactory
 
     private lateinit var recycler: Recycler<ViewTyped>
     private lateinit var listOfStreams: List<StreamUI>
@@ -159,8 +166,8 @@ class SubscribedStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() 
         drawable?.let { divider.setDrawable(it) }
         recycler = Recycler(
             recyclerView = binding.recycleViewSubscribedStreams,
-            diffCallback = DiffCallback<ViewTyped>(),
-            holderFactory = MainHolderFactory(),
+            diffCallback = diffCallback,
+            holderFactory = holderFactory,
         ) {
             itemDecoration += divider
         }

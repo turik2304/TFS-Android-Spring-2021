@@ -9,6 +9,10 @@ import com.turik2304.coursework.presentation.UsersActions
 import com.turik2304.coursework.presentation.UsersReducer
 import com.turik2304.coursework.presentation.UsersUiState
 import com.turik2304.coursework.presentation.base.Store
+import com.turik2304.coursework.presentation.recycler_view.DiffCallback
+import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
+import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
+import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import dagger.Module
 import dagger.Provides
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -69,6 +73,12 @@ class PeopleModule {
     @Provides
     @PeoplesScope
     fun provideActions(): PublishRelay<UsersActions> = PublishRelay.create()
+
+    @Provides
+    fun provideDiffCallBack(): DiffCallback<ViewTyped> = DiffCallback()
+
+    @Provides
+    fun provideHolderFactory(): HolderFactory = MainHolderFactory()
 
     @Provides
     fun provideCompositeDisposable(): CompositeDisposable = CompositeDisposable()

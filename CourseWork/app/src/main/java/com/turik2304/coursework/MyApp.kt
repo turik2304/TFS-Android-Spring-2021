@@ -64,6 +64,4 @@ class MyApp : Application() {
         peopleComponent = null
         streamsComponent = null
     }
-
-
 }

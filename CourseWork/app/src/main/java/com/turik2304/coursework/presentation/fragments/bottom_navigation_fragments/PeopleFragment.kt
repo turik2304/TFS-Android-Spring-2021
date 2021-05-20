@@ -17,6 +17,7 @@ import com.turik2304.coursework.presentation.UsersUiState
 import com.turik2304.coursework.presentation.base.MviFragment
 import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
+import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
@@ -37,6 +38,12 @@ class PeopleFragment : MviFragment<UsersActions, UsersUiState>() {
 
     @Inject
     lateinit var compositeDisposable: CompositeDisposable
+
+    @Inject
+    lateinit var diffCallback: DiffCallback<ViewTyped>
+
+    @Inject
+    lateinit var holderFactory: HolderFactory
 
     private lateinit var recycler: Recycler<ViewTyped>
 
@@ -128,8 +135,8 @@ class PeopleFragment : MviFragment<UsersActions, UsersUiState>() {
     private fun initRecycler() {
         recycler = Recycler(
             recyclerView = binding.recycleViewUsers,
-            diffCallback = DiffCallback<ViewTyped>(),
-            holderFactory = MainHolderFactory()
+            diffCallback = diffCallback,
+            holderFactory = holderFactory
         )
     }
 

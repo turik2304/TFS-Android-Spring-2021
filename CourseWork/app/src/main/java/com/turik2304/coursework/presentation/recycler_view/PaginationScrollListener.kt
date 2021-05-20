@@ -19,6 +19,4 @@ abstract class PaginationScrollListener(var layoutManager: LinearLayoutManager) 
     }
 
     abstract fun loadMoreItems()
-
-
 }

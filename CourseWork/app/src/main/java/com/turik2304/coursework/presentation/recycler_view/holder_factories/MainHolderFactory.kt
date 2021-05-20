@@ -16,7 +16,6 @@ class MainHolderFactory : HolderFactory() {
             R.layout.item_stream -> StreamHolder(view, clicks)
             R.layout.item_topic -> TopicHolder(view, clicks)
             R.layout.item_user -> UserHolder(view, clicks)
-            R.layout.item_bottom_sheet_reaction -> BottomSheetReactionHolder(view, clicks)
             else -> null
         }
     }

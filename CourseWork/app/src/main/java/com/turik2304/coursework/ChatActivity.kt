@@ -18,6 +18,7 @@ import com.turik2304.coursework.presentation.base.Store
 import com.turik2304.coursework.presentation.recycler_view.AsyncAdapter
 import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.PaginationScrollListener
+import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.clicks.ChatClickMapper
@@ -51,6 +52,12 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
     @Inject
     lateinit var viewBinding: CompositeDisposable
+
+    @Inject
+    lateinit var diffCallback: DiffCallback<ViewTyped>
+
+    @Inject
+    lateinit var holderFactory: HolderFactory
 
     private lateinit var chatBinding: ActivityChatBinding
     private lateinit var dialogBinding: BottomSheetBinding
@@ -282,8 +289,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private fun initRecycler() {
         recycler = Recycler(
             recyclerView = chatBinding.recycleView,
-            diffCallback = DiffCallback<ViewTyped>(),
-            holderFactory = ChatHolderFactory()
+            diffCallback = diffCallback,
+            holderFactory = holderFactory
         )
         chatBinding.recycleView.addOnScrollListener(object :
             PaginationScrollListener(chatBinding.recycleView.layoutManager as LinearLayoutManager) {
@@ -310,7 +317,7 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
     private fun initBottomSheetRecycler() {
         recyclerSheet = Recycler<ViewTyped>(
             recyclerView = dialogBinding.bottomSheetRecyclerView,
-            holderFactory = MainHolderFactory()
+            holderFactory = holderFactory
         )
         actions.accept(ChatActions.GetBottomSheetReactions)
     }

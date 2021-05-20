@@ -9,6 +9,10 @@ import com.turik2304.coursework.presentation.StreamsActions
 import com.turik2304.coursework.presentation.StreamsReducer
 import com.turik2304.coursework.presentation.StreamsUiState
 import com.turik2304.coursework.presentation.base.Store
+import com.turik2304.coursework.presentation.recycler_view.DiffCallback
+import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
+import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
+import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import dagger.Module
 import dagger.Provides
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -68,6 +72,13 @@ class StreamsModule {
 
     @Provides
     fun provideActions(): PublishRelay<StreamsActions> = PublishRelay.create()
+
+    @Provides
+    @StreamsScope
+    fun provideDiffCallBack(): DiffCallback<ViewTyped> = DiffCallback()
+
+    @Provides
+    fun provideHolderFactory(): HolderFactory = MainHolderFactory()
 
     @Provides
     @StreamsScope

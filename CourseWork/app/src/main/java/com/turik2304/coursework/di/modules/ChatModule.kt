@@ -9,6 +9,11 @@ import com.turik2304.coursework.presentation.ChatActions
 import com.turik2304.coursework.presentation.ChatReducer
 import com.turik2304.coursework.presentation.ChatUiState
 import com.turik2304.coursework.presentation.base.Store
+import com.turik2304.coursework.presentation.recycler_view.DiffCallback
+import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
+import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
+import com.turik2304.coursework.presentation.recycler_view.holder_factories.ChatHolderFactory
+import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import dagger.Module
 import dagger.Provides
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -52,6 +57,14 @@ class ChatModule {
     @Provides
     @ChatScope
     fun provideActions(): PublishRelay<ChatActions> = PublishRelay.create()
+
+    @Provides
+    @ChatScope
+    fun provideDiffCallBack(): DiffCallback<ViewTyped> = DiffCallback()
+
+    @Provides
+    @ChatScope
+    fun provideHolderFactory(): HolderFactory = ChatHolderFactory()
 
     @Provides
     fun provideCompositeDisposable(): CompositeDisposable = CompositeDisposable()
