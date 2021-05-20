@@ -69,20 +69,36 @@ class PeopleFragment : MviFragment<UsersActions, UsersUiState>() {
     }
 
     override fun render(state: UsersUiState) {
-        if (state.isLoading) {
+        renderLoading(state.isLoading)
+        renderError(state.error)
+        renderLoadedUsers(state.data)
+        renderUserInfo(state.userInfo)
+    }
+
+    private fun renderLoading(isLoading: Boolean) {
+        if (isLoading) {
             binding.usersShimmer.showShimmer(true)
         } else {
             binding.usersShimmer.stopAndHideShimmer()
         }
-        state.error?.let { Error.showError(context, state.error) }
-        state.data?.let { users ->
-            recycler.setItems(users as List<UserUI>)
+    }
+
+    private fun renderError(error: Throwable?) {
+        error?.let { Error.showError(context, it) }
+    }
+
+    private fun renderLoadedUsers(data: Any?) {
+        if (data is List<*> && data.first() is UserUI) {
+            recycler.setItems(data as List<UserUI>)
             Search.initSearch(
                 editText = binding.edSearchUsers,
                 recyclerView = binding.recycleViewUsers
             )
         }
-        state.userInfo?.let { user ->
+    }
+
+    private fun renderUserInfo(targetUser: UserUI?) {
+        targetUser?.let { user ->
             startProfileDetailsFragment(
                 userName = user.userName,
                 status = user.presence,

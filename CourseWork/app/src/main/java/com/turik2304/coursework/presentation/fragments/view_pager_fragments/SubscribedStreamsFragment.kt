@@ -91,20 +91,35 @@ class SubscribedStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() 
     }
 
     override fun render(state: StreamsUiState) {
-        if (state.isLoading) {
+        renderLoading(state.isLoading)
+        renderError(state.error)
+        renderLoadedStreams(state.data)
+        renderExpandedStream(state.expandStream)
+        renderReducedStream(state.reduceStream)
+        renderOpeningChat(state)
+    }
+
+    private fun renderLoading(isLoading: Boolean) {
+        if (isLoading) {
             parentBinding.tabLayoutShimmer.showShimmer(true)
         } else {
             parentBinding.tabLayoutShimmer.stopAndHideShimmer()
         }
-        state.error?.let { Error.showError(context, state.error) }
+    }
 
-        state.data?.let {
-            val streamList = state.data as List<StreamUI>
-            listOfStreams = streamList
+    private fun renderError(error: Throwable?) {
+        error?.let { Error.showError(context, it) }
+    }
+
+    private fun renderLoadedStreams(streams: List<ViewTyped>?) {
+        streams?.let {
+            listOfStreams = it as List<StreamUI>
             updateList()
         }
+    }
 
-        state.expandStream?.let { expandedStream ->
+    private fun renderExpandedStream(expandableStream: StreamUI?) {
+        expandableStream?.let { expandedStream ->
             if (expandedStream.uid !in listOfExpandedStreams) {
                 listOfExpandedStreams.add(expandedStream.uid)
                 updateList()
@@ -113,13 +128,17 @@ class SubscribedStreamsFragment : MviFragment<StreamsActions, StreamsUiState>() 
                 actions.accept(StreamsActions.ReduceStream(expandedStream))
             }
         }
+    }
 
-        state.reduceStream?.let { reducedStream ->
+    private fun renderReducedStream(reducibleStream: StreamUI?) {
+        reducibleStream?.let { reducedStream ->
             listOfExpandedStreams.remove(reducedStream.uid)
             updateList()
             actions.accept(StreamsActions.StreamReduced)
         }
+    }
 
+    private fun renderOpeningChat(state: StreamsUiState) {
         if (state.nameOfTopic != null && state.nameOfStream != null) {
             val intent = Intent(context, ChatActivity::class.java)
             intent.putExtra(EXTRA_NAME_OF_TOPIC, state.nameOfTopic)

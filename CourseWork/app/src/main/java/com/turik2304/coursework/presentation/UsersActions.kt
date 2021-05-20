@@ -1,6 +1,7 @@
 package com.turik2304.coursework.presentation
 
 import com.turik2304.coursework.presentation.base.Action
+import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.UserUI
 
 sealed class UsersActions : Action {

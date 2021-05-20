@@ -136,8 +136,8 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
         renderClickedMessage(state.messageClicked)
 
         when (state.data) {
-            is MessageData.FirstPageData -> renderFirstPage(state.data.items)
-            is MessageData.NextPageData -> renderNextPage(state.data.items)
+            is MessageData.FirstPageData -> renderFirstPage(state.data.messages)
+            is MessageData.NextPageData -> renderNextPage(state.data.messages)
             is MessageData.SentMessageData -> renderSentMessages(state.data.messages)
 
             is MessageData.EventRegistrationData -> initEventsRegistrationData(state.data)

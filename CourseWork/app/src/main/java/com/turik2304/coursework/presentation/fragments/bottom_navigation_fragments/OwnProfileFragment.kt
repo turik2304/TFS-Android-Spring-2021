@@ -60,20 +60,30 @@ class OwnProfileFragment : MviFragment<UsersActions, UsersUiState>() {
     }
 
     override fun render(state: UsersUiState) {
-        if (state.isLoading) {
+        renderLoading(state.isLoading)
+        renderError(state.error)
+        renderOwnProfile(state.data)
+    }
+
+    private fun renderLoading(isLoading: Boolean) {
+        if (isLoading) {
             binding.ownProfileShimmer.showShimmer(true)
         } else {
             binding.ownProfileShimmer.stopAndHideShimmer()
         }
-        if (state.error != null) {
-            binding.ownProfileShimmer.showShimmer(true)
-            Error.showError(context, state.error)
+    }
+
+    private fun renderError(error: Throwable?) {
+        error?.let {
+            Error.showError(context, it)
         }
-        if (state.data != null) {
-            val ownProfileInfo = state.data as GetOwnProfileResponse
-            binding.tvUserNameProfileTab.text = ownProfileInfo.name
-            binding.tvStatusProfile.setColoredTextStatus(ownProfileInfo.statusEnum)
-            val avatarUrl = ownProfileInfo.avatarUrl
+    }
+
+    private fun renderOwnProfile(data: Any?) {
+        if (data is GetOwnProfileResponse) {
+            binding.tvUserNameProfileTab.text = data.name
+            binding.tvStatusProfile.setColoredTextStatus(data.statusEnum)
+            val avatarUrl = data.avatarUrl
             Glide.with(this).load(avatarUrl).into(binding.imUserAvatarProfileTab)
         }
     }
