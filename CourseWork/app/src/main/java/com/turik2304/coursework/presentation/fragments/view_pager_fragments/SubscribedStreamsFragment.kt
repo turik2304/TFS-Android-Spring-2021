@@ -28,7 +28,6 @@ import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.clicks.StreamsClickMapper
-import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
 import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
 import com.turik2304.coursework.presentation.utils.Error

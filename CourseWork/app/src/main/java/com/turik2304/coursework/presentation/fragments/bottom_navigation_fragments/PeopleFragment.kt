@@ -20,7 +20,6 @@ import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
-import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import com.turik2304.coursework.presentation.recycler_view.items.UserUI
 import com.turik2304.coursework.presentation.utils.Error
 import com.turik2304.coursework.presentation.utils.Search

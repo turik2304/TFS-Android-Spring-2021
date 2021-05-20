@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.transition.Hold
 import com.jakewharton.rxrelay3.PublishRelay
 import com.turik2304.coursework.ChatActivity
 import com.turik2304.coursework.MyApp
@@ -27,7 +26,6 @@ import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.clicks.StreamsClickMapper
-import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import com.turik2304.coursework.presentation.recycler_view.items.StreamUI
 import com.turik2304.coursework.presentation.recycler_view.items.TopicUI
 import com.turik2304.coursework.presentation.utils.Error

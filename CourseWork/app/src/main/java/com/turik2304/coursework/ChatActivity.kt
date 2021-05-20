@@ -22,8 +22,6 @@ import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.Recycler
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.clicks.ChatClickMapper
-import com.turik2304.coursework.presentation.recycler_view.holder_factories.ChatHolderFactory
-import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import com.turik2304.coursework.presentation.recycler_view.items.BottomSheetReactionUI
 import com.turik2304.coursework.presentation.recycler_view.items.InMessageUI
 import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI

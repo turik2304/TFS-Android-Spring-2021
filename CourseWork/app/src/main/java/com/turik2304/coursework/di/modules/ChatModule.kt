@@ -13,7 +13,6 @@ import com.turik2304.coursework.presentation.recycler_view.DiffCallback
 import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.holder_factories.ChatHolderFactory
-import com.turik2304.coursework.presentation.recycler_view.holder_factories.MainHolderFactory
 import dagger.Module
 import dagger.Provides
 import io.reactivex.rxjava3.disposables.CompositeDisposable

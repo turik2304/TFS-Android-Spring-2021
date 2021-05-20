@@ -4,7 +4,6 @@ import android.view.View
 import com.turik2304.coursework.R
 import com.turik2304.coursework.presentation.recycler_view.base.BaseViewHolder
 import com.turik2304.coursework.presentation.recycler_view.base.HolderFactory
-import com.turik2304.coursework.presentation.recycler_view.holders.BottomSheetReactionHolder
 import com.turik2304.coursework.presentation.recycler_view.holders.StreamHolder
 import com.turik2304.coursework.presentation.recycler_view.holders.TopicHolder
 import com.turik2304.coursework.presentation.recycler_view.holders.UserHolder
