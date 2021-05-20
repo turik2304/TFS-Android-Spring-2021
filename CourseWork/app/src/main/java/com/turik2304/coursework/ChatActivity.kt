@@ -89,8 +89,6 @@ class ChatActivity : MviActivity<ChatActions, ChatUiState>() {
 
         loadFirstPage()
 
-        Log.d("xxx", "activity $actions")
-
         chatBinding.imageViewBackButton.setOnClickListener { onBackPressed() }
         chatBinding.imageViewSendMessage.setOnClickListener {
             if (chatBinding.editTextEnterMessage.text.isNotEmpty()) {

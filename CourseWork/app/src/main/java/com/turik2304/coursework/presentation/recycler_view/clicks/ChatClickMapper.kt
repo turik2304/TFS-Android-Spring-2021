@@ -10,9 +10,9 @@ import io.reactivex.rxjava3.functions.Consumer
 class ChatClickMapper(
     private val outMessageClick: Observable<OutMessageUI>,
     private val inMessageClick: Observable<InMessageUI>
-) {
+) : ClickMapper<ChatActions> {
 
-    fun bind(actionConsumer: Consumer<ChatActions>): Disposable {
+    override fun bind(actionConsumer: Consumer<ChatActions>): Disposable {
         return Observable.merge(
             outMessageClick.map {
                 ChatActions.ShowBottomSheetDialog(
