@@ -4,11 +4,11 @@ import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 
 sealed class MessageData {
     class FirstPageData(
-        val items: List<ViewTyped>
+        val messages: List<ViewTyped>
     ) : MessageData()
 
     class NextPageData(
-        val items: List<ViewTyped>
+        val messages: List<ViewTyped>
     ) : MessageData()
 
     class SentMessageData(

@@ -10,9 +10,9 @@ import io.reactivex.rxjava3.functions.Consumer
 class StreamsClickMapper(
     private val streamClick: Observable<StreamUI>,
     private val topicClick: Observable<TopicUI>
-) {
+) : ClickMapper<StreamsActions> {
 
-    fun bind(actionConsumer: Consumer<StreamsActions>): Disposable {
+    override fun bind(actionConsumer: Consumer<StreamsActions>): Disposable {
         return Observable.merge(
             streamClick.map {
                 StreamsActions.ExpandStream(

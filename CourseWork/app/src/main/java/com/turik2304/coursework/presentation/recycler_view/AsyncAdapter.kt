@@ -28,6 +28,4 @@ class AsyncAdapter<T : ViewTyped>(
             runnable.run()
         }
     }
-
-
 }

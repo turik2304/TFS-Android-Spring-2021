@@ -1,14 +1,12 @@
 package com.turik2304.coursework.domain
 
 import com.turik2304.coursework.data.repository.Repository
-import com.turik2304.coursework.data.repository.ZulipRepository
 import com.turik2304.coursework.presentation.UsersActions
 import com.turik2304.coursework.presentation.UsersUiState
 import io.reactivex.rxjava3.core.Observable
 
-class UsersMiddleware : Middleware<UsersActions, UsersUiState> {
-
-    override val repository: Repository = ZulipRepository
+class UsersMiddleware(override val repository: Repository) :
+    Middleware<UsersActions, UsersUiState> {
 
     override fun bind(
         actions: Observable<UsersActions>,

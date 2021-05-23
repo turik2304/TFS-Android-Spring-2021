@@ -46,7 +46,7 @@ class MessageViewGroup @JvmOverloads constructor(
         color = resources.getColor(R.color.gray_not_selected_background, context.theme)
         style = Paint.Style.FILL
     }
-    private val roundRadius: Float = 10f.dpToPx()
+    private val roundRadius: Float = 10f.dpToPx(context)
     private var backgroundMargin = 0
 
     init {

@@ -14,6 +14,4 @@ class DiffCallback<T : ViewTyped> : DiffUtil.ItemCallback<T>() {
     override fun areContentsTheSame(oldItem: T, newItem: T): Boolean {
         return oldItem == newItem
     }
-
-
 }

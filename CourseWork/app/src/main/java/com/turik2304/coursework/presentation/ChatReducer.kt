@@ -8,7 +8,8 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
         return when (action) {
             //Longpolling reducing
             is ChatActions.RegisterEvents -> ChatUiState(
-                isLoading = state.isLoading
+                isLoading = state.isLoading,
+                messageClicked = state.messageClicked
             )
             is ChatActions.EventsRegistered -> ChatUiState(
                 isLoading = state.isLoading,
@@ -17,46 +18,54 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
                     messageEventId = action.messageEventId,
                     reactionsQueueId = action.reactionQueueId,
                     reactionEventId = action.reactionEventId
-                )
+                ),
+                messageClicked = state.messageClicked
             )
             is ChatActions.GetEvents -> ChatUiState(
-                isLoading = state.isLoading
+                isLoading = state.isLoading,
+                messageClicked = state.messageClicked
             )
             is ChatActions.MessageEventReceived -> ChatUiState(
                 data = MessageData.MessageLongpollingData(
                     messagesQueueId = action.queueId,
                     lastMessageEventId = action.eventId,
                     polledData = action.updatedList
-                )
+                ),
+                messageClicked = state.messageClicked
             )
             is ChatActions.ReactionEventReceived -> ChatUiState(
                 data = MessageData.ReactionLongpollingData(
                     reactionsQueueId = action.queueId,
                     lastReactionEventId = action.eventId,
                     polledData = action.updatedList
-                )
+                ),
+                messageClicked = state.messageClicked
             )
             //Main reducing
             is ChatActions.LoadItems -> ChatUiState(
                 isLoading = true,
+                messageClicked = state.messageClicked
             )
             is ChatActions.MessagesLoaded ->
                 if (action.isFirstPage) {
                     ChatUiState(
                         isLoading = false,
                         isFirstPage = true,
-                        data = MessageData.FirstPageData(action.messages)
+                        data = MessageData.FirstPageData(action.messages),
+                        messageClicked = state.messageClicked
                     )
                 } else {
                     ChatUiState(
                         isLoading = false,
                         isFirstPage = false,
-                        data = MessageData.NextPageData(action.messages)
+                        data = MessageData.NextPageData(action.messages),
+                        messageClicked = state.messageClicked
                     )
                 }
 
             is ChatActions.LoadedEmptyList -> ChatUiState(
-                isLoading = true
+                isLoading = true,
+                messageClicked = state.messageClicked
             )
             is ChatActions.ErrorLoading -> ChatUiState(
                 isLoading = false,
@@ -67,13 +76,16 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
             )
             is ChatActions.MessageSent -> ChatUiState(
                 isLoading = false,
-                data = MessageData.SentMessageData(action.messages)
+                data = MessageData.SentMessageData(action.messages),
+                messageClicked = state.messageClicked
             )
             is ChatActions.AddReaction -> ChatUiState(
-                isLoading = true
+                isLoading = true,
+                messageClicked = false
             )
             is ChatActions.ReactionAdded -> ChatUiState(
-                isLoading = false
+                isLoading = false,
+                messageClicked = false
             )
             is ChatActions.RemoveReaction -> ChatUiState(
                 isLoading = true
@@ -81,10 +93,19 @@ class ChatReducer : Reducer<ChatUiState, ChatActions> {
             is ChatActions.ReactionRemoved -> ChatUiState(
                 isLoading = false
             )
-            is ChatActions.ShowBottomSheetDialog -> ChatUiState(
-                uidOfClickedMessage = action.uidOfClickedMessage
+            is ChatActions.GetBottomSheetReactions -> ChatUiState(
+                isLoading = true
             )
-            is ChatActions.DismissBottomSheetDialog -> ChatUiState()
+            is ChatActions.BottomSheetReactionsReceived -> ChatUiState(
+                isLoading = false,
+                auxiliaryData = action.bottomSheetReactions
+            )
+            is ChatActions.ShowBottomSheetDialog -> ChatUiState(
+                messageClicked = true
+            )
+            is ChatActions.DismissBottomSheetDialog -> ChatUiState(
+                messageClicked = false
+            )
         }
     }
 

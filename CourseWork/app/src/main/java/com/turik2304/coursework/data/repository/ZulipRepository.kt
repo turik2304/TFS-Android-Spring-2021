@@ -1,8 +1,8 @@
 package com.turik2304.coursework.data.repository
 
-import com.turik2304.coursework.MyApp
+import com.turik2304.coursework.data.EmojiEnum
 import com.turik2304.coursework.data.MyUserId
-import com.turik2304.coursework.data.network.RetroClient
+import com.turik2304.coursework.data.network.ZulipApi
 import com.turik2304.coursework.data.network.models.data.*
 import com.turik2304.coursework.data.network.models.data.MessageData.MessageLongpollingData
 import com.turik2304.coursework.data.network.models.data.MessageData.ReactionLongpollingData
@@ -11,8 +11,7 @@ import com.turik2304.coursework.data.network.models.response.GetUserPresenceResp
 import com.turik2304.coursework.data.network.models.response.RegisterEventsResponse
 import com.turik2304.coursework.data.network.utils.NarrowConstructor
 import com.turik2304.coursework.data.network.utils.ViewTypedConverter
-import com.turik2304.coursework.data.network.utils.ViewTypedConverterImpl
-import com.turik2304.coursework.data.room.DatabaseClient
+import com.turik2304.coursework.data.room.Database
 import com.turik2304.coursework.presentation.recycler_view.base.ViewTyped
 import com.turik2304.coursework.presentation.recycler_view.items.*
 import io.reactivex.rxjava3.core.Completable
@@ -20,23 +19,26 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.*
 
-object ZulipRepository : Repository {
+class ZulipRepository(
+    override val api: ZulipApi,
+    override val db: Database,
+    override val converter: ViewTypedConverter,
+    override val narrowConstructor: NarrowConstructor
+) : Repository {
 
-    private const val NUMBER_OF_MESSAGES_BEFORE = 20
-    private const val NUMBER_OF_MESSAGES_AFTER = 0
-    private const val MAX_NUMBER_OF_MESSAGES_IN_DB = 50
-
-    private val db = DatabaseClient.getInstance(MyApp.app.applicationContext)
-
-    override val converter: ViewTypedConverter = ViewTypedConverterImpl
+    companion object {
+        private const val NUMBER_OF_MESSAGES_BEFORE = 20
+        private const val NUMBER_OF_MESSAGES_AFTER = 0
+        private const val MAX_NUMBER_OF_MESSAGES_IN_DB = 50
+    }
 
     override fun getAllUsers(): Observable<List<User>> {
         val usersFromDB =
             Observable.fromCallable {
-                (db?.userDao()?.getAll() ?: emptyList())
+                db.userDao().getAll()
             }
                 .subscribeOn(Schedulers.io())
-        val usersFromNetWork = RetroClient.zulipApi.getAllUsers()
+        val usersFromNetWork = api.getAllUsers()
             .subscribeOn(Schedulers.io())
             .flatMap { response ->
                 val sortedUserList = response.members.sortedBy { user -> user.userName }
@@ -45,7 +47,7 @@ object ZulipRepository : Repository {
                         return@concatMap if (user.isBot) {
                             Observable.just(user)
                         } else {
-                            RetroClient.zulipApi.getUserPresence(user.email)
+                            api.getUserPresence(user.email)
                                 .map m@{ response ->
                                     user.presence = response.presence.aggregated.statusEnum
                                     return@m user
@@ -55,7 +57,7 @@ object ZulipRepository : Repository {
                     .toList()
                     .toObservable()
                     .doOnNext { updatedUserList ->
-                        db?.userDao()?.deleteAndCreate(updatedUserList)
+                        db.userDao().deleteAndCreate(updatedUserList)
                     }
             }
         return usersFromNetWork
@@ -67,21 +69,21 @@ object ZulipRepository : Repository {
 
     override fun getStreams(needAllStreams: Boolean): Observable<List<Stream>> {
         val streamsFromDB = Observable.fromCallable {
-            (db?.streamDao()?.getStreams(needAllStreams) ?: emptyList())
+            db.streamDao().getStreams(needAllStreams)
         }
             .subscribeOn(Schedulers.io())
         val streamsFromNetwork: Observable<List<Stream>>
         if (needAllStreams) {
-            streamsFromNetwork = RetroClient.zulipApi.getAllStreams()
+            streamsFromNetwork = api.getAllStreams()
                 .subscribeOn(Schedulers.io())
                 .flatMap { allStreamsResponse ->
                     getTopicsOfStreams(allStreamsResponse.allStreams)
                 }
                 .doOnNext { updatedStreams ->
-                    db?.streamDao()?.deleteAndCreate(deleteAllStreams = true, updatedStreams)
+                    db.streamDao().deleteAndCreate(deleteAllStreams = true, updatedStreams)
                 }
         } else {
-            streamsFromNetwork = RetroClient.zulipApi.getSubscribedStreams()
+            streamsFromNetwork = api.getSubscribedStreams()
                 .subscribeOn(Schedulers.io())
                 .flatMap { subscribedStreamsResponse ->
                     val subscribedStreams =
@@ -92,7 +94,7 @@ object ZulipRepository : Repository {
                     getTopicsOfStreams(subscribedStreams)
                 }
                 .doOnNext { updatedStreams ->
-                    db?.streamDao()?.deleteAndCreate(deleteAllStreams = false, updatedStreams)
+                    db.streamDao().deleteAndCreate(deleteAllStreams = false, updatedStreams)
                 }
         }
         return streamsFromNetwork
@@ -105,7 +107,7 @@ object ZulipRepository : Repository {
     override fun getTopicsOfStreams(streams: List<Stream>): Observable<List<Stream>> {
         return Observable.fromIterable(streams)
             .concatMap { stream ->
-                return@concatMap RetroClient.zulipApi.getTopics(stream.id)
+                return@concatMap api.getTopics(stream.id)
                     .map { response ->
                         stream.topics = response.topics.map topicNameMap@{ topic ->
                             topic.nameOfStream = stream.nameOfStream
@@ -120,8 +122,8 @@ object ZulipRepository : Repository {
     }
 
     override fun getOwnProfile(): Observable<GetOwnProfileResponse> {
-        val getOwnProfile = RetroClient.zulipApi.getOwnProfile()
-        val getOwnPresence = RetroClient.zulipApi.getUserPresence(MyUserId.MY_USER_ID.toString())
+        val getOwnProfile = api.getOwnProfile()
+        val getOwnPresence = api.getUserPresence(MyUserId.MY_USER_ID.toString())
         return Observable.zip(getOwnProfile, getOwnPresence,
             { ownProfileResponse: GetOwnProfileResponse, ownPresence: GetUserPresenceResponse ->
                 ownProfileResponse.statusEnum = ownPresence.presence.aggregated.statusEnum
@@ -139,7 +141,7 @@ object ZulipRepository : Repository {
         //raw message will be updated when MessageEvent is receive
         val rawMessage = converter.messageHelper.generateRawMessage(message)
         val rawMessageSupplier = Observable.just(rawMessage)
-        val sendMessageCall = RetroClient.zulipApi.sendMessage(
+        val sendMessageCall = api.sendMessage(
             nameOfTopic = nameOfTopic,
             nameOfStream = nameOfStream,
             message = message
@@ -148,12 +150,26 @@ object ZulipRepository : Repository {
         return sendMessageCall.startWith(rawMessageSupplier)
     }
 
+    override fun getBottomSheetReactionList(): Observable<List<BottomSheetReaction>> {
+        val list = mutableListOf<BottomSheetReaction>()
+        val emojiCodeRange = EmojiEnum.values().map { it.unicodeCodePoint }.sortedDescending()
+        for ((id, emojiCode) in emojiCodeRange.withIndex()) {
+            list.add(
+                BottomSheetReaction(
+                    emojiCode = emojiCode,
+                    id = id
+                )
+            )
+        }
+        return Observable.just(list)
+    }
+
     override fun sendReaction(
         messageId: Int,
         emojiName: String,
         emojiCode: String
     ): Completable {
-        return RetroClient.zulipApi.sendReaction(
+        return api.sendReaction(
             messageId = messageId,
             emojiName = emojiName,
             emojiCode = emojiCode
@@ -166,7 +182,7 @@ object ZulipRepository : Repository {
         emojiName: String,
         emojiCode: String
     ): Completable {
-        return RetroClient.zulipApi.removeReaction(
+        return api.removeReaction(
             messageId = messageId,
             emojiName = emojiName,
             emojiCode = emojiCode
@@ -179,13 +195,13 @@ object ZulipRepository : Repository {
         uidOfLastLoadedMessage: String,
         needFirstPage: Boolean
     ): Observable<List<Message>> {
-        val narrow = NarrowConstructor.getNarrow(nameOfTopic, nameOfStream)
+        val narrow = narrowConstructor.getNarrow(nameOfTopic, nameOfStream)
         val messagesFromDB = if (needFirstPage)
             Observable.fromCallable {
-                db?.messageDao()?.getAll(nameOfStream, nameOfTopic) ?: emptyList()
+                db.messageDao().getAll(nameOfStream, nameOfTopic)
             }
                 .subscribeOn(Schedulers.io()) else Observable.empty()
-        val messagesFromNetwork = RetroClient.zulipApi.getMessages(
+        val messagesFromNetwork = api.getMessages(
             uidOfLastLoadedMessage,
             NUMBER_OF_MESSAGES_BEFORE,
             NUMBER_OF_MESSAGES_AFTER,
@@ -200,20 +216,18 @@ object ZulipRepository : Repository {
                     message
                 }
                 if (needFirstPage) {
-                    db?.messageDao()
-                        ?.deleteAndCreate(nameOfStream, nameOfTopic, messages)
+                    db.messageDao()
+                        .deleteAndCreate(nameOfStream, nameOfTopic, messages)
                 } else {
                     val numberOfMessagesCanBeInserted =
-                        MAX_NUMBER_OF_MESSAGES_IN_DB - (db?.messageDao()
-                            ?.getCount(nameOfStream, nameOfTopic)
-                            ?: MAX_NUMBER_OF_MESSAGES_IN_DB)
+                        MAX_NUMBER_OF_MESSAGES_IN_DB - db.messageDao()
+                            .getCount(nameOfStream, nameOfTopic)
                     val messagesToDatabase = messages
                         .takeLast(numberOfMessagesCanBeInserted)
-                    db?.messageDao()?.insertAll(messagesToDatabase)
+                    db.messageDao().insertAll(messagesToDatabase)
                 }
                 return@map messages
             }
-
         return messagesFromNetwork
             .publish { fromNetwork ->
                 Observable.mergeDelayError(fromNetwork, messagesFromDB.takeUntil(fromNetwork))
@@ -225,9 +239,9 @@ object ZulipRepository : Repository {
         nameOfTopic: String,
         nameOfStream: String
     ): Observable<MessageData.EventRegistrationData> {
-        val narrow = NarrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
-        val registerMessageEvents = RetroClient.zulipApi.registerMessageEvents(narrow = narrow)
-        val registerReactionEvents = RetroClient.zulipApi.registerReactionEvents(narrow = narrow)
+        val narrow = narrowConstructor.getNarrowArray(nameOfTopic, nameOfStream)
+        val registerMessageEvents = api.registerMessageEvents(narrow = narrow)
+        val registerReactionEvents = api.registerReactionEvents(narrow = narrow)
         return Observable.zip(registerMessageEvents, registerReactionEvents,
             { registerMessageEventsResponse: RegisterEventsResponse, registerReactionEventsResponse: RegisterEventsResponse ->
                 converter.messageHelper.setOfRawIdsOfMessages.clear()
@@ -248,7 +262,7 @@ object ZulipRepository : Repository {
         nameOfStream: String,
         currentList: List<ViewTyped>,
     ): Observable<MessageLongpollingData> {
-        return RetroClient.zulipApi.getMessageEvents(queueId, lastEventId)
+        return api.getMessageEvents(queueId, lastEventId)
             .subscribeOn(Schedulers.io())
             .map { response ->
                 if (response.messageEvents.isNotEmpty() && currentList.isNotEmpty()) {
@@ -263,8 +277,8 @@ object ZulipRepository : Repository {
                     //current list may include raw messages
                     val filteredMessages = converter.messageHelper.filterRawMessages(currentList)
                     val actualList = filteredMessages + newMessages
-                    db?.messageDao()
-                        ?.insertAllAndCheckCapacity(nameOfStream, nameOfTopic, zulipMessages)
+                    db.messageDao()
+                        .insertAllAndCheckCapacity(nameOfStream, nameOfTopic, zulipMessages)
                     return@map MessageLongpollingData(
                         messagesQueueId = queueId,
                         lastMessageEventId = newLastEventId,
@@ -286,7 +300,7 @@ object ZulipRepository : Repository {
         lastEventId: String,
         currentList: List<ViewTyped>,
     ): Observable<ReactionLongpollingData> {
-        return RetroClient.zulipApi.getReactionEvents(queueId, lastEventId)
+        return api.getReactionEvents(queueId, lastEventId)
             .subscribeOn(Schedulers.io())
             .map { response ->
                 if (response.reactionEvents.isNotEmpty() && currentList.isNotEmpty()) {

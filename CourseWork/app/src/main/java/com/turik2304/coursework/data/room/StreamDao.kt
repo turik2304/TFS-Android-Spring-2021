@@ -23,5 +23,4 @@ interface StreamDao {
         deleteStreams(deleteAllStreams)
         insertAll(newStreams)
     }
-
 }

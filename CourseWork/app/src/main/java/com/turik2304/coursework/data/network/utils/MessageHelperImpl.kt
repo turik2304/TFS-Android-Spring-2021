@@ -8,9 +8,7 @@ import com.turik2304.coursework.presentation.recycler_view.items.OutMessageUI
 import java.text.SimpleDateFormat
 import java.util.*
 
-object MessageHelperImpl : MessageHelper {
-
-    override val reactionHelper: ReactionHelper = ReactionHelperImpl
+class MessageHelperImpl(override val reactionHelper: ReactionHelper) : MessageHelper {
 
     override val setOfRawIdsOfMessages: HashSet<Int> = hashSetOf()
 
