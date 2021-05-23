@@ -1,5 +1,6 @@
 Итоговый проект Тинькофф Финтех школы 2021 Android dev  
 Представляет собой клиент для Zulip (https://zulip.com/)  
+Ссылка на дизайн https://www.figma.com/file/cTA9Cy4ix1VjiW7MgYy5tL/TFS-ANDROID?node-id=141%3A408
 Retrofit, OkHttp, Room, Dagger2, RxJava, Glide, Json, Shimmer, MVI
 
 # TFS Android Spring 2021
