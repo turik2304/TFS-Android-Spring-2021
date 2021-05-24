@@ -3,7 +3,7 @@
 Ссылка на дизайн https://www.figma.com/file/cTA9Cy4ix1VjiW7MgYy5tL/TFS-ANDROID?node-id=141%3A408  
 Retrofit, OkHttp, Room, Dagger2, RxJava, Glide, Json, Shimmer, MVI
 
-![Сибагатуллин Артур](https://github.com/turik2304/TFS-Android-Spring-2021/blob/master/%D0%A1%D0%B8%D0%B1%D0%B0%D0%B3%D0%B0%D1%82%D1%83%D0%BB%D0%BB%D0%B8%D0%BD%20%D0%90%D1%80%D1%82%D1%83%D1%80-1.png)
+![Сибагатуллин Артур](https://github.com/turik2304/TFS-Android-Spring-2021/blob/master/Certificate.png)
 # TFS Android Spring 2021
 
 #### Общие требования:
